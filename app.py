@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request, redirect, session
+from functools import wraps
 import psycopg2
 from datetime import date
+import os
 
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
 
 # ===============================
-# CONFIGURACIÓN LOGIN
+# CONFIGURACIÓN LOGIN ADMIN
 # ===============================
 
 ADMIN_USER = "admin"
@@ -15,7 +17,6 @@ ADMIN_PASS = "1234"
 # ===============================
 # CONEXIÓN POSTGRESQL
 # ===============================
-import os
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -30,14 +31,41 @@ except Exception as e:
     print("Error conectando:", e)
 
 # ===============================
-# INICIO / DASHBOARD
+# 🛡️ SEGURIDAD DE RUTAS (NUEVO)
+# ===============================
+
+def login_required(role=None):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+
+            # ❌ nadie logueado
+            if "usuario" not in session and "paciente_id" not in session:
+                return redirect("/login")
+
+            # 👨‍⚕️ ADMIN
+            if role == "admin":
+                if session.get("usuario") != ADMIN_USER:
+                    return redirect("/login")
+
+            # 👤 PACIENTE
+            if role == "paciente":
+                if "paciente_id" not in session:
+                    return redirect("/login_paciente")
+
+            return func(*args, **kwargs)
+
+        return wrapper
+    return decorator
+
+
+# ===============================
+# DASHBOARD ADMIN
 # ===============================
 
 @app.route("/")
+@login_required(role="admin")
 def index():
-
-    if "usuario" not in session:
-        return redirect("/login")
 
     if conn is None:
         return "Error de conexión con la base de datos"
@@ -70,10 +98,11 @@ def index():
 
 
 # ===============================
-# REGISTRAR PACIENTE
+# REGISTRAR PACIENTE (ADMIN)
 # ===============================
 
 @app.route("/registro", methods=["GET","POST"])
+@login_required(role="admin")
 def registro():
 
     if request.method == "POST":
@@ -85,7 +114,6 @@ def registro():
         fecha_nacimiento = request.form["fecha_nacimiento"]
 
         try:
-
             cursor = conn.cursor()
 
             cursor.execute("""
@@ -101,9 +129,7 @@ def registro():
             tipo="success")
 
         except Exception as e:
-
             conn.rollback()
-
             return render_template("registro.html",
             mensaje=f"Error: {e}",
             tipo="error")
@@ -112,69 +138,62 @@ def registro():
 
 
 # ===============================
-# LISTAR PACIENTES
+# LISTAR PACIENTES (ADMIN)
 # ===============================
 
 @app.route("/pacientes")
+@login_required(role="admin")
 def pacientes():
 
     cursor = conn.cursor()
-
     buscar = request.args.get("buscar")
 
     if buscar:
-
         cursor.execute("""
         SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
         FROM paciente
         WHERE nombre ILIKE %s OR apellido ILIKE %s
         """,(f"%{buscar}%",f"%{buscar}%"))
-
     else:
-
         cursor.execute("""
         SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
         FROM paciente
         """)
 
     pacientes = cursor.fetchall()
-
     cursor.close()
 
     return render_template("pacientes.html",pacientes=pacientes)
 
 
 # ===============================
-# ELIMINAR PACIENTE
+# ELIMINAR PACIENTE (ADMIN)
 # ===============================
 
 @app.route("/eliminar_paciente/<int:id>")
+@login_required(role="admin")
 def eliminar_paciente(id):
 
     cursor = conn.cursor()
 
     try:
-
         cursor.execute("DELETE FROM cita WHERE id_paciente=%s",(id,))
         cursor.execute("DELETE FROM paciente WHERE id_paciente=%s",(id,))
-
         conn.commit()
-
     except Exception as e:
-
         conn.rollback()
         print("Error:",e)
 
     cursor.close()
-
     return redirect("/pacientes")
 
 
 # ===============================
-# REGISTRAR CITA
+# REGISTRAR CITA (ADMIN)
 # ===============================
 
 @app.route("/cita", methods=["GET","POST"])
+@login_required(role="admin")
 def registrar_cita():
 
     cursor = conn.cursor()
@@ -190,7 +209,6 @@ def registrar_cita():
         descripcion=request.form["descripcion"]
 
         try:
-
             cursor.execute("""
             SELECT 1 FROM cita
             WHERE fecha=%s AND hora=%s
@@ -199,32 +217,25 @@ def registrar_cita():
             existe=cursor.fetchone()
 
             if existe:
-
                 mensaje="Ya existe una cita en esa fecha y hora"
                 tipo="error"
-
             else:
-
                 cursor.execute("""
                 INSERT INTO cita(id_paciente,fecha,hora,estado,descripcion)
                 VALUES(%s,%s,%s,'pendiente',%s)
                 """,(id_paciente,fecha,hora,descripcion))
 
                 conn.commit()
-
                 mensaje="Cita registrada correctamente"
                 tipo="success"
 
         except Exception as e:
-
             conn.rollback()
             mensaje=f"Error: {e}"
             tipo="error"
 
-
     cursor.execute("SELECT id_paciente,nombre,apellido FROM paciente")
     pacientes=cursor.fetchall()
-
     cursor.close()
 
     return render_template("cita.html",
@@ -234,10 +245,11 @@ def registrar_cita():
 
 
 # ===============================
-# LISTAR CITAS
+# LISTAR CITAS (ADMIN)
 # ===============================
 
 @app.route("/citas")
+@login_required(role="admin")
 def citas():
 
     cursor = conn.cursor()
@@ -269,14 +281,14 @@ def citas():
 
 
 # ===============================
-# COMPLETAR CITA
+# ACCIONES CITAS (ADMIN)
 # ===============================
 
 @app.route("/completar_cita/<int:id>")
+@login_required(role="admin")
 def completar_cita(id):
 
     cursor=conn.cursor()
-
     cursor.execute("""
     UPDATE cita
     SET estado='completada'
@@ -285,19 +297,14 @@ def completar_cita(id):
 
     conn.commit()
     cursor.close()
-
     return redirect("/citas")
 
 
-# ===============================
-# CANCELAR CITA
-# ===============================
-
 @app.route("/cancelar_cita/<int:id>")
+@login_required(role="admin")
 def cancelar_cita(id):
 
     cursor=conn.cursor()
-
     cursor.execute("""
     UPDATE cita
     SET estado='cancelada'
@@ -306,25 +313,24 @@ def cancelar_cita(id):
 
     conn.commit()
     cursor.close()
-
     return redirect("/citas")
 
 
-# ===============================
-# ELIMINAR CITA
-# ===============================
-
 @app.route("/eliminar_cita/<int:id>")
+@login_required(role="admin")
 def eliminar_cita(id):
 
     cursor=conn.cursor()
-
     cursor.execute("DELETE FROM cita WHERE id_cita=%s",(id,))
 
     conn.commit()
     cursor.close()
-
     return redirect("/citas")
+
+
+# ===============================
+# LOGIN PACIENTE
+# ===============================
 
 @app.route("/login_paciente", methods=["GET","POST"])
 def login_paciente():
@@ -347,11 +353,14 @@ def login_paciente():
 
     return render_template("login_paciente.html")
 
-@app.route("/panel_paciente")
-def panel_paciente():
 
-    if "paciente_id" not in session:
-        return redirect("/login_paciente")
+# ===============================
+# PANEL PACIENTE
+# ===============================
+
+@app.route("/panel_paciente")
+@login_required(role="paciente")
+def panel_paciente():
 
     cursor = conn.cursor()
 
@@ -367,11 +376,14 @@ def panel_paciente():
 
     return render_template("panel_paciente.html", citas=citas)
 
-@app.route("/reservar", methods=["GET","POST"])
-def reservar():
 
-    if "paciente_id" not in session:
-        return redirect("/login_paciente")
+# ===============================
+# RESERVAR CITA (PACIENTE)
+# ===============================
+
+@app.route("/reservar", methods=["GET","POST"])
+@login_required(role="paciente")
+def reservar():
 
     mensaje=None
     tipo=None
@@ -407,7 +419,7 @@ def reservar():
 
 
 # ===============================
-# LOGIN
+# LOGIN ADMIN
 # ===============================
 
 @app.route("/login", methods=["GET","POST"])
@@ -419,16 +431,11 @@ def login():
         password = request.form["password"]
 
         if usuario == ADMIN_USER and password == ADMIN_PASS:
-
             session["usuario"] = usuario
             return redirect("/")
-
         else:
-
-            return render_template(
-                "login.html",
-                error="Usuario o contraseña incorrectos"
-            )
+            return render_template("login.html",
+            error="Usuario o contraseña incorrectos")
 
     return render_template("login.html")
 
@@ -439,9 +446,7 @@ def login():
 
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/login")
 
 
