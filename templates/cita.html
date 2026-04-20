@@ -2,39 +2,22 @@
 
 {% block contenido %}
 
-<div class="form-container">
+<h2>Registrar Cita</h2>
 
-<h2>Registrar Cita - Dr. Luis Suarez</h2>
+<form method="POST">
 
-<form method="POST" action="/cita">
-
-<label>Paciente</label>
-
-<select name="id_paciente" required>
-
-{% for paciente in pacientes %}
-
-<option value="{{ paciente[0] }}">
-{{ paciente[1] }} {{ paciente[2] }}
-</option>
-
+<select name="id_paciente">
+{% for p in pacientes %}
+<option value="{{ p[0] }}">{{ p[1] }} {{ p[2] }}</option>
 {% endfor %}
-
 </select>
 
-<label>Fecha</label>
-<input type="date" name="fecha" required>
-
-<label>Hora</label>
-<input type="time" name="hora" required>
-
-<label>Descripción</label>
+<input type="date" name="fecha">
+<input type="time" name="hora">
 <textarea name="descripcion"></textarea>
 
-<button type="submit">Registrar Cita</button>
+<button>Registrar</button>
 
 </form>
-
-</div>
 
 {% endblock %}

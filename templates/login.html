@@ -1,96 +1,20 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-<title>Login | MediClover</title>
-
-<style>
-
-body{
-margin:0;
-font-family:Arial, Helvetica, sans-serif;
-background:url("/static/img/fondo.jpg");
-background-size:cover;
-background-position:center;
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
-.login-box{
-background:rgba(0,0,0,0.85);
-padding:40px;
-border-radius:15px;
-width:320px;
-text-align:center;
-box-shadow:0 0 20px rgba(0,0,0,0.6);
-}
-
-.login-box h2{
-color:#22c55e;
-margin-bottom:25px;
-}
-
-input{
-width:100%;
-padding:10px;
-margin:10px 0;
-border:none;
-border-radius:6px;
-}
-
-button{
-width:100%;
-padding:10px;
-border:none;
-background:#22c55e;
-color:white;
-font-weight:bold;
-border-radius:6px;
-cursor:pointer;
-}
-
-button:hover{
-background:#16a34a;
-}
-
-.error{
-color:red;
-margin-top:10px;
-}
-
-</style>
-
-</head>
+<head><title>Login Admin</title></head>
 
 <body>
 
-<div class="login-box">
-
-<img src="{{ url_for('static', filename='img/Luis Suarez.png.jpeg') }}"
-style="width:120px; border-radius:50%; margin-bottom:15px;">
-
-<h2>MediClover</h2>
+<h2>Login Admin</h2>
 
 <form method="POST">
-
-<label style="color:white;">Usuario</label>
-<input type="text" name="usuario" required>
-
-<label style="color:white;">Contraseña</label>
-<input type="password" name="password" required>
-
-<button type="submit">Ingresar</button>
-
-{% if error %}
-<p class="error">{{ error }}</p>
-{% endif %}
-
+    <input name="usuario" placeholder="Usuario" required><br><br>
+    <input type="password" name="password" placeholder="Contraseña" required><br><br>
+    <button>Ingresar</button>
 </form>
 
-</div>
+{% if error %}
+<p style="color:red;">{{ error }}</p>
+{% endif %}
 
 </body>
-
 </html>

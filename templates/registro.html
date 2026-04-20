@@ -2,31 +2,16 @@
 
 {% block contenido %}
 
-<div class="form-container">
-
 <h2>Registrar Paciente</h2>
 
 <form method="POST">
+<input name="nombre" placeholder="Nombre" required><br>
+<input name="apellido" placeholder="Apellido" required><br>
+<input name="correo" placeholder="Correo" required><br>
+<input name="telefono" placeholder="Teléfono"><br>
+<input type="date" name="fecha_nacimiento"><br>
 
-<label>Nombre</label>
-<input type="text" name="nombre" required>
-
-<label>Apellido</label>
-<input type="text" name="apellido" required>
-
-<label>Correo</label>
-<input type="email" name="correo" required>
-
-<label>Teléfono</label>
-<input type="text" name="telefono">
-
-<label>Fecha de nacimiento</label>
-<input type="date" name="fecha_nacimiento">
-
-<button type="submit">Guardar Paciente</button>
-
+<button>Guardar</button>
 </form>
-
-</div>
 
 {% endblock %}

@@ -1,38 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<title>MediClover</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
+    <title>MediClover</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
 
-<div class="navbar">
-MediClover | Sistema de Gestión Médica
+<div style="background:#1b4332; padding:15px; color:white; display:flex; justify-content:space-between; align-items:center;">
+    <h3>🏥 MediClover</h3>
+
+    <div>
+        <a href="/" style="color:white; margin-right:10px;">Dashboard</a>
+        <a href="/pacientes" style="color:white; margin-right:10px;">Pacientes</a>
+        <a href="/citas" style="color:white; margin-right:10px;">Citas</a>
+        <a href="/logout" style="color:#ffdddd;">Salir</a>
+    </div>
 </div>
 
-<div class="menu-container">
-
-<a href="/" class="card-menu">Dashboard</a>
-
-<a href="/registro" class="card-menu">Registrar Paciente</a>
-
-<a href="/pacientes" class="card-menu">Ver Pacientes</a>
-
-<a href="/cita" class="card-menu">Registrar Cita</a>
-
-<a href="/citas" class="card-menu">Ver Citas</a>
-
-</div>
-
-<div class="contenido">
-
-{% block contenido %}
-{% endblock %}
-
+<div style="padding:20px;">
+    {% block contenido %}{% endblock %}
 </div>
 
 </body>

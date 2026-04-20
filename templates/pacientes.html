@@ -2,56 +2,28 @@
 
 {% block contenido %}
 
-<h2>Lista de Pacientes</h2>
-<h3>Buscar Paciente</h3>
+<h2>Pacientes</h2>
 
-<form method="GET" action="/pacientes">
-
-<input type="text" name="buscar" placeholder="Buscar por nombre o apellido">
-
-<button type="submit">Buscar</button>
-
+<form method="GET">
+    <input name="buscar" placeholder="Buscar paciente">
+    <button>Buscar</button>
 </form>
 
-<br>
-<table>
-
+<table border="1">
 <tr>
-<th>ID</th>
-<th>Nombre</th>
-<th>Apellido</th>
-<th>Correo</th>
-<th>Teléfono</th>
-<th>Fecha Nacimiento</th>
-<th>Acciones</th>
+<th>ID</th><th>Nombre</th><th>Apellido</th><th>Correo</th><th>Acción</th>
 </tr>
 
-{% for paciente in pacientes %}
-
+{% for p in pacientes %}
 <tr>
-
-<td>{{ paciente[0] }}</td>
-<td>{{ paciente[1] }}</td>
-<td>{{ paciente[2] }}</td>
-<td>{{ paciente[3] }}</td>
-<td>{{ paciente[4] }}</td>
-<td>{{ paciente[5] }}</td>
-
+<td>{{ p[0] }}</td>
+<td>{{ p[1] }}</td>
+<td>{{ p[2] }}</td>
+<td>{{ p[3] }}</td>
 <td>
-
-<a href="/editar_paciente/{{ paciente[0] }}">Editar</a>
-
-<a href="/eliminar_paciente/{{ paciente[0] }}"
-onclick="return confirm('¿Seguro que quieres eliminar este paciente?')">
-
-Eliminar
-
-</a>
-
+<a href="/eliminar_paciente/{{ p[0] }}">Eliminar</a>
 </td>
-
 </tr>
-
 {% endfor %}
 
 </table>

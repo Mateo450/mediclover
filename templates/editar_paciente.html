@@ -2,31 +2,16 @@
 
 {% block contenido %}
 
-<div class="form-container">
-
 <h2>Editar Paciente</h2>
 
 <form method="POST">
+<input name="nombre" value="{{ paciente[1] }}"><br>
+<input name="apellido" value="{{ paciente[2] }}"><br>
+<input name="correo" value="{{ paciente[3] }}"><br>
+<input name="telefono" value="{{ paciente[4] }}"><br>
+<input type="date" name="fecha_nacimiento" value="{{ paciente[5] }}"><br>
 
-<label>Nombre</label>
-<input type="text" name="nombre" value="{{ paciente[0] }}" required>
-
-<label>Apellido</label>
-<input type="text" name="apellido" value="{{ paciente[1] }}" required>
-
-<label>Correo</label>
-<input type="email" name="correo" value="{{ paciente[2] }}" required>
-
-<label>Teléfono</label>
-<input type="text" name="telefono" value="{{ paciente[3] }}">
-
-<label>Fecha de nacimiento</label>
-<input type="date" name="fecha_nacimiento" value="{{ paciente[4] }}">
-
-<button type="submit">Actualizar Paciente</button>
-
+<button>Actualizar</button>
 </form>
-
-</div>
 
 {% endblock %}

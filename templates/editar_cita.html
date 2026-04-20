@@ -2,46 +2,23 @@
 
 {% block contenido %}
 
-<div class="form-container">
-
 <h2>Editar Cita</h2>
 
 <form method="POST">
 
-<label>Fecha</label>
-<input type="date" name="fecha" value="{{ cita[2] }}" required>
-
-<label>Hora</label>
-<input type="time" name="hora" value="{{ cita[3] }}" required>
-
-<label>Estado</label>
+<input type="date" name="fecha" value="{{ cita[2] }}">
+<input type="time" name="hora" value="{{ cita[3] }}">
 
 <select name="estado">
-
-<option value="pendiente"
-{% if cita[5] == "pendiente" %}selected{% endif %}>
-Pendiente
-</option>
-
-<option value="completada"
-{% if cita[5] == "completada" %}selected{% endif %}>
-Completada
-</option>
-
-<option value="cancelada"
-{% if cita[5] == "cancelada" %}selected{% endif %}>
-Cancelada
-</option>
-
+<option>pendiente</option>
+<option>completada</option>
+<option>cancelada</option>
 </select>
 
-<label>Descripción</label>
 <textarea name="descripcion">{{ cita[4] }}</textarea>
 
-<button type="submit">Actualizar Cita</button>
+<button>Actualizar</button>
 
 </form>
-
-</div>
 
 {% endblock %}
