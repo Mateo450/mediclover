@@ -326,6 +326,85 @@ def eliminar_cita(id):
 
     return redirect("/citas")
 
+@app.route("/login_paciente", methods=["GET","POST"])
+def login_paciente():
+
+    if request.method == "POST":
+
+        correo = request.form["correo"]
+
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_paciente,nombre FROM paciente WHERE correo=%s",(correo,))
+        paciente = cursor.fetchone()
+        cursor.close()
+
+        if paciente:
+            session["paciente_id"] = paciente[0]
+            session["paciente_nombre"] = paciente[1]
+            return redirect("/panel_paciente")
+        else:
+            return render_template("login_paciente.html", error="Correo no registrado")
+
+    return render_template("login_paciente.html")
+
+@app.route("/panel_paciente")
+def panel_paciente():
+
+    if "paciente_id" not in session:
+        return redirect("/login_paciente")
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT fecha,hora,estado,descripcion
+    FROM cita
+    WHERE id_paciente=%s
+    ORDER BY fecha,hora
+    """,(session["paciente_id"],))
+
+    citas = cursor.fetchall()
+    cursor.close()
+
+    return render_template("panel_paciente.html", citas=citas)
+
+@app.route("/reservar", methods=["GET","POST"])
+def reservar():
+
+    if "paciente_id" not in session:
+        return redirect("/login_paciente")
+
+    mensaje=None
+    tipo=None
+
+    if request.method=="POST":
+
+        fecha=request.form["fecha"]
+        hora=request.form["hora"]
+        descripcion=request.form["descripcion"]
+
+        cursor=conn.cursor()
+
+        cursor.execute("""
+        SELECT 1 FROM cita WHERE fecha=%s AND hora=%s
+        """,(fecha,hora))
+
+        if cursor.fetchone():
+            mensaje="Horario ocupado"
+            tipo="error"
+        else:
+            cursor.execute("""
+            INSERT INTO cita(id_paciente,fecha,hora,estado,descripcion)
+            VALUES(%s,%s,%s,'pendiente',%s)
+            """,(session["paciente_id"],fecha,hora,descripcion))
+
+            conn.commit()
+            mensaje="Cita reservada"
+            tipo="success"
+
+        cursor.close()
+
+    return render_template("reservar.html",mensaje=mensaje,tipo=tipo)
+
 
 # ===============================
 # LOGIN

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reservar Cita</title>
+</head>
+<body>
+
+<h2>Reservar Cita</h2>
+
+<form method="POST">
+    <input type="date" name="fecha" required><br><br>
+    <input type="time" name="hora" required><br><br>
+    <textarea name="descripcion" placeholder="Descripción"></textarea><br><br>
+    <button type="submit">Reservar</button>
+</form>
+
+{% if mensaje %}
+<p>{{ mensaje }}</p>
+{% endif %}
+
+</body>
+</html>

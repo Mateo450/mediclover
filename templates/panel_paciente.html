@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Panel Paciente</title>
+</head>
+<body>
+
+<h2>Mis Citas</h2>
+
+<table border="1">
+<tr>
+    <th>Fecha</th>
+    <th>Hora</th>
+    <th>Estado</th>
+    <th>Descripción</th>
+</tr>
+
+{% for c in citas %}
+<tr>
+    <td>{{ c[0] }}</td>
+    <td>{{ c[1] }}</td>
+    <td>{{ c[2] }}</td>
+    <td>{{ c[3] }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<a href="/reservar">Reservar nueva cita</a>
+
+</body>
+</html>
