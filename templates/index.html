@@ -1,46 +1,113 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MediClover - Dashboard</title>
 
-{% block contenido %}
+    <style>
+        body{
+            margin:0;
+            font-family:Arial;
+            background:#f2f6f3;
+        }
 
-<h3>Sistema de Gestión de Citas Médicas</h3>
+        .topbar{
+            background:#1b4332;
+            color:white;
+            padding:18px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
 
-<div class="stats">
+        .container{
+            padding:20px;
+        }
 
-<div class="stat-card">
-👨‍⚕️ Pacientes
-<span>{{ total_pacientes }}</span>
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:15px;
+        }
+
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:12px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+            text-align:center;
+        }
+
+        .number{
+            font-size:28px;
+            font-weight:bold;
+            color:#1b4332;
+        }
+
+        .label{
+            color:#666;
+            margin-top:5px;
+        }
+
+        .section{
+            margin-top:20px;
+            background:white;
+            padding:15px;
+            border-radius:12px;
+        }
+
+        a{
+            text-decoration:none;
+            color:white;
+            background:#52b788;
+            padding:8px 12px;
+            border-radius:8px;
+        }
+
+        a:hover{
+            background:#40916c;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <h2>🏥 MediClover Admin</h2>
+    <a href="/logout">Cerrar sesión</a>
 </div>
 
-<div class="stat-card">
-📅 Citas Hoy
-<span>{{ citas_hoy }}</span>
+<div class="container">
+
+    <div class="grid">
+
+        <div class="card">
+            <div class="number">{{ total_pacientes }}</div>
+            <div class="label">Pacientes registrados</div>
+        </div>
+
+        <div class="card">
+            <div class="number">{{ citas_hoy }}</div>
+            <div class="label">Citas hoy</div>
+        </div>
+
+        <div class="card">
+            <div class="number">{{ citas_pendientes }}</div>
+            <div class="label">Citas pendientes</div>
+        </div>
+
+    </div>
+
+    <div class="section">
+        <h3>Acciones rápidas</h3>
+
+        <p>
+            <a href="/registro">➕ Registrar paciente</a>
+            <a href="/pacientes">👥 Ver pacientes</a>
+            <a href="/citas">📅 Ver citas</a>
+        </p>
+    </div>
+
 </div>
 
-<div class="stat-card">
-⏳ Pendientes
-<span>{{ citas_pendientes }}</span>
-</div>
-
-</div>
-
-<h3>Agenda de Hoy</h3>
-
-<table>
-
-<tr>
-<th>Paciente</th>
-<th>Hora</th>
-</tr>
-
-{% for cita in citas_hoy_lista %}
-
-<tr>
-<td>{{ cita[0] }} {{ cita[1] }}</td>
-<td>{{ cita[2] }}</td>
-</tr>
-
-{% endfor %}
-
-</table>
-
-{% endblock %}
+</body>
+</html>
