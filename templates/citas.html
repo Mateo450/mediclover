@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<h2>Lista de Citas</h2>
+<h3>Citas de Hoy</h3>
+<h3>Buscar citas por fecha</h3>
+
+<form method="GET" action="/citas">
+
+<input type="date" name="fecha">
+
+<button type="submit">Buscar</button>
+
+</form>
+
+<br>
+<table>
+
+<tr>
+<th>Paciente</th>
+<th>Hora</th>
+<th>Estado</th>
+</tr>
+
+{% for cita in citas_hoy %}
+
+<tr>
+
+<td>{{ cita[0] }} {{ cita[1] }}</td>
+
+<td>{{ cita[2] }}</td>
+
+<td>
+
+{% if cita[3] == "pendiente" %}
+<span class="estado pendiente">🟡 Pendiente</span>
+
+{% elif cita[3] == "completada" %}
+<span class="estado completada">🟢 Completada</span>
+
+{% elif cita[3] == "cancelada" %}
+<span class="estado cancelada">🔴 Cancelada</span>
+
+{% endif %}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<br>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Paciente</th>
+<th>Fecha</th>
+<th>Hora</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Acciones</th>
+</tr>
+
+{% for cita in citas %}
+
+<tr>
+
+<td>{{ cita[0] }}</td>
+
+<td>{{ cita[1] }} {{ cita[2] }}</td>
+
+<td>{{ cita[3] }}</td>
+
+<td>{{ cita[4] }}</td>
+
+<td>
+
+{% if cita[5] == "pendiente" %}
+<span class="estado pendiente">🟡 Pendiente</span>
+
+{% elif cita[5] == "completada" %}
+<span class="estado completada">🟢 Completada</span>
+
+{% elif cita[5] == "cancelada" %}
+<span class="estado cancelada">🔴 Cancelada</span>
+
+{% endif %}
+
+</td>
+
+<td>{{ cita[6] }}</td>
+<td>
+
+<a href="/editar_cita/{{ cita[0] }}">Editar</a>
+
+<a href="/eliminar_cita/{{ cita[0] }}"
+onclick="return confirm('¿Eliminar esta cita?')">
+Eliminar
+</a>
+
+{% if cita[5] == "pendiente" %}
+
+<a href="/completar_cita/{{ cita[0] }}" style="color:lime;">
+Completar
+</a>
+
+<a href="/cancelar_cita/{{ cita[0] }}" style="color:red;">
+Cancelar
+</a>
+
+{% endif %}
+
+</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

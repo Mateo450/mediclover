@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>MediClover</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+
+<body>
+
+<div class="navbar">
+MediClover | Sistema de Gestión Médica
+</div>
+
+<div class="menu-container">
+
+<a href="/" class="card-menu">Dashboard</a>
+
+<a href="/registro" class="card-menu">Registrar Paciente</a>
+
+<a href="/pacientes" class="card-menu">Ver Pacientes</a>
+
+<a href="/cita" class="card-menu">Registrar Cita</a>
+
+<a href="/citas" class="card-menu">Ver Citas</a>
+
+</div>
+
+<div class="contenido">
+
+{% block contenido %}
+{% endblock %}
+
+</div>
+
+</body>
+</html>

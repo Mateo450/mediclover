@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<h3>Sistema de Gestión de Citas Médicas</h3>
+
+<div class="stats">
+
+<div class="stat-card">
+👨‍⚕️ Pacientes
+<span>{{ total_pacientes }}</span>
+</div>
+
+<div class="stat-card">
+📅 Citas Hoy
+<span>{{ citas_hoy }}</span>
+</div>
+
+<div class="stat-card">
+⏳ Pendientes
+<span>{{ citas_pendientes }}</span>
+</div>
+
+</div>
+
+<h3>Agenda de Hoy</h3>
+
+<table>
+
+<tr>
+<th>Paciente</th>
+<th>Hora</th>
+</tr>
+
+{% for cita in citas_hoy_lista %}
+
+<tr>
+<td>{{ cita[0] }} {{ cita[1] }}</td>
+<td>{{ cita[2] }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}
