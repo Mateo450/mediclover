@@ -1,21 +1,28 @@
+
+# ===============================
+# 1. IMPORTS
+# ===============================
+
 from flask import Flask, render_template, request, redirect, session
 from functools import wraps
 import psycopg2
 from datetime import date
 import os
 
-app = Flask(__name__)
-app.secret_key = "Mediclover_19"
 
 # ===============================
-# CONFIGURACIÓN LOGIN ADMIN
+# 2. CONFIGURACIÓN
 # ===============================
+
+app = Flask(__name__)
+app.secret_key = "Mediclover_19"
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
+
 # ===============================
-# CONEXIÓN POSTGRESQL
+# 3. CONEXIÓN BD
 # ===============================
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -30,8 +37,9 @@ try:
 except Exception as e:
     print("Error conectando:", e)
 
+
 # ===============================
-# 🛡️ SEGURIDAD DE RUTAS (NUEVO)
+# 4. DECORADORES (SEGURIDAD)
 # ===============================
 
 def login_required(role=None):
@@ -39,18 +47,15 @@ def login_required(role=None):
         @wraps(func)
         def wrapper(*args, **kwargs):
 
-            # ❌ nadie logueado
             if "usuario" not in session and "paciente_id" not in session:
                 return redirect("/login")
 
-            # 👨‍⚕️ ADMIN
             if role == "admin":
                 if session.get("usuario") != ADMIN_USER:
                     return redirect("/login")
 
-            # 👤 PACIENTE
             if role == "paciente":
-                if "paciente_id" not in session:
+                if session.get("role") != "paciente":
                     return redirect("/login_paciente")
 
             return func(*args, **kwargs)
@@ -60,47 +65,35 @@ def login_required(role=None):
 
 
 # ===============================
-# DASHBOARD ADMIN
+# 5. RUTAS
 # ===============================
 
+# ---------------- ADMIN DASHBOARD ----------------
 @app.route("/")
 @login_required(role="admin")
 def index():
-
-    if conn is None:
-        return "Error de conexión con la base de datos"
 
     cursor = conn.cursor()
 
     cursor.execute("SELECT COUNT(*) FROM paciente")
     total_pacientes = cursor.fetchone()[0]
 
-    cursor.execute("""
-    SELECT COUNT(*) FROM cita
-    WHERE fecha = CURRENT_DATE
-    """)
+    cursor.execute("SELECT COUNT(*) FROM cita WHERE fecha = CURRENT_DATE")
     citas_hoy = cursor.fetchone()[0]
 
-    cursor.execute("""
-    SELECT COUNT(*) FROM cita
-    WHERE estado='pendiente'
-    """)
+    cursor.execute("SELECT COUNT(*) FROM cita WHERE estado='pendiente'")
     citas_pendientes = cursor.fetchone()[0]
 
     cursor.close()
 
-    return render_template(
-        "index.html",
+    return render_template("index.html",
         total_pacientes=total_pacientes,
         citas_hoy=citas_hoy,
         citas_pendientes=citas_pendientes
     )
 
 
-# ===============================
-# REGISTRAR PACIENTE (ADMIN)
-# ===============================
-
+# ---------------- REGISTRO PACIENTE ----------------
 @app.route("/registro", methods=["GET","POST"])
 @login_required(role="admin")
 def registro():
@@ -137,10 +130,7 @@ def registro():
     return render_template("registro.html")
 
 
-# ===============================
-# LISTAR PACIENTES (ADMIN)
-# ===============================
-
+# ---------------- LISTAR PACIENTES ----------------
 @app.route("/pacientes")
 @login_required(role="admin")
 def pacientes():
@@ -166,10 +156,7 @@ def pacientes():
     return render_template("pacientes.html",pacientes=pacientes)
 
 
-# ===============================
-# ELIMINAR PACIENTE (ADMIN)
-# ===============================
-
+# ---------------- ELIMINAR PACIENTE ----------------
 @app.route("/eliminar_paciente/<int:id>")
 @login_required(role="admin")
 def eliminar_paciente(id):
@@ -188,66 +175,7 @@ def eliminar_paciente(id):
     return redirect("/pacientes")
 
 
-# ===============================
-# REGISTRAR CITA (ADMIN)
-# ===============================
-
-@app.route("/cita", methods=["GET","POST"])
-@login_required(role="admin")
-def registrar_cita():
-
-    cursor = conn.cursor()
-
-    mensaje=None
-    tipo=None
-
-    if request.method=="POST":
-
-        id_paciente=request.form["id_paciente"]
-        fecha=request.form["fecha"]
-        hora=request.form["hora"]
-        descripcion=request.form["descripcion"]
-
-        try:
-            cursor.execute("""
-            SELECT 1 FROM cita
-            WHERE fecha=%s AND hora=%s
-            """,(fecha,hora))
-
-            existe=cursor.fetchone()
-
-            if existe:
-                mensaje="Ya existe una cita en esa fecha y hora"
-                tipo="error"
-            else:
-                cursor.execute("""
-                INSERT INTO cita(id_paciente,fecha,hora,estado,descripcion)
-                VALUES(%s,%s,%s,'pendiente',%s)
-                """,(id_paciente,fecha,hora,descripcion))
-
-                conn.commit()
-                mensaje="Cita registrada correctamente"
-                tipo="success"
-
-        except Exception as e:
-            conn.rollback()
-            mensaje=f"Error: {e}"
-            tipo="error"
-
-    cursor.execute("SELECT id_paciente,nombre,apellido FROM paciente")
-    pacientes=cursor.fetchall()
-    cursor.close()
-
-    return render_template("cita.html",
-    pacientes=pacientes,
-    mensaje=mensaje,
-    tipo=tipo)
-
-
-# ===============================
-# LISTAR CITAS (ADMIN)
-# ===============================
-
+# ---------------- CITAS ADMIN ----------------
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
@@ -262,7 +190,6 @@ def citas():
     """)
 
     citas = cursor.fetchall()
-
     hoy = date.today()
 
     cursor.execute("""
@@ -280,21 +207,13 @@ def citas():
     return render_template("citas.html",citas=citas,citas_hoy=citas_hoy)
 
 
-# ===============================
-# ACCIONES CITAS (ADMIN)
-# ===============================
-
+# ---------------- ACCIONES CITAS ----------------
 @app.route("/completar_cita/<int:id>")
 @login_required(role="admin")
 def completar_cita(id):
 
     cursor=conn.cursor()
-    cursor.execute("""
-    UPDATE cita
-    SET estado='completada'
-    WHERE id_cita=%s
-    """,(id,))
-
+    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
     conn.commit()
     cursor.close()
     return redirect("/citas")
@@ -305,12 +224,7 @@ def completar_cita(id):
 def cancelar_cita(id):
 
     cursor=conn.cursor()
-    cursor.execute("""
-    UPDATE cita
-    SET estado='cancelada'
-    WHERE id_cita=%s
-    """,(id,))
-
+    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
     conn.commit()
     cursor.close()
     return redirect("/citas")
@@ -322,42 +236,56 @@ def eliminar_cita(id):
 
     cursor=conn.cursor()
     cursor.execute("DELETE FROM cita WHERE id_cita=%s",(id,))
-
     conn.commit()
     cursor.close()
     return redirect("/citas")
 
 
-# ===============================
-# LOGIN PACIENTE
-# ===============================
-
+# ---------------- LOGIN PACIENTE ----------------
 @app.route("/login_paciente", methods=["GET","POST"])
 def login_paciente():
 
     if request.method == "POST":
 
-        correo = request.form["correo"]
+        correo = request.form.get("correo")
 
-        cursor = conn.cursor()
-        cursor.execute("SELECT id_paciente,nombre FROM paciente WHERE correo=%s",(correo,))
-        paciente = cursor.fetchone()
-        cursor.close()
+        if not correo:
+            return render_template("login_paciente.html",
+            error="Debes ingresar un correo")
 
-        if paciente:
+        try:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+            SELECT id_paciente,nombre,apellido
+            FROM paciente
+            WHERE correo=%s
+            """,(correo,))
+
+            paciente = cursor.fetchone()
+            cursor.close()
+
+            if not paciente:
+                return render_template("login_paciente.html",
+                error="Correo no registrado")
+
+            session.clear()
+
             session["paciente_id"] = paciente[0]
             session["paciente_nombre"] = paciente[1]
+            session["paciente_apellido"] = paciente[2]
+            session["role"] = "paciente"
+
             return redirect("/panel_paciente")
-        else:
-            return render_template("login_paciente.html", error="Correo no registrado")
+
+        except:
+            return render_template("login_paciente.html",
+            error="Error en el sistema")
 
     return render_template("login_paciente.html")
 
 
-# ===============================
-# PANEL PACIENTE
-# ===============================
-
+# ---------------- PANEL PACIENTE ----------------
 @app.route("/panel_paciente")
 @login_required(role="paciente")
 def panel_paciente():
@@ -377,10 +305,7 @@ def panel_paciente():
     return render_template("panel_paciente.html", citas=citas)
 
 
-# ===============================
-# RESERVAR CITA (PACIENTE)
-# ===============================
-
+# ---------------- RESERVAR CITA ----------------
 @app.route("/reservar", methods=["GET","POST"])
 @login_required(role="paciente")
 def reservar():
@@ -418,10 +343,7 @@ def reservar():
     return render_template("reservar.html",mensaje=mensaje,tipo=tipo)
 
 
-# ===============================
-# LOGIN ADMIN
-# ===============================
-
+# ---------------- LOGIN ADMIN ----------------
 @app.route("/login", methods=["GET","POST"])
 def login():
 
@@ -440,20 +362,14 @@ def login():
     return render_template("login.html")
 
 
-# ===============================
-# LOGOUT
-# ===============================
-
+# ---------------- LOGOUT ----------------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
 
-# ===============================
-# CREAR TABLAS
-# ===============================
-
+# ---------------- CREAR TABLAS ----------------
 def crear_tablas():
 
     cursor=conn.cursor()
@@ -483,11 +399,9 @@ def crear_tablas():
     conn.commit()
     cursor.close()
 
-    print("Tablas listas")
-
 
 # ===============================
-# EJECUCIÓN
+# 6. EJECUCIÓN
 # ===============================
 
 if __name__ == "__main__":
