@@ -1,65 +1,135 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Panel Paciente</title>
+    <title>Mediclover - Panel Paciente</title>
+
     <style>
         body{
-            font-family: Arial;
-            background:#f4f6f9;
             margin:0;
+            font-family: Arial, sans-serif;
+            background:#f2f6f3;
         }
 
+        /* TOP BAR */
         .topbar{
-            background:#2c3e50;
+            background:#1b4332;
             color:white;
-            padding:15px;
+            padding:18px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
         }
 
+        .topbar h2{
+            margin:0;
+            font-size:18px;
+        }
+
+        .btn{
+            background:#52b788;
+            color:white;
+            padding:8px 12px;
+            border-radius:8px;
+            text-decoration:none;
+            font-size:14px;
+        }
+
+        .btn:hover{
+            background:#40916c;
+        }
+
+        /* CONTAINER */
         .container{
             padding:20px;
         }
 
+        .welcome{
+            background:white;
+            padding:15px;
+            border-radius:12px;
+            margin-bottom:15px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        /* CARD */
         .card{
             background:white;
             padding:15px;
-            margin:10px 0;
-            border-radius:10px;
-            box-shadow:0 2px 5px rgba(0,0,0,0.1);
+            border-radius:12px;
+            margin-bottom:12px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.08);
+            border-left:6px solid #52b788;
         }
 
+        .row{
+            margin:5px 0;
+        }
+
+        /* ESTADOS */
         .estado{
             padding:5px 10px;
             border-radius:8px;
             font-size:12px;
             color:white;
+            display:inline-block;
+            margin-top:8px;
         }
 
-        .pendiente{background:orange;}
-        .completada{background:green;}
-        .cancelada{background:red;}
+        .pendiente{ background:#f4a261; }
+        .completada{ background:#2a9d8f; }
+        .cancelada{ background:#e63946; }
+
+        /* BOTÓN ACCIÓN */
+        .action{
+            margin-top:10px;
+            display:inline-block;
+            background:#1b4332;
+            color:white;
+            padding:6px 10px;
+            border-radius:8px;
+            text-decoration:none;
+            font-size:13px;
+        }
+
+        .action:hover{
+            background:#2d6a4f;
+        }
+
     </style>
 </head>
 
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
-    <h2>👤 Bienvenido {{ session["paciente_nombre"] }}</h2>
+    <h2>🏥 MediClover</h2>
+    <a href="/logout" class="btn">Cerrar sesión</a>
 </div>
 
 <div class="container">
+
+    <!-- BIENVENIDA -->
+    <div class="welcome">
+        <h3>👤 Bienvenido {{ session["paciente_nombre"] }} {{ session["paciente_apellido"] }}</h3>
+        <p>Gestiona tus citas médicas de forma rápida y sencilla.</p>
+
+        <a href="/reservar" class="action">➕ Reservar cita</a>
+    </div>
 
     <h3>📅 Mis Citas</h3>
 
     {% for c in citas %}
 
     <div class="card">
-        <p><b>Fecha:</b> {{ c[0] }}</p>
-        <p><b>Hora:</b> {{ c[1] }}</p>
-        <p><b>Descripción:</b> {{ c[3] }}</p>
+
+        <div class="row"><b>📆 Fecha:</b> {{ c[0] }}</div>
+        <div class="row"><b>⏰ Hora:</b> {{ c[1] }}</div>
+        <div class="row"><b>📝 Descripción:</b> {{ c[3] }}</div>
 
         <span class="estado {{ c[2] }}">
             {{ c[2] }}
         </span>
+
     </div>
 
     {% endfor %}
