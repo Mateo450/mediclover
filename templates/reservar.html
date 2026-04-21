@@ -1,21 +1,56 @@
 <!DOCTYPE html>
 <html>
-<head><title>Reservar</title></head>
+<head>
+    <title>Reservar Cita - MediClover</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
 
 <body>
 
-<h2>Reservar cita</h2>
+<div class="navbar">
+    <div>🏥 MediClover</div>
+    <div>
+        <a href="/panel_paciente">Inicio</a>
+        <a href="/reservar">Reservar</a>
+        <a href="/logout">Salir</a>
+    </div>
+</div>
 
-<form method="POST">
-<input type="date" name="fecha">
-<input type="time" name="hora">
-<textarea name="descripcion"></textarea>
-<button>Reservar</button>
-</form>
+<div class="container">
 
-{% if mensaje %}
-<p>{{ mensaje }}</p>
-{% endif %}
+    <div class="card">
+        <h2>📅 Reservar cita médica</h2>
+        <p>Selecciona fecha y hora disponible</p>
+    </div>
+
+    {% if mensaje %}
+        <div class="{% if tipo == 'success' %}success{% else %}error{% endif %}">
+            {{ mensaje }}
+        </div>
+    {% endif %}
+
+    <div class="card">
+
+        <form method="POST">
+
+            <label>📆 Fecha</label>
+            <input type="date" name="fecha" required>
+
+            <label>⏰ Hora</label>
+            <input type="time" name="hora" required>
+
+            <label>📝 Descripción</label>
+            <textarea name="descripcion" placeholder="Motivo de la cita..."></textarea>
+
+            <br><br>
+
+            <button type="submit">➕ Reservar cita</button>
+
+        </form>
+
+    </div>
+
+</div>
 
 </body>
 </html>
