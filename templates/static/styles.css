@@ -1,240 +1,131 @@
-/* =========================
-   BASE GENERAL
-========================= */
-
-body{
-    font-family: 'Segoe UI', Arial, sans-serif;
+/* =======================
+RESET
+======================= */
+*{
     margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* =======================
+BODY
+======================= */
+body{
     background:#f4f7f5;
     color:#1b4332;
 }
 
-/* =========================
-   NAVBAR MODERNO
-========================= */
-
+/* =======================
+NAVBAR
+======================= */
 .navbar{
-    background: linear-gradient(90deg, #1b4332, #2d6a4f);
+    background:#1b4332;
     color:white;
-    padding:16px 20px;
+    padding:15px 20px;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    box-shadow:0 4px 10px rgba(0,0,0,0.15);
 }
 
 .navbar a{
     color:white;
-    margin:0 10px;
+    margin-left:10px;
     text-decoration:none;
-    font-weight:500;
+    font-weight:bold;
 }
 
-.navbar a:hover{
-    color:#b7e4c7;
-}
-
-/* =========================
-   CONTENEDORES
-========================= */
-
+/* =======================
+CONTAINER
+======================= */
 .container{
     padding:20px;
 }
 
-/* =========================
-   CARDS (DASHBOARD STYLE)
-========================= */
-
+/* =======================
+CARDS
+======================= */
 .card{
     background:white;
-    padding:18px;
-    border-radius:14px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.08);
-    margin:12px 0;
-    transition:0.3s;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom:15px;
 }
 
-.card:hover{
-    transform:translateY(-3px);
-    box-shadow:0 10px 25px rgba(0,0,0,0.12);
-}
-
-/* =========================
-   BOTONES PRO
-========================= */
-
-button, .btn, .boton{
-    background: linear-gradient(90deg, #2d6a4f, #52b788);
+/* =======================
+BOTONES
+======================= */
+.btn{
+    background:#52b788;
     color:white;
-    padding:10px 16px;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
-    font-weight:bold;
-    transition:0.3s;
+    padding:10px 15px;
+    border-radius:8px;
     text-decoration:none;
     display:inline-block;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
 }
 
-button:hover, .btn:hover, .boton:hover{
-    transform:scale(1.05);
-    box-shadow:0 5px 12px rgba(82,183,136,0.4);
+.btn:hover{
+    background:#40916c;
 }
 
-/* =========================
-   FORMULARIOS
-========================= */
-
+/* =======================
+FORMULARIOS
+======================= */
 input, select, textarea{
     width:100%;
     padding:10px;
     margin:8px 0;
-    border-radius:10px;
-    border:1px solid #d0d0d0;
-    outline:none;
-    transition:0.2s;
+    border-radius:8px;
+    border:1px solid #ccc;
 }
 
-input:focus, select:focus, textarea:focus{
-    border:1px solid #52b788;
-    box-shadow:0 0 5px rgba(82,183,136,0.4);
-}
-
-/* =========================
-   TABLAS PRO
-========================= */
-
+/* =======================
+TABLAS
+======================= */
 table{
     width:100%;
     border-collapse:collapse;
-    background:white;
-    border-radius:12px;
-    overflow:hidden;
-    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    margin-top:10px;
 }
 
 th{
     background:#1b4332;
     color:white;
-    padding:12px;
-    text-transform:uppercase;
-    font-size:13px;
+    padding:10px;
 }
 
 td{
-    padding:12px;
-    border-bottom:1px solid #eee;
+    padding:10px;
+    border-bottom:1px solid #ddd;
     text-align:center;
 }
 
-tr:hover{
-    background:#f1f8f5;
-}
-
-/* =========================
-   MENSAJES
-========================= */
-
-.success{
-    background:#dcfce7;
-    color:#166534;
-    padding:12px;
-    border-radius:10px;
-    margin-bottom:10px;
-}
-
-.error{
-    background:#fee2e2;
-    color:#991b1b;
-    padding:12px;
-    border-radius:10px;
-    margin-bottom:10px;
-}
-
-/* =========================
-   ESTADOS
-========================= */
-
-.pendiente{
-    color:#d97706;
-    font-weight:bold;
-}
-
-.completada{
-    color:#16a34a;
-    font-weight:bold;
-}
-
-.cancelada{
-    color:#dc2626;
-    font-weight:bold;
-}
-
-/* =========================
-   DASHBOARD STATS
-========================= */
-
-.stats{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:15px;
-    margin-top:20px;
-}
-
-.stat-card{
-    background:linear-gradient(135deg, #1b4332, #2d6a4f);
+/* =======================
+ESTADOS
+======================= */
+.estado{
+    padding:5px 10px;
+    border-radius:8px;
     color:white;
-    padding:22px;
-    border-radius:14px;
-    text-align:center;
-    box-shadow:0 6px 15px rgba(0,0,0,0.2);
-    transition:0.3s;
 }
 
-.stat-card:hover{
-    transform:scale(1.03);
-}
+.pendiente{ background:#f4a261; }
+.completada{ background:#2a9d8f; }
+.cancelada{ background:#e63946; }
 
-.stat-card span{
-    font-size:30px;
-    display:block;
-    margin-top:8px;
-    font-weight:bold;
-}
+/* =======================
+RESPONSIVE
+======================= */
+@media(max-width:768px){
+    .container{
+        padding:10px;
+    }
 
-/* =========================
-   MENU CARDS
-========================= */
-
-.menu-container{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:20px;
-}
-
-.card-menu{
-    background:white;
-    padding:25px;
-    border-radius:14px;
-    text-align:center;
-    text-decoration:none;
-    color:#1b4332;
-    font-weight:bold;
-    box-shadow:0 6px 15px rgba(0,0,0,0.08);
-    transition:0.3s;
-}
-
-.card-menu:hover{
-    transform:translateY(-5px);
-    background:#e9f5ef;
-    box-shadow:0 10px 25px rgba(0,0,0,0.15);
-}
-
-/* =========================
-   TITULOS
-========================= */
-
-h1,h2,h3{
-    color:#1b4332;
+    table{
+        font-size:12px;
+    }
 }
