@@ -1,13 +1,61 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MediClover - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
 
-{% block contenido %}
+<body>
 
-<h2>📊 Dashboard</h2>
-
-<div>
-    <p>👥 Pacientes: {{ total_pacientes }}</p>
-    <p>📅 Citas hoy: {{ citas_hoy }}</p>
-    <p>⏳ Pendientes: {{ citas_pendientes }}</p>
+<!-- NAVBAR -->
+<div class="navbar">
+    <h2>🏥 MediClover Admin</h2>
+    <div>
+        <a href="/">Dashboard</a>
+        <a href="/pacientes">Pacientes</a>
+        <a href="/citas">Citas</a>
+        <a href="/logout">Salir</a>
+    </div>
 </div>
 
-{% endblock %}
+<div class="container">
+
+    <h2 style="margin-bottom:20px;">📊 Panel de Control</h2>
+
+    <!-- TARJETAS -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px;">
+
+        <div class="card">
+            <h3>👥 Pacientes</h3>
+            <p style="font-size:30px;">{{ total_pacientes }}</p>
+        </div>
+
+        <div class="card">
+            <h3>📅 Citas Hoy</h3>
+            <p style="font-size:30px;">{{ citas_hoy }}</p>
+        </div>
+
+        <div class="card">
+            <h3>⏳ Pendientes</h3>
+            <p style="font-size:30px;">{{ citas_pendientes }}</p>
+        </div>
+
+    </div>
+
+    <!-- ACCIONES -->
+    <div style="margin-top:25px;" class="card">
+
+        <h3>⚡ Acciones rápidas</h3>
+
+        <br>
+
+        <a href="/registro" class="btn">➕ Registrar paciente</a>
+        <a href="/citas" class="btn">📅 Ver citas</a>
+        <a href="/pacientes" class="btn">👥 Ver pacientes</a>
+
+    </div>
+
+</div>
+
+</body>
+</html>
