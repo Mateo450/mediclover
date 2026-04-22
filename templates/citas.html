@@ -21,7 +21,6 @@
 
         <h1>📅 Gestión de Citas</h1>
 
-        <!-- FILTRO -->
         <form method="GET" style="margin-bottom:20px;">
             <input type="date" name="fecha" min="2026-01-01">
             <button type="submit" class="btn">🔍 Filtrar</button>
@@ -44,7 +43,13 @@
                     <td>{{ c[1] }} {{ c[2] }}</td>
                     <td>{{ c[3] }}</td>
                     <td>{{ c[4] }}</td>
-                    <td>{{ c[5] }}</td>
+
+                    <td>
+                        <span class="estado {{ c[5] }}">
+                            {{ c[5] }}
+                        </span>
+                    </td>
+
                     <td>{{ c[6] }}</td>
                 </tr>
                 {% endfor %}

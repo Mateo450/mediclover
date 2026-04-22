@@ -383,3 +383,28 @@ h3{
     }
 
 }
+.estado {
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+/* PENDIENTE */
+.estado.pendiente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* COMPLETADA */
+.estado.completada {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* CANCELADA */
+.estado.cancelada {
+    background: #f8d7da;
+    color: #721c24;
+}
