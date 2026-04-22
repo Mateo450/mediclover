@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MediClover</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <h2>🏥 MediClover</h2>
+    <div>
+        <a href="#">Inicio</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#servicios">Servicios</a>
+        <a href="#especialidades">Especialidades</a>
+        <a href="#doctores">Doctores</a>
+        <a href="/login_paciente" class="btn">Agendar Cita</a>
+    </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+    <h1>Tu salud, nuestra prioridad</h1>
+    <p>Agenda tu cita médica de forma rápida y segura</p>
+    <a href="/login_paciente" class="btn">Agendar ahora</a>
+</div>
+
+<!-- NOSOTROS -->
+<section id="nosotros" class="section">
+    <h2>Nosotros</h2>
+    <p>
+        MediClover es un sistema moderno que mejora la gestión médica,
+        brindando atención organizada, rápida y eficiente.
+    </p>
+</section>
+
+<!-- SERVICIOS -->
+<section id="servicios" class="section">
+    <h2>Servicios</h2>
+    <div class="grid">
+        <div class="card">Consulta médica</div>
+        <div class="card">Emergencias</div>
+        <div class="card">Laboratorio</div>
+        <div class="card">Farmacia</div>
+    </div>
+</section>
+
+<!-- ESPECIALIDADES -->
+<section id="especialidades" class="section">
+    <h2>Especialidades</h2>
+    <div class="grid">
+        <div class="card">Cardiología</div>
+        <div class="card">Pediatría</div>
+        <div class="card">Dermatología</div>
+        <div class="card">Odontología</div>
+    </div>
+</section>
+
+<!-- DOCTORES -->
+<section id="doctores" class="section">
+    <h2>Nuestros Especialistas</h2>
+
+    <div class="grid">
+
+        <div class="card">
+            <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
+            <h3>Dr. Luis Suárez</h3>
+            <p>Médico General</p>
+        </div>
+
+        <div class="card">
+            <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
+            <h3>Dra. María López</h3>
+            <p>Pediatra</p>
+        </div>
+
+        <div class="card">
+            <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
+            <h3>Dr. Carlos Pérez</h3>
+            <p>Cardiólogo</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- TESTIMONIOS -->
+<section class="section">
+    <h2>Opiniones de pacientes</h2>
+
+    <div class="grid">
+
+        <div class="card">
+            <p>"Excelente atención y rapidez."</p>
+            <b>- Ana Torres</b>
+        </div>
+
+        <div class="card">
+            <p>"El sistema es fácil de usar."</p>
+            <b>- Juan Pérez</b>
+        </div>
+
+        <div class="card">
+            <p>"Muy buena experiencia médica."</p>
+            <b>- Sofía Gómez</b>
+        </div>
+
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <p>📍 Quito - Ecuador</p>
+    <p>📞 098 000 0000</p>
+    <p>© 2026 MediClover</p>
+</footer>
+
+</body>
+</html>
