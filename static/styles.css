@@ -320,3 +320,66 @@ h3{
     margin-bottom:10px;
     color:#2d6a4f;
 }
+/* ===============================
+   📱 RESPONSIVE DESIGN
+   =============================== */
+
+@media (max-width: 768px){
+
+    /* LAYOUT GENERAL */
+    .layout{
+        flex-direction: column;
+    }
+
+    /* SIDEBAR */
+    .sidebar{
+        width: 100%;
+        height: auto;
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 10px;
+    }
+
+    .sidebar h2{
+        display: none; /* ocultamos título para ahorrar espacio */
+    }
+
+    .sidebar a{
+        flex: 1;
+        text-align: center;
+        font-size: 14px;
+        padding: 10px;
+        white-space: nowrap;
+    }
+
+    /* CONTENIDO */
+    .main{
+        padding: 15px;
+    }
+
+    /* CARDS */
+    .grid{
+        grid-template-columns: 1fr;
+    }
+
+    .card{
+        padding: 15px;
+    }
+
+    /* TABLAS */
+    table{
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* BOTONES */
+    .btn{
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        text-align: center;
+    }
+
+}
