@@ -140,6 +140,8 @@ def citas():
 
     cursor = conn.cursor()
     fecha = request.args.get("fecha")
+    if fecha and fecha < "2026-04-04":
+        fecha = None
 
     if fecha:
         cursor.execute("""
