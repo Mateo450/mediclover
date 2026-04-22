@@ -1,115 +1,129 @@
-/* =======================
-RESET
-======================= */
+/* ===== RESET ===== */
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family: 'Segoe UI', sans-serif;
+    font-family:'Segoe UI', sans-serif;
 }
 
-/* =======================
-BODY
-======================= */
+/* ===== BODY ===== */
 body{
-    background:#f4f7f5;
+    background:linear-gradient(135deg, #d8f3dc, #f1faee);
     color:#1b4332;
 }
 
-/* =======================
-NAVBAR
-======================= */
+/* ===== NAVBAR ===== */
 .navbar{
     background:#1b4332;
     color:white;
-    padding:15px 20px;
+    padding:15px 25px;
     display:flex;
     justify-content:space-between;
     align-items:center;
+    box-shadow:0 3px 10px rgba(0,0,0,0.2);
+}
+
+.navbar h2{
+    margin:0;
 }
 
 .navbar a{
     color:white;
-    margin-left:10px;
     text-decoration:none;
+    margin-left:15px;
     font-weight:bold;
 }
 
-/* =======================
-CONTAINER
-======================= */
-.container{
-    padding:20px;
+.navbar a:hover{
+    color:#95d5b2;
 }
 
-/* =======================
-CARDS
-======================= */
+/* ===== CONTAINER ===== */
+.container{
+    padding:25px;
+}
+
+/* ===== CARDS ===== */
 .card{
     background:white;
-    padding:15px;
-    border-radius:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.05);
-    margin-bottom:15px;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+    box-shadow:0 6px 15px rgba(0,0,0,0.08);
+    transition:0.3s;
 }
 
-/* =======================
-BOTONES
-======================= */
+.card:hover{
+    transform:translateY(-5px);
+}
+
+/* ===== BOTONES ===== */
 .btn{
     background:#52b788;
     color:white;
-    padding:10px 15px;
-    border-radius:8px;
+    padding:10px 18px;
+    border-radius:10px;
     text-decoration:none;
     display:inline-block;
+    font-weight:bold;
     border:none;
     cursor:pointer;
-    font-weight:bold;
+    transition:0.3s;
 }
 
 .btn:hover{
     background:#40916c;
+    transform:scale(1.05);
 }
 
-/* =======================
-FORMULARIOS
-======================= */
+/* ===== FORMULARIOS ===== */
 input, select, textarea{
     width:100%;
     padding:10px;
     margin:8px 0;
-    border-radius:8px;
+    border-radius:10px;
     border:1px solid #ccc;
+    transition:0.3s;
 }
 
-/* =======================
-TABLAS
-======================= */
+input:focus, select:focus, textarea:focus{
+    outline:none;
+    border:1px solid #52b788;
+    box-shadow:0 0 5px #95d5b2;
+}
+
+/* ===== TABLAS ===== */
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:10px;
+    margin-top:15px;
+    background:white;
+    border-radius:10px;
+    overflow:hidden;
 }
 
 th{
     background:#1b4332;
     color:white;
-    padding:10px;
+    padding:12px;
 }
 
 td{
-    padding:10px;
-    border-bottom:1px solid #ddd;
+    padding:12px;
+    border-bottom:1px solid #eee;
     text-align:center;
 }
 
-/* =======================
-ESTADOS
-======================= */
+tr:hover{
+    background:#f1faee;
+}
+
+/* ===== ESTADOS ===== */
 .estado{
-    padding:5px 10px;
-    border-radius:8px;
+    padding:6px 12px;
+    border-radius:10px;
+    font-size:12px;
+    font-weight:bold;
     color:white;
 }
 
@@ -117,12 +131,55 @@ ESTADOS
 .completada{ background:#2a9d8f; }
 .cancelada{ background:#e63946; }
 
-/* =======================
-RESPONSIVE
-======================= */
+/* ===== MENSAJES ===== */
+.success{
+    background:#2a9d8f;
+    color:white;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+}
+
+.error{
+    background:#e63946;
+    color:white;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+}
+
+/* ===== DASHBOARD STATS ===== */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+    gap:20px;
+}
+
+.stat-card{
+    background:#1b4332;
+    color:white;
+    padding:20px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+.stat-card span{
+    font-size:30px;
+    display:block;
+    margin-top:10px;
+    color:#95d5b2;
+}
+
+/* ===== RESPONSIVE ===== */
 @media(max-width:768px){
+    .navbar{
+        flex-direction:column;
+        text-align:center;
+    }
+
     .container{
-        padding:10px;
+        padding:15px;
     }
 
     table{
