@@ -2,24 +2,43 @@
 
 {% block contenido %}
 
-<h2>Citas</h2>
+<h1>📅 Lista de Citas</h1>
 
-<table border="1">
+<div class="card">
+
+<table>
 
 <tr>
-<th>ID</th><th>Paciente</th><th>Fecha</th><th>Hora</th><th>Estado</th>
+<th>Paciente</th>
+<th>Fecha</th>
+<th>Hora</th>
+<th>Estado</th>
+<th>Acciones</th>
 </tr>
 
-{% for c in citas %}
+{% for cita in citas %}
+
 <tr>
-<td>{{ c[0] }}</td>
-<td>{{ c[1] }} {{ c[2] }}</td>
-<td>{{ c[3] }}</td>
-<td>{{ c[4] }}</td>
-<td>{{ c[5] }}</td>
+<td>{{ cita[1] }} {{ cita[2] }}</td>
+<td>{{ cita[3] }}</td>
+<td>{{ cita[4] }}</td>
+
+<td>
+<span class="estado {{ cita[5] }}">
+{{ cita[5] }}
+</span>
+</td>
+
+<td>
+<a href="/editar_cita/{{ cita[0] }}">Editar</a>
+<a href="/eliminar_cita/{{ cita[0] }}">Eliminar</a>
+</td>
 </tr>
+
 {% endfor %}
 
 </table>
+
+</div>
 
 {% endblock %}

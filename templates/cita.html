@@ -2,22 +2,42 @@
 
 {% block contenido %}
 
-<h2>Registrar Cita</h2>
+<h1>📅 Registrar Cita</h1>
 
-<form method="POST">
+<div class="card">
 
-<select name="id_paciente">
-{% for p in pacientes %}
-<option value="{{ p[0] }}">{{ p[1] }} {{ p[2] }}</option>
+{% if mensaje %}
+<div class="{{ tipo }}">
+    {{ mensaje }}
+</div>
+{% endif %}
+
+<form method="POST" action="/cita">
+
+<label>Paciente</label>
+<select name="id_paciente" required>
+{% for paciente in pacientes %}
+<option value="{{ paciente[0] }}">
+{{ paciente[1] }} {{ paciente[2] }}
+</option>
 {% endfor %}
 </select>
 
-<input type="date" name="fecha">
-<input type="time" name="hora">
+<label>Fecha</label>
+<input type="date" name="fecha" required>
+
+<label>Hora</label>
+<input type="time" name="hora" required>
+
+<label>Descripción</label>
 <textarea name="descripcion"></textarea>
 
-<button>Registrar</button>
+<br>
+
+<button class="btn">Registrar Cita</button>
 
 </form>
+
+</div>
 
 {% endblock %}

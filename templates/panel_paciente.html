@@ -25,19 +25,29 @@
         <a href="/reservar" class="btn">➕ Reservar cita</a>
     </div>
 
-    <h3 style="margin-top:20px;">📅 Tus Citas</h3>
+    <h2 style="margin-top:20px;">📅 Tus Citas</h2>
 
     {% for c in citas %}
 
     <div class="card">
 
-        <p><b>📆 Fecha:</b> {{ c[0] }}</p>
-        <p><b>⏰ Hora:</b> {{ c[1] }}</p>
-        <p><b>📝 Motivo:</b> {{ c[3] }}</p>
+        <p><b>📆 Fecha:</b> {{ c[1] }}</p>
+        <p><b>⏰ Hora:</b> {{ c[2] }}</p>
+        <p><b>📝 Motivo:</b> {{ c[4] }}</p>
 
-        <span class="estado {{ c[2] }}">
-            {{ c[2] }}
+        <span class="estado {{ c[3] }}">
+            {{ c[3] }}
         </span>
+
+        <!-- BOTÓN CANCELAR -->
+        {% if c[3] == "pendiente" %}
+            <br><br>
+            <a href="/cancelar_cita_paciente/{{ c[0] }}"
+               class="btn"
+               onclick="return confirm('¿Cancelar esta cita?')">
+               ❌ Cancelar
+            </a>
+        {% endif %}
 
     </div>
 

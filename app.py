@@ -1,17 +1,14 @@
 # ===============================
 # 1. IMPORTS
 # ===============================
-
 from flask import Flask, render_template, request, redirect, session
 from functools import wraps
 import psycopg2
-from datetime import date
 import os
 
 # ===============================
 # 2. CONFIGURACIÓN
 # ===============================
-
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
 
@@ -21,23 +18,21 @@ ADMIN_PASS = "1234"
 # ===============================
 # 3. CONEXIÓN BD
 # ===============================
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 conn = None
 try:
     if DATABASE_URL:
         conn = psycopg2.connect(DATABASE_URL, sslmode="require")
-        print("Conexión exitosa a PostgreSQL")
+        print("✅ Conectado a PostgreSQL")
     else:
-        print("No existe DATABASE_URL")
+        print("❌ No existe DATABASE_URL")
 except Exception as e:
-    print("Error conectando:", e)
+    print("❌ Error:", e)
 
 # ===============================
-# 4. DECORADORES
+# 4. SEGURIDAD
 # ===============================
-
 def login_required(role=None):
     def decorator(func):
         @wraps(func)
@@ -46,24 +41,19 @@ def login_required(role=None):
             if "usuario" not in session and "paciente_id" not in session:
                 return redirect("/login")
 
-            if role == "admin":
-                if session.get("usuario") != ADMIN_USER:
-                    return redirect("/login")
+            if role == "admin" and session.get("usuario") != ADMIN_USER:
+                return redirect("/login")
 
-            if role == "paciente":
-                if session.get("role") != "paciente":
-                    return redirect("/login_paciente")
+            if role == "paciente" and session.get("role") != "paciente":
+                return redirect("/login_paciente")
 
             return func(*args, **kwargs)
-
         return wrapper
     return decorator
 
 # ===============================
-# 5. RUTAS
+# 5. DASHBOARD ADMIN
 # ===============================
-
-# ---------------- DASHBOARD ADMIN ----------------
 @app.route("/")
 @login_required(role="admin")
 def index():
@@ -87,18 +77,14 @@ def index():
         citas_pendientes=citas_pendientes
     )
 
-# ---------------- REGISTRO PACIENTE ----------------
+# ===============================
+# 6. REGISTRO PACIENTE
+# ===============================
 @app.route("/registro", methods=["GET","POST"])
 @login_required(role="admin")
 def registro():
 
     if request.method == "POST":
-
-        nombre = request.form["nombre"]
-        apellido = request.form["apellido"]
-        correo = request.form["correo"]
-        telefono = request.form["telefono"]
-        fecha_nacimiento = request.form["fecha_nacimiento"]
 
         cursor = conn.cursor()
 
@@ -106,10 +92,15 @@ def registro():
             cursor.execute("""
             INSERT INTO paciente(nombre,apellido,correo,telefono,fecha_nacimiento)
             VALUES(%s,%s,%s,%s,%s)
-            """,(nombre,apellido,correo,telefono,fecha_nacimiento))
+            """,(
+                request.form["nombre"],
+                request.form["apellido"],
+                request.form["correo"],
+                request.form["telefono"],
+                request.form["fecha_nacimiento"]
+            ))
 
             conn.commit()
-
         except Exception as e:
             conn.rollback()
             return f"Error: {e}"
@@ -119,7 +110,9 @@ def registro():
 
     return render_template("registro.html")
 
-# ---------------- LISTAR PACIENTES ----------------
+# ===============================
+# 7. LISTAR PACIENTES
+# ===============================
 @app.route("/pacientes")
 @login_required(role="admin")
 def pacientes():
@@ -144,7 +137,9 @@ def pacientes():
 
     return render_template("pacientes.html",pacientes=pacientes)
 
-# ---------------- ELIMINAR PACIENTE ----------------
+# ===============================
+# 8. ELIMINAR PACIENTE
+# ===============================
 @app.route("/eliminar_paciente/<int:id>")
 @login_required(role="admin")
 def eliminar_paciente(id):
@@ -159,7 +154,9 @@ def eliminar_paciente(id):
 
     return redirect("/pacientes")
 
-# ---------------- EDITAR PACIENTE ----------------
+# ===============================
+# 9. EDITAR PACIENTE
+# ===============================
 @app.route("/editar_paciente/<int:id>", methods=["GET","POST"])
 @login_required(role="admin")
 def editar_paciente(id):
@@ -183,13 +180,11 @@ def editar_paciente(id):
 
         conn.commit()
         cursor.close()
-
         return redirect("/pacientes")
 
     cursor.execute("""
     SELECT nombre,apellido,correo,telefono,fecha_nacimiento
-    FROM paciente
-    WHERE id_paciente=%s
+    FROM paciente WHERE id_paciente=%s
     """,(id,))
 
     paciente = cursor.fetchone()
@@ -197,7 +192,9 @@ def editar_paciente(id):
 
     return render_template("editar_paciente.html",paciente=paciente)
 
-# ---------------- CITAS ----------------
+# ===============================
+# 10. CITAS ADMIN
+# ===============================
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
@@ -210,7 +207,6 @@ def citas():
     JOIN paciente p ON c.id_paciente = p.id_paciente
     ORDER BY c.fecha,c.hora
     """)
-
     citas = cursor.fetchall()
 
     cursor.execute("""
@@ -220,14 +216,15 @@ def citas():
     WHERE c.fecha=CURRENT_DATE
     ORDER BY c.hora
     """)
-
     citas_hoy = cursor.fetchall()
 
     cursor.close()
 
     return render_template("citas.html",citas=citas,citas_hoy=citas_hoy)
 
-# ---------------- EDITAR CITA ----------------
+# ===============================
+# 11. EDITAR CITA
+# ===============================
 @app.route("/editar_cita/<int:id>", methods=["GET","POST"])
 @login_required(role="admin")
 def editar_cita(id):
@@ -250,13 +247,11 @@ def editar_cita(id):
 
         conn.commit()
         cursor.close()
-
         return redirect("/citas")
 
     cursor.execute("""
     SELECT id_cita,id_paciente,fecha,hora,descripcion,estado
-    FROM cita
-    WHERE id_cita=%s
+    FROM cita WHERE id_cita=%s
     """,(id,))
 
     cita = cursor.fetchone()
@@ -264,21 +259,20 @@ def editar_cita(id):
 
     return render_template("editar_cita.html",cita=cita)
 
-# ---------------- LOGIN PACIENTE ----------------
+# ===============================
+# 12. LOGIN PACIENTE
+# ===============================
 @app.route("/login_paciente", methods=["GET","POST"])
 def login_paciente():
 
     if request.method == "POST":
 
-        correo = request.form.get("correo")
-
         cursor = conn.cursor()
 
         cursor.execute("""
         SELECT id_paciente,nombre,apellido
-        FROM paciente
-        WHERE correo=%s
-        """,(correo,))
+        FROM paciente WHERE correo=%s
+        """,(request.form["correo"],))
 
         paciente = cursor.fetchone()
         cursor.close()
@@ -296,7 +290,9 @@ def login_paciente():
 
     return render_template("login_paciente.html")
 
-# ---------------- PANEL PACIENTE ----------------
+# ===============================
+# 13. PANEL PACIENTE (FIX CLAVE)
+# ===============================
 @app.route("/panel_paciente")
 @login_required(role="paciente")
 def panel_paciente():
@@ -304,7 +300,7 @@ def panel_paciente():
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT fecha,hora,estado,descripcion
+    SELECT id_cita, fecha, hora, estado, descripcion
     FROM cita
     WHERE id_paciente=%s
     ORDER BY fecha,hora
@@ -315,7 +311,9 @@ def panel_paciente():
 
     return render_template("panel_paciente.html",citas=citas)
 
-# ---------------- RESERVAR ----------------
+# ===============================
+# 14. RESERVAR
+# ===============================
 @app.route("/reservar", methods=["GET","POST"])
 @login_required(role="paciente")
 def reservar():
@@ -352,7 +350,29 @@ def reservar():
 
     return render_template("reservar.html",mensaje=mensaje,tipo=tipo)
 
-# ---------------- LOGIN ADMIN ----------------
+# ===============================
+# 15. CANCELAR CITA PACIENTE
+# ===============================
+@app.route("/cancelar_cita_paciente/<int:id>")
+@login_required(role="paciente")
+def cancelar_cita_paciente(id):
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    UPDATE cita 
+    SET estado='cancelada'
+    WHERE id_cita=%s AND id_paciente=%s
+    """, (id, session["paciente_id"]))
+
+    conn.commit()
+    cursor.close()
+
+    return redirect("/panel_paciente")
+
+# ===============================
+# 16. LOGIN ADMIN
+# ===============================
 @app.route("/login", methods=["GET","POST"])
 def login():
 
@@ -366,13 +386,17 @@ def login():
 
     return render_template("login.html")
 
-# ---------------- LOGOUT ----------------
+# ===============================
+# 17. LOGOUT
+# ===============================
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
-# ---------------- TABLAS ----------------
+# ===============================
+# 18. CREAR TABLAS
+# ===============================
 def crear_tablas():
 
     cursor = conn.cursor()
@@ -403,9 +427,8 @@ def crear_tablas():
     cursor.close()
 
 # ===============================
-# 6. EJECUCIÓN
+# 19. EJECUCIÓN
 # ===============================
-
 if __name__ == "__main__":
 
     if conn:

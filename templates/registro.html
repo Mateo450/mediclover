@@ -2,39 +2,38 @@
 
 {% block contenido %}
 
+<h1>👤 Registrar Paciente</h1>
+
 <div class="card">
 
-    <h2>👤 Registrar Paciente</h2>
+{% if mensaje %}
+<div class="{{ tipo }}">
+    {{ mensaje }}
+</div>
+{% endif %}
 
-    <!-- MENSAJE -->
-    {% if mensaje %}
-        <div class="{{ tipo }}">
-            {{ mensaje }}
-        </div>
-    {% endif %}
+<form method="POST">
 
-    <form method="POST">
+<label>Nombre</label>
+<input name="nombre" required>
 
-        <label>Nombre</label>
-        <input name="nombre" placeholder="Nombre" required>
+<label>Apellido</label>
+<input name="apellido" required>
 
-        <label>Apellido</label>
-        <input name="apellido" placeholder="Apellido" required>
+<label>Correo</label>
+<input name="correo" required>
 
-        <label>Correo</label>
-        <input name="correo" placeholder="Correo" required>
+<label>Teléfono</label>
+<input name="telefono">
 
-        <label>Teléfono</label>
-        <input name="telefono" placeholder="Teléfono">
+<label>Fecha de nacimiento</label>
+<input type="date" name="fecha_nacimiento">
 
-        <label>Fecha de nacimiento</label>
-        <input type="date" name="fecha_nacimiento">
+<br>
 
-        <br>
+<button class="btn">Guardar</button>
 
-        <button class="btn">Guardar</button>
-
-    </form>
+</form>
 
 </div>
 

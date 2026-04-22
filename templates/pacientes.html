@@ -2,30 +2,36 @@
 
 {% block contenido %}
 
-<h2>Pacientes</h2>
+<h1>👥 Pacientes</h1>
 
-<form method="GET">
-    <input name="buscar" placeholder="Buscar paciente">
-    <button>Buscar</button>
-</form>
+<div class="card">
 
-<table border="1">
+<table>
+
 <tr>
-<th>ID</th><th>Nombre</th><th>Apellido</th><th>Correo</th><th>Acción</th>
+<th>Nombre</th>
+<th>Apellido</th>
+<th>Correo</th>
+<th>Acciones</th>
 </tr>
 
-{% for p in pacientes %}
+{% for paciente in pacientes %}
+
 <tr>
-<td>{{ p[0] }}</td>
-<td>{{ p[1] }}</td>
-<td>{{ p[2] }}</td>
-<td>{{ p[3] }}</td>
+<td>{{ paciente[1] }}</td>
+<td>{{ paciente[2] }}</td>
+<td>{{ paciente[3] }}</td>
+
 <td>
-<a href="/eliminar_paciente/{{ p[0] }}">Eliminar</a>
+<a href="/editar_paciente/{{ paciente[0] }}">Editar</a>
+<a href="/eliminar_paciente/{{ paciente[0] }}">Eliminar</a>
 </td>
 </tr>
+
 {% endfor %}
 
 </table>
+
+</div>
 
 {% endblock %}
