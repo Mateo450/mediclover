@@ -9,20 +9,24 @@
 
 <div class="layout">
 
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>🏥 MediClover</h2>
-        <a href="/">📊 Dashboard</a>
+        <a href="/admin">📊 Dashboard</a>
+        <a href="/pacientes">👥 Pacientes</a>
         <a href="/citas" class="active">📅 Citas</a>
         <a href="/logout">🚪 Salir</a>
     </div>
 
+    <!-- CONTENIDO -->
     <div class="main">
 
         <h1>📅 Gestión de Citas</h1>
 
-        <form method="GET">
+        <form method="GET" style="margin-bottom:20px;">
             <input type="date" name="fecha" min="2026-01-01">
-            <button>Filtrar</button>
+            <button class="btn">🔍 Filtrar</button>
+            <a href="/citas" class="btn">❌ Limpiar</a>
         </form>
 
         <div class="card">

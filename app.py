@@ -10,10 +10,12 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 conn = psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
+# ===============================
+# LOGIN REQUIRED
+# ===============================
 def login_required(role=None):
     def decorator(func):
         @wraps(func)
@@ -35,7 +37,18 @@ def login_required(role=None):
     return decorator
 
 
+# ===============================
+# HOME (PÁGINA PÚBLICA)
+# ===============================
 @app.route("/")
+def home():
+    return render_template("home.html")
+
+
+# ===============================
+# DASHBOARD ADMIN
+# ===============================
+@app.route("/admin")
 @login_required(role="admin")
 def index():
 
@@ -55,6 +68,29 @@ def index():
     )
 
 
+# ===============================
+# PACIENTES
+# ===============================
+@app.route("/pacientes")
+@login_required(role="admin")
+def pacientes():
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
+    FROM paciente
+    """)
+
+    pacientes = cursor.fetchall()
+    cursor.close()
+
+    return render_template("pacientes.html", pacientes=pacientes)
+
+
+# ===============================
+# CITAS
+# ===============================
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
@@ -87,7 +123,9 @@ def citas():
     return render_template("citas.html", citas=citas)
 
 
-# 🔥 NUEVAS RUTAS
+# ===============================
+# ACCIONES DE CITAS
+# ===============================
 @app.route("/completar_cita/<int:id>")
 @login_required(role="admin")
 def completar_cita(id):
@@ -112,19 +150,121 @@ def cancelar_cita(id):
     return redirect("/citas")
 
 
+# ===============================
+# LOGIN ADMIN
+# ===============================
 @app.route("/login", methods=["GET","POST"])
 def login():
 
     if request.method == "POST":
         if request.form["usuario"] == ADMIN_USER and request.form["password"] == ADMIN_PASS:
             session["usuario"] = ADMIN_USER
-            return redirect("/")
+            return redirect("/admin")
         else:
-            return render_template("login.html", error="Error")
+            return render_template("login.html", error="Credenciales incorrectas")
 
     return render_template("login.html")
 
 
+# ===============================
+# LOGIN PACIENTE
+# ===============================
+@app.route("/login_paciente", methods=["GET","POST"])
+def login_paciente():
+
+    if request.method == "POST":
+
+        correo = request.form.get("correo")
+
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT id_paciente,nombre,apellido
+        FROM paciente
+        WHERE correo=%s
+        """,(correo,))
+
+        paciente = cursor.fetchone()
+        cursor.close()
+
+        if not paciente:
+            return render_template("login_paciente.html", error="Correo no registrado")
+
+        session.clear()
+        session["paciente_id"] = paciente[0]
+        session["paciente_nombre"] = paciente[1]
+        session["paciente_apellido"] = paciente[2]
+        session["role"] = "paciente"
+
+        return redirect("/panel_paciente")
+
+    return render_template("login_paciente.html")
+
+
+# ===============================
+# PANEL PACIENTE
+# ===============================
+@app.route("/panel_paciente")
+@login_required(role="paciente")
+def panel_paciente():
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT id_cita,fecha,hora,estado,descripcion
+    FROM cita
+    WHERE id_paciente=%s
+    ORDER BY fecha,hora
+    """,(session["paciente_id"],))
+
+    citas = cursor.fetchall()
+    cursor.close()
+
+    return render_template("panel_paciente.html", citas=citas)
+
+
+# ===============================
+# RESERVAR
+# ===============================
+@app.route("/reservar", methods=["GET","POST"])
+@login_required(role="paciente")
+def reservar():
+
+    mensaje=None
+    tipo=None
+
+    if request.method=="POST":
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT 1 FROM cita
+        WHERE fecha=%s AND hora=%s AND id_paciente=%s
+        """,(request.form["fecha"],request.form["hora"],session["paciente_id"]))
+
+        if cursor.fetchone():
+            mensaje="Ya tienes una cita en ese horario"
+            tipo="error"
+        else:
+            cursor.execute("""
+            INSERT INTO cita(id_paciente,fecha,hora,estado,descripcion)
+            VALUES(%s,%s,%s,'pendiente',%s)
+            """,(session["paciente_id"],
+                request.form["fecha"],
+                request.form["hora"],
+                request.form["descripcion"]))
+
+            conn.commit()
+            mensaje="Cita reservada"
+            tipo="success"
+
+        cursor.close()
+
+    return render_template("reservar.html",mensaje=mensaje,tipo=tipo)
+
+
+# ===============================
+# LOGOUT
+# ===============================
 @app.route("/logout")
 def logout():
     session.clear()
