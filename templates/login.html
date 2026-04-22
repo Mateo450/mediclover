@@ -7,17 +7,26 @@
 
 <body>
 
-<h2>Login Admin</h2>
+<div class="login-box">
 
-<form method="POST">
-    <input name="usuario" placeholder="Usuario" required><br><br>
-    <input type="password" name="password" placeholder="Contraseña" required><br><br>
-    <button>Ingresar</button>
-</form>
+    <h2>🏥 MediClover</h2>
+    <p>Panel de Administración</p>
 
-{% if error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
+    <form method="POST">
+
+        <input type="text" name="usuario" placeholder="👤 Usuario" required>
+
+        <input type="password" name="password" placeholder="🔒 Contraseña" required>
+
+        <button class="btn" type="submit">Ingresar</button>
+
+    </form>
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+
+</div>
 
 </body>
 </html>
