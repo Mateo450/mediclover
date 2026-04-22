@@ -1,31 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MediClover - Paciente</title>
+    <title>MediClover - Panel Paciente</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
 
+<!-- NAVBAR -->
 <div class="navbar">
-    <div>🏥 MediClover</div>
-    <div>
-        <a href="/panel_paciente">Inicio</a>
-        <a href="/reservar">Reservar</a>
-        <a href="/logout">Salir</a>
-    </div>
+    <h2>🏥 MediClover</h2>
+    <a href="/logout">Cerrar sesión</a>
 </div>
 
 <div class="container">
 
+    <!-- BIENVENIDA -->
     <div class="card">
-        <h2>👤 Bienvenido {{ session["paciente_nombre"] }} {{ session["paciente_apellido"] }}</h2>
-        <p>Gestiona tus citas médicas de forma rápida y sencilla.</p>
+        <h3>👤 Bienvenido {{ session["paciente_nombre"] }}</h3>
+        <p>Gestiona tus citas de forma rápida.</p>
+
+        <br>
 
         <a href="/reservar" class="btn">➕ Reservar cita</a>
     </div>
 
-    <h3>📅 Mis Citas</h3>
+    <h3 style="margin-top:20px;">📅 Tus Citas</h3>
 
     {% for c in citas %}
 
@@ -33,15 +33,11 @@
 
         <p><b>📆 Fecha:</b> {{ c[0] }}</p>
         <p><b>⏰ Hora:</b> {{ c[1] }}</p>
-        <p><b>📝 Descripción:</b> {{ c[3] }}</p>
+        <p><b>📝 Motivo:</b> {{ c[3] }}</p>
 
-        {% if c[2] == "pendiente" %}
-            <span class="pendiente">🟡 Pendiente</span>
-        {% elif c[2] == "completada" %}
-            <span class="completada">🟢 Completada</span>
-        {% else %}
-            <span class="cancelada">🔴 Cancelada</span>
-        {% endif %}
+        <span class="estado {{ c[2] }}">
+            {{ c[2] }}
+        </span>
 
     </div>
 
