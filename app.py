@@ -199,6 +199,37 @@ def login_paciente():
 
     return render_template("login_paciente.html")
 
+# ===============================
+# REGISTRO PACIENTE
+# ===============================
+@app.route("/registro_paciente", methods=["GET","POST"])
+def registro_paciente():
+
+    if request.method == "POST":
+
+        nombre = request.form["nombre"]
+        apellido = request.form["apellido"]
+        correo = request.form["correo"]
+        telefono = request.form["telefono"]
+
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+            INSERT INTO paciente(nombre,apellido,correo,telefono)
+            VALUES(%s,%s,%s,%s)
+            """,(nombre,apellido,correo,telefono))
+
+            conn.commit()
+
+        except:
+            conn.rollback()
+            return render_template("registro_paciente.html", error="Correo ya registrado")
+
+        cursor.close()
+        return redirect("/login_paciente")
+
+    return render_template("registro_paciente.html")
 
 # ===============================
 # PANEL PACIENTE
