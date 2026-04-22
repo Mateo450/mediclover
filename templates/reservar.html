@@ -23,8 +23,9 @@
         <p>Selecciona fecha y hora disponible</p>
     </div>
 
+    <!-- MENSAJE BONITO -->
     {% if mensaje %}
-        <div class="{% if tipo == 'success' %}success{% else %}error{% endif %}">
+        <div class="{{ tipo }}">
             {{ mensaje }}
         </div>
     {% endif %}
@@ -42,9 +43,9 @@
             <label>📝 Descripción</label>
             <textarea name="descripcion" placeholder="Motivo de la cita..."></textarea>
 
-            <br><br>
+            <br>
 
-            <button type="submit">➕ Reservar cita</button>
+            <button class="btn" type="submit">➕ Reservar cita</button>
 
         </form>
 
