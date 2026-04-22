@@ -12,7 +12,6 @@
     <div class="sidebar">
         <h2>🏥 MediClover</h2>
         <a href="/">📊 Dashboard</a>
-        <a href="/pacientes">👥 Pacientes</a>
         <a href="/citas" class="active">📅 Citas</a>
         <a href="/logout">🚪 Salir</a>
     </div>
@@ -21,10 +20,9 @@
 
         <h1>📅 Gestión de Citas</h1>
 
-        <form method="GET" style="margin-bottom:20px;">
+        <form method="GET">
             <input type="date" name="fecha" min="2026-01-01">
-            <button type="submit" class="btn">🔍 Filtrar</button>
-            <a href="/citas" class="btn">❌ Limpiar</a>
+            <button>Filtrar</button>
         </form>
 
         <div class="card">
@@ -35,7 +33,7 @@
                     <th>Fecha</th>
                     <th>Hora</th>
                     <th>Estado</th>
-                    <th>Descripción</th>
+                    <th>Acciones</th>
                 </tr>
 
                 {% for c in citas %}
@@ -50,7 +48,10 @@
                         </span>
                     </td>
 
-                    <td>{{ c[6] }}</td>
+                    <td>
+                        <a href="/completar_cita/{{ c[0] }}">✔</a>
+                        <a href="/cancelar_cita/{{ c[0] }}">❌</a>
+                    </td>
                 </tr>
                 {% endfor %}
 
