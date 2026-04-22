@@ -1,38 +1,27 @@
-# ===============================
-# 1. IMPORTS
-# ===============================
 from flask import Flask, render_template, request, redirect, session
 from functools import wraps
 import psycopg2
+from datetime import date
 import os
 
-# ===============================
-# 2. CONFIGURACIÓN
-# ===============================
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-# ===============================
-# 3. CONEXIÓN BD
-# ===============================
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 conn = None
 try:
     if DATABASE_URL:
         conn = psycopg2.connect(DATABASE_URL, sslmode="require")
-        print("✅ Conectado a PostgreSQL")
+        print("Conexión exitosa")
     else:
-        print("❌ No existe DATABASE_URL")
+        print("No hay DATABASE_URL")
 except Exception as e:
-    print("❌ Error:", e)
+    print("Error:", e)
 
-# ===============================
-# 4. SEGURIDAD
-# ===============================
 def login_required(role=None):
     def decorator(func):
         @wraps(func)
@@ -41,19 +30,20 @@ def login_required(role=None):
             if "usuario" not in session and "paciente_id" not in session:
                 return redirect("/login")
 
-            if role == "admin" and session.get("usuario") != ADMIN_USER:
-                return redirect("/login")
+            if role == "admin":
+                if session.get("usuario") != ADMIN_USER:
+                    return redirect("/login")
 
-            if role == "paciente" and session.get("role") != "paciente":
-                return redirect("/login_paciente")
+            if role == "paciente":
+                if session.get("role") != "paciente":
+                    return redirect("/login_paciente")
 
             return func(*args, **kwargs)
         return wrapper
     return decorator
 
-# ===============================
-# 5. DASHBOARD ADMIN
-# ===============================
+
+# ================= DASHBOARD =================
 @app.route("/")
 @login_required(role="admin")
 def index():
@@ -77,9 +67,8 @@ def index():
         citas_pendientes=citas_pendientes
     )
 
-# ===============================
-# 6. REGISTRO PACIENTE
-# ===============================
+
+# ================= REGISTRO =================
 @app.route("/registro", methods=["GET","POST"])
 @login_required(role="admin")
 def registro():
@@ -88,31 +77,26 @@ def registro():
 
         cursor = conn.cursor()
 
-        try:
-            cursor.execute("""
-            INSERT INTO paciente(nombre,apellido,correo,telefono,fecha_nacimiento)
-            VALUES(%s,%s,%s,%s,%s)
-            """,(
-                request.form["nombre"],
-                request.form["apellido"],
-                request.form["correo"],
-                request.form["telefono"],
-                request.form["fecha_nacimiento"]
-            ))
+        cursor.execute("""
+        INSERT INTO paciente(nombre,apellido,correo,telefono,fecha_nacimiento)
+        VALUES(%s,%s,%s,%s,%s)
+        """,(
+            request.form["nombre"],
+            request.form["apellido"],
+            request.form["correo"],
+            request.form["telefono"],
+            request.form["fecha_nacimiento"]
+        ))
 
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            return f"Error: {e}"
-
+        conn.commit()
         cursor.close()
+
         return redirect("/pacientes")
 
     return render_template("registro.html")
 
-# ===============================
-# 7. LISTAR PACIENTES
-# ===============================
+
+# ================= PACIENTES =================
 @app.route("/pacientes")
 @login_required(role="admin")
 def pacientes():
@@ -122,24 +106,18 @@ def pacientes():
 
     if buscar:
         cursor.execute("""
-        SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
-        FROM paciente
+        SELECT * FROM paciente
         WHERE nombre ILIKE %s OR apellido ILIKE %s
         """,(f"%{buscar}%",f"%{buscar}%"))
     else:
-        cursor.execute("""
-        SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
-        FROM paciente
-        """)
+        cursor.execute("SELECT * FROM paciente")
 
     pacientes = cursor.fetchall()
     cursor.close()
 
-    return render_template("pacientes.html",pacientes=pacientes)
+    return render_template("pacientes.html", pacientes=pacientes)
 
-# ===============================
-# 8. ELIMINAR PACIENTE
-# ===============================
+
 @app.route("/eliminar_paciente/<int:id>")
 @login_required(role="admin")
 def eliminar_paciente(id):
@@ -154,114 +132,38 @@ def eliminar_paciente(id):
 
     return redirect("/pacientes")
 
-# ===============================
-# 9. EDITAR PACIENTE
-# ===============================
-@app.route("/editar_paciente/<int:id>", methods=["GET","POST"])
-@login_required(role="admin")
-def editar_paciente(id):
 
-    cursor = conn.cursor()
-
-    if request.method == "POST":
-
-        cursor.execute("""
-        UPDATE paciente
-        SET nombre=%s, apellido=%s, correo=%s, telefono=%s, fecha_nacimiento=%s
-        WHERE id_paciente=%s
-        """,(
-            request.form["nombre"],
-            request.form["apellido"],
-            request.form["correo"],
-            request.form["telefono"],
-            request.form["fecha_nacimiento"],
-            id
-        ))
-
-        conn.commit()
-        cursor.close()
-        return redirect("/pacientes")
-
-    cursor.execute("""
-    SELECT nombre,apellido,correo,telefono,fecha_nacimiento
-    FROM paciente WHERE id_paciente=%s
-    """,(id,))
-
-    paciente = cursor.fetchone()
-    cursor.close()
-
-    return render_template("editar_paciente.html",paciente=paciente)
-
-# ===============================
-# 10. CITAS ADMIN
-# ===============================
+# ================= CITAS CON FILTRO =================
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
 
     cursor = conn.cursor()
+    fecha = request.args.get("fecha")
 
-    cursor.execute("""
-    SELECT c.id_cita,p.nombre,p.apellido,c.fecha,c.hora,c.estado,c.descripcion
-    FROM cita c
-    JOIN paciente p ON c.id_paciente = p.id_paciente
-    ORDER BY c.fecha,c.hora
-    """)
-    citas = cursor.fetchall()
-
-    cursor.execute("""
-    SELECT p.nombre,p.apellido,c.hora,c.estado
-    FROM cita c
-    JOIN paciente p ON c.id_paciente = p.id_paciente
-    WHERE c.fecha=CURRENT_DATE
-    ORDER BY c.hora
-    """)
-    citas_hoy = cursor.fetchall()
-
-    cursor.close()
-
-    return render_template("citas.html",citas=citas,citas_hoy=citas_hoy)
-
-# ===============================
-# 11. EDITAR CITA
-# ===============================
-@app.route("/editar_cita/<int:id>", methods=["GET","POST"])
-@login_required(role="admin")
-def editar_cita(id):
-
-    cursor = conn.cursor()
-
-    if request.method == "POST":
-
+    if fecha:
         cursor.execute("""
-        UPDATE cita
-        SET fecha=%s, hora=%s, estado=%s, descripcion=%s
-        WHERE id_cita=%s
-        """,(
-            request.form["fecha"],
-            request.form["hora"],
-            request.form["estado"],
-            request.form["descripcion"],
-            id
-        ))
+        SELECT c.id_cita,p.nombre,p.apellido,c.fecha,c.hora,c.estado,c.descripcion
+        FROM cita c
+        JOIN paciente p ON c.id_paciente = p.id_paciente
+        WHERE c.fecha=%s
+        ORDER BY c.fecha,c.hora
+        """,(fecha,))
+    else:
+        cursor.execute("""
+        SELECT c.id_cita,p.nombre,p.apellido,c.fecha,c.hora,c.estado,c.descripcion
+        FROM cita c
+        JOIN paciente p ON c.id_paciente = p.id_paciente
+        ORDER BY c.fecha,c.hora
+        """)
 
-        conn.commit()
-        cursor.close()
-        return redirect("/citas")
-
-    cursor.execute("""
-    SELECT id_cita,id_paciente,fecha,hora,descripcion,estado
-    FROM cita WHERE id_cita=%s
-    """,(id,))
-
-    cita = cursor.fetchone()
+    citas = cursor.fetchall()
     cursor.close()
 
-    return render_template("editar_cita.html",cita=cita)
+    return render_template("citas.html", citas=citas)
 
-# ===============================
-# 12. LOGIN PACIENTE
-# ===============================
+
+# ================= LOGIN PACIENTE =================
 @app.route("/login_paciente", methods=["GET","POST"])
 def login_paciente():
 
@@ -271,28 +173,27 @@ def login_paciente():
 
         cursor.execute("""
         SELECT id_paciente,nombre,apellido
-        FROM paciente WHERE correo=%s
+        FROM paciente
+        WHERE correo=%s
         """,(request.form["correo"],))
 
         paciente = cursor.fetchone()
         cursor.close()
 
         if not paciente:
-            return render_template("login_paciente.html",error="Correo no registrado")
+            return render_template("login_paciente.html", error="Correo no registrado")
 
         session.clear()
         session["paciente_id"] = paciente[0]
         session["paciente_nombre"] = paciente[1]
-        session["paciente_apellido"] = paciente[2]
         session["role"] = "paciente"
 
         return redirect("/panel_paciente")
 
     return render_template("login_paciente.html")
 
-# ===============================
-# 13. PANEL PACIENTE (FIX CLAVE)
-# ===============================
+
+# ================= PANEL PACIENTE =================
 @app.route("/panel_paciente")
 @login_required(role="paciente")
 def panel_paciente():
@@ -300,7 +201,7 @@ def panel_paciente():
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT id_cita, fecha, hora, estado, descripcion
+    SELECT id_cita,fecha,hora,estado,descripcion
     FROM cita
     WHERE id_paciente=%s
     ORDER BY fecha,hora
@@ -309,11 +210,10 @@ def panel_paciente():
     citas = cursor.fetchall()
     cursor.close()
 
-    return render_template("panel_paciente.html",citas=citas)
+    return render_template("panel_paciente.html", citas=citas)
 
-# ===============================
-# 14. RESERVAR
-# ===============================
+
+# ================= RESERVAR =================
 @app.route("/reservar", methods=["GET","POST"])
 @login_required(role="paciente")
 def reservar():
@@ -327,11 +227,11 @@ def reservar():
 
         cursor.execute("""
         SELECT 1 FROM cita
-        WHERE fecha=%s AND hora=%s AND id_paciente=%s
-        """,(request.form["fecha"],request.form["hora"],session["paciente_id"]))
+        WHERE fecha=%s AND hora=%s
+        """,(request.form["fecha"],request.form["hora"]))
 
         if cursor.fetchone():
-            mensaje="Ya tienes una cita en ese horario"
+            mensaje="Horario ocupado"
             tipo="error"
         else:
             cursor.execute("""
@@ -350,29 +250,8 @@ def reservar():
 
     return render_template("reservar.html",mensaje=mensaje,tipo=tipo)
 
-# ===============================
-# 15. CANCELAR CITA PACIENTE
-# ===============================
-@app.route("/cancelar_cita_paciente/<int:id>")
-@login_required(role="paciente")
-def cancelar_cita_paciente(id):
 
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    UPDATE cita 
-    SET estado='cancelada'
-    WHERE id_cita=%s AND id_paciente=%s
-    """, (id, session["paciente_id"]))
-
-    conn.commit()
-    cursor.close()
-
-    return redirect("/panel_paciente")
-
-# ===============================
-# 16. LOGIN ADMIN
-# ===============================
+# ================= LOGIN ADMIN =================
 @app.route("/login", methods=["GET","POST"])
 def login():
 
@@ -386,52 +265,13 @@ def login():
 
     return render_template("login.html")
 
-# ===============================
-# 17. LOGOUT
-# ===============================
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
-# ===============================
-# 18. CREAR TABLAS
-# ===============================
-def crear_tablas():
 
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS paciente(
-    id_paciente SERIAL PRIMARY KEY,
-    nombre VARCHAR(50),
-    apellido VARCHAR(50),
-    correo VARCHAR(100) UNIQUE,
-    telefono VARCHAR(20),
-    fecha_nacimiento DATE
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS cita(
-    id_cita SERIAL PRIMARY KEY,
-    id_paciente INT REFERENCES paciente(id_paciente),
-    fecha DATE,
-    hora TIME,
-    estado VARCHAR(20) DEFAULT 'pendiente',
-    descripcion TEXT
-    )
-    """)
-
-    conn.commit()
-    cursor.close()
-
-# ===============================
-# 19. EJECUCIÓN
-# ===============================
+# ================= RUN =================
 if __name__ == "__main__":
-
-    if conn:
-        crear_tablas()
-
     app.run(debug=True)

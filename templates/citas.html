@@ -1,44 +1,61 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Citas - MediClover</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
 
-{% block contenido %}
+<body>
 
-<h1>📅 Lista de Citas</h1>
+<div class="layout">
 
-<div class="card">
+    <div class="sidebar">
+        <h2>🏥 MediClover</h2>
+        <a href="/">📊 Dashboard</a>
+        <a href="/pacientes">👥 Pacientes</a>
+        <a href="/citas" class="active">📅 Citas</a>
+        <a href="/logout">🚪 Salir</a>
+    </div>
 
-<table>
+    <div class="main">
 
-<tr>
-<th>Paciente</th>
-<th>Fecha</th>
-<th>Hora</th>
-<th>Estado</th>
-<th>Acciones</th>
-</tr>
+        <h1>📅 Gestión de Citas</h1>
 
-{% for cita in citas %}
+        <!-- FILTRO -->
+        <form method="GET" style="margin-bottom:20px;">
+            <input type="date" name="fecha">
+            <button type="submit" class="btn">🔍 Filtrar</button>
+            <a href="/citas" class="btn">❌ Limpiar</a>
+        </form>
 
-<tr>
-<td>{{ cita[1] }} {{ cita[2] }}</td>
-<td>{{ cita[3] }}</td>
-<td>{{ cita[4] }}</td>
+        <div class="card">
 
-<td>
-<span class="estado {{ cita[5] }}">
-{{ cita[5] }}
-</span>
-</td>
+            <table>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Estado</th>
+                    <th>Descripción</th>
+                </tr>
 
-<td>
-<a href="/editar_cita/{{ cita[0] }}">Editar</a>
-<a href="/eliminar_cita/{{ cita[0] }}">Eliminar</a>
-</td>
-</tr>
+                {% for c in citas %}
+                <tr>
+                    <td>{{ c[1] }} {{ c[2] }}</td>
+                    <td>{{ c[3] }}</td>
+                    <td>{{ c[4] }}</td>
+                    <td>{{ c[5] }}</td>
+                    <td>{{ c[6] }}</td>
+                </tr>
+                {% endfor %}
 
-{% endfor %}
+            </table>
 
-</table>
+        </div>
+
+    </div>
 
 </div>
 
-{% endblock %}
+</body>
+</html>
