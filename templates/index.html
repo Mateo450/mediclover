@@ -1,61 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MediClover - Dashboard</title>
+    <title>MediClover Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
 
-<!-- NAVBAR -->
-<div class="navbar">
-    <h2>🏥 MediClover Admin</h2>
-    <div>
-        <a href="/">Dashboard</a>
-        <a href="/pacientes">Pacientes</a>
-        <a href="/citas">Citas</a>
-        <a href="/logout">Salir</a>
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>🏥 MediClover</h2>
+
+        <a href="/" class="active">📊 Dashboard</a>
+        <a href="/pacientes">👥 Pacientes</a>
+        <a href="/citas">📅 Citas</a>
+        <a href="/logout">🚪 Salir</a>
     </div>
+
+    <!-- CONTENIDO -->
+    <div class="main">
+
+        <h1>📊 Panel de Control</h1>
+
+        <!-- TARJETAS -->
+        <div class="grid">
+
+            <div class="card stat">
+                <p>👥 Pacientes</p>
+                <h2>{{ total_pacientes }}</h2>
+            </div>
+
+            <div class="card stat">
+                <p>📅 Citas Hoy</p>
+                <h2>{{ citas_hoy }}</h2>
+            </div>
+
+            <div class="card stat">
+                <p>⏳ Pendientes</p>
+                <h2>{{ citas_pendientes }}</h2>
+            </div>
+
+        </div>
+
+        <!-- ACCIONES -->
+        <div class="card">
+            <h3>⚡ Acciones rápidas</h3>
+
+            <div class="actions">
+                <a href="/registro" class="btn">➕ Paciente</a>
+                <a href="/citas" class="btn">📅 Citas</a>
+                <a href="/pacientes" class="btn">👥 Ver</a>
+            </div>
+        </div>
+
+        <!-- GRÁFICO -->
+        <div class="card">
+            <h3>📊 Estadísticas</h3>
+
+            <!-- DATOS SEGUROS -->
+            <div id="data"
+                data-pacientes="{{ total_pacientes }}"
+                data-hoy="{{ citas_hoy }}"
+                data-pendientes="{{ citas_pendientes }}">
+            </div>
+
+            <canvas id="grafico"></canvas>
+        </div>
+
+    </div>
+
 </div>
 
-<div class="container">
+<!-- CHART JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <h2 style="margin-bottom:20px;">📊 Panel de Control</h2>
+<script>
+const dataDiv = document.getElementById("data");
 
-    <!-- TARJETAS -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px;">
+const pacientes = Number(dataDiv.dataset.pacientes);
+const hoy = Number(dataDiv.dataset.hoy);
+const pendientes = Number(dataDiv.dataset.pendientes);
 
-        <div class="card">
-            <h3>👥 Pacientes</h3>
-            <p style="font-size:30px;">{{ total_pacientes }}</p>
-        </div>
+const ctx = document.getElementById('grafico');
 
-        <div class="card">
-            <h3>📅 Citas Hoy</h3>
-            <p style="font-size:30px;">{{ citas_hoy }}</p>
-        </div>
-
-        <div class="card">
-            <h3>⏳ Pendientes</h3>
-            <p style="font-size:30px;">{{ citas_pendientes }}</p>
-        </div>
-
-    </div>
-
-    <!-- ACCIONES -->
-    <div style="margin-top:25px;" class="card">
-
-        <h3>⚡ Acciones rápidas</h3>
-
-        <br>
-
-        <a href="/registro" class="btn">➕ Registrar paciente</a>
-        <a href="/citas" class="btn">📅 Ver citas</a>
-        <a href="/pacientes" class="btn">👥 Ver pacientes</a>
-
-    </div>
-
-</div>
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Pacientes', 'Citas Hoy', 'Pendientes'],
+        datasets: [{
+            label: 'Datos del sistema',
+            data: [pacientes, hoy, pendientes]
+        }]
+    }
+});
+</script>
 
 </body>
 </html>

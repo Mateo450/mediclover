@@ -192,3 +192,131 @@ tr:hover{
         padding:15px;
     }
 }
+/* ===== LAYOUT ===== */
+.layout{
+    display:flex;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+    width:220px;
+    height:100vh;
+    background:#1b4332;
+    color:white;
+    padding:20px;
+    position:fixed;
+}
+
+.sidebar h2{
+    margin-bottom:30px;
+}
+
+.sidebar a{
+    display:block;
+    color:white;
+    padding:10px;
+    margin-bottom:10px;
+    text-decoration:none;
+    border-radius:8px;
+    transition:0.3s;
+}
+
+.sidebar a:hover{
+    background:#2d6a4f;
+}
+
+.sidebar .active{
+    background:#40916c;
+}
+
+/* ===== MAIN ===== */
+.main{
+    margin-left:220px;
+    padding:30px;
+    width:100%;
+}
+
+/* ===== STATS ===== */
+.stat{
+    text-align:center;
+}
+
+.stat h2{
+    font-size:28px;
+    margin-top:10px;
+}
+
+/* ===== ACTIONS ===== */
+.actions{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+}
+/* ===== ANIMACIONES GENERALES ===== */
+*{
+    transition: all 0.25s ease;
+}
+
+/* ===== CARDS MÁS PRO ===== */
+.card{
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* HOVER CARD */
+.card:hover{
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+}
+
+/* ===== BOTONES PRO ===== */
+.btn{
+    background: linear-gradient(135deg, #52b788, #40916c);
+    color:white;
+    padding:10px 16px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:bold;
+    display:inline-block;
+}
+
+/* HOVER BOTÓN */
+.btn:hover{
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* ===== SIDEBAR HOVER ===== */
+.sidebar a{
+    position: relative;
+    overflow:hidden;
+}
+
+.sidebar a::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:0%;
+    height:3px;
+    background:#52b788;
+    transition:0.3s;
+}
+
+.sidebar a:hover::after{
+    width:100%;
+}
+
+/* ===== TITULOS ===== */
+h1{
+    font-size:28px;
+    margin-bottom:20px;
+}
+
+h3{
+    margin-bottom:10px;
+    color:#2d6a4f;
+}
