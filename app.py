@@ -27,10 +27,6 @@ def login_required(role=None):
                 if session.get("usuario") != ADMIN_USER:
                     return redirect("/login")
 
-            if role == "paciente":
-                if session.get("role") != "paciente":
-                    return redirect("/login_paciente")
-
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -122,6 +118,23 @@ def editar_paciente(id):
     return render_template("editar_paciente.html", paciente=paciente)
 
 # ===============================
+# ELIMINAR PACIENTE
+# ===============================
+@app.route("/eliminar_paciente/<int:id>")
+@login_required(role="admin")
+def eliminar_paciente(id):
+
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM cita WHERE id_paciente=%s",(id,))
+    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s",(id,))
+
+    conn.commit()
+    cursor.close()
+
+    return redirect("/pacientes")
+
+# ===============================
 # CITAS
 # ===============================
 @app.route("/citas")
@@ -168,7 +181,7 @@ def cancelar_cita(id):
     return redirect("/citas")
 
 # ===============================
-# LOGIN ADMIN
+# LOGIN
 # ===============================
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -181,20 +194,6 @@ def login():
             return render_template("login.html", error="Credenciales incorrectas")
 
     return render_template("login.html")
-
-@app.route("/eliminar_paciente/<int:id>")
-@login_required(role="admin")
-def eliminar_paciente(id):
-
-    cursor = conn.cursor()
-
-    cursor.execute("DELETE FROM cita WHERE id_paciente=%s",(id,))
-    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s",(id,))
-
-    conn.commit()
-    cursor.close()
-
-    return redirect("/pacientes")
 
 # ===============================
 # LOGOUT

@@ -9,23 +9,18 @@
 
 <div class="container">
 
-    <div class="card">
-        <h2>✏️ Editar Paciente</h2>
+    <h2>Editar Paciente</h2>
 
-        <form method="POST">
-            <input name="nombre" value="{{ paciente[0] }}" required>
-            <input name="apellido" value="{{ paciente[1] }}" required>
-            <input name="correo" value="{{ paciente[2] }}" required>
-            <input name="telefono" value="{{ paciente[3] }}">
-            <input type="date" name="fecha_nacimiento" value="{{ paciente[4] }}">
+    <form method="POST">
+        <input name="nombre" value="{{ paciente[0] }}">
+        <input name="apellido" value="{{ paciente[1] }}">
+        <input name="correo" value="{{ paciente[2] }}">
+        <input name="telefono" value="{{ paciente[3] }}">
+        <input type="date" name="fecha_nacimiento" value="{{ paciente[4] }}">
+        <button>Guardar</button>
+    </form>
 
-            <button class="btn">Guardar cambios</button>
-        </form>
-
-        <br>
-        <a href="/pacientes" class="btn">⬅ Volver</a>
-
-    </div>
+    <a href="/pacientes">Volver</a>
 
 </div>
 

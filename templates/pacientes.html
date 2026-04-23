@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pacientes - MediClover</title>
+    <title>Pacientes</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
@@ -9,51 +9,43 @@
 
 <div class="layout">
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>🏥 MediClover</h2>
-        <a href="/admin">📊 Dashboard</a>
-        <a href="/pacientes" class="active">👥 Pacientes</a>
-        <a href="/citas">📅 Citas</a>
-        <a href="/logout">🚪 Salir</a>
+        <a href="/admin">Dashboard</a>
+        <a href="/pacientes" class="active">Pacientes</a>
+        <a href="/citas">Citas</a>
+        <a href="/logout">Salir</a>
     </div>
 
-    <!-- CONTENIDO -->
     <div class="main">
 
-        <h1>👥 Lista de Pacientes</h1>
+        <h1>Pacientes</h1>
 
-        <div class="card">
+        <table>
+            <tr>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
 
-            <table>
+            {% for p in pacientes %}
+            <tr>
+                <td>{{ p[1] }}</td>
+                <td>{{ p[2] }}</td>
+                <td>{{ p[3] }}</td>
+                <td>{{ p[4] }}</td>
+                <td>{{ p[5] }}</td>
+                <td>
+                    <a href="/editar_paciente/{{ p[0] }}">✏️</a>
+                    <a href="/eliminar_paciente/{{ p[0] }}">🗑️</a>
+                </td>
+            </tr>
+            {% endfor %}
 
-                <tr>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Correo</th>
-                    <th>Teléfono</th>
-                    <th>Fecha Nac.</th>
-                    <th>Acciones</th>
-                </tr>
-
-                {% for p in pacientes %}
-                <tr>
-                    <td>{{ p[1] }}</td>
-                    <td>{{ p[2] }}</td>
-                    <td>{{ p[3] }}</td>
-                    <td>{{ p[4] }}</td>
-                    <td>{{ p[5] }}</td>
-
-                    <td>
-                        <a href="/editar_paciente/{{ p[0] }}">✏️</a>
-                        <a href="/eliminar_paciente/{{ p[0] }}" onclick="return confirm('¿Eliminar paciente?')">🗑️</a>
-                    </td>
-                </tr>
-                {% endfor %}
-
-            </table>
-
-        </div>
+        </table>
 
     </div>
 
