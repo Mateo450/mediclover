@@ -260,6 +260,50 @@ def citas():
 
     return render_template("citas.html", citas=data)
 
+# ===============================
+# RESERVAR CITA (PACIENTE)
+# ===============================
+@app.route("/reservar", methods=["GET","POST"])
+@login_paciente_required
+def reservar():
+
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+
+        fecha = request.form["fecha"]
+        hora = request.form["hora"]
+        descripcion = request.form["descripcion"]
+
+        # 🔒 evitar duplicados
+        cursor.execute("""
+            SELECT id_cita FROM cita
+            WHERE fecha=%s AND hora=%s
+        """, (fecha, hora))
+
+        if cursor.fetchone():
+            cursor.close()
+            return render_template("reservar.html",
+                mensaje="Ese horario ya está ocupado",
+                tipo="error"
+            )
+
+        cursor.execute("""
+            INSERT INTO cita (fecha, hora, descripcion, estado, id_paciente)
+            VALUES (%s, %s, %s, 'pendiente', %s)
+        """, (fecha, hora, descripcion, session["paciente_id"]))
+
+        conn.commit()
+        cursor.close()
+
+        return render_template("reservar.html",
+            mensaje="Cita registrada correctamente",
+            tipo="success"
+        )
+
+    cursor.close()
+    return render_template("reservar.html")
+
 
 # ===============================
 # COMPLETAR / CANCELAR ADMIN
