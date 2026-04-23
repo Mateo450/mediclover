@@ -84,33 +84,61 @@ def admin():
 
     cursor.close()
 
-    return render_template(
-        "index.html",
+    return render_template("index.html",
         total_pacientes=total_pacientes,
         citas_pendientes=citas_pendientes
     )
 
 
 # ===============================
-# CITAS PACIENTE (API)
+# LOGIN PACIENTE
 # ===============================
-@app.route("/paciente/citas/<int:id_paciente>")
+@app.route("/login_paciente", methods=["GET","POST"])
+def login_paciente():
+
+    if request.method == "POST":
+        correo = request.form["correo"]
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id_paciente, nombre
+            FROM paciente
+            WHERE correo=%s
+        """, (correo,))
+
+        paciente = cursor.fetchone()
+        cursor.close()
+
+        if paciente:
+            session["paciente_id"] = paciente[0]
+            session["paciente_nombre"] = paciente[1]
+            return redirect("/panel_paciente")
+
+        return render_template("login_paciente.html", error="Paciente no encontrado")
+
+    return render_template("login_paciente.html")
+
+
+# ===============================
+# PANEL PACIENTE
+# ===============================
+@app.route("/panel_paciente")
 @login_paciente_required
-def citas_paciente(id_paciente):
+def panel_paciente():
 
     cursor = conn.cursor()
 
     cursor.execute("""
         SELECT id_cita, fecha, hora, estado, descripcion
         FROM cita
-        WHERE id_paciente = %s
+        WHERE id_paciente=%s
         ORDER BY fecha, hora
-    """, (id_paciente,))
+    """, (session["paciente_id"],))
 
     citas = cursor.fetchall()
     cursor.close()
 
-    return jsonify({"citas": citas})
+    return render_template("panel_paciente.html", citas=citas)
 
 
 # ===============================
@@ -131,42 +159,7 @@ def cancelar_cita_paciente(id):
     conn.commit()
     cursor.close()
 
-    return jsonify({"mensaje": "Cita cancelada"})
-
-
-# ===============================
-# AGENDAR CITA (ANTI-DUPLICADOS)
-# ===============================
-@app.route("/cita/agendar", methods=["POST"])
-@login_paciente_required
-def agendar_cita():
-
-    fecha = request.form["fecha"]
-    hora = request.form["hora"]
-    descripcion = request.form["descripcion"]
-    id_paciente = session["paciente_id"]
-
-    cursor = conn.cursor()
-
-    # evitar duplicados
-    cursor.execute("""
-        SELECT id_cita FROM cita
-        WHERE fecha=%s AND hora=%s
-    """, (fecha, hora))
-
-    if cursor.fetchone():
-        cursor.close()
-        return jsonify({"error": "Horario ocupado"})
-
-    cursor.execute("""
-        INSERT INTO cita (fecha, hora, descripcion, estado, id_paciente)
-        VALUES (%s, %s, %s, 'pendiente', %s)
-    """, (fecha, hora, descripcion, id_paciente))
-
-    conn.commit()
-    cursor.close()
-
-    return jsonify({"mensaje": "Cita creada"})
+    return redirect("/panel_paciente")
 
 
 # ===============================
@@ -187,6 +180,63 @@ def pacientes():
     cursor.close()
 
     return render_template("pacientes.html", pacientes=data)
+
+
+# ===============================
+# EDITAR PACIENTE
+# ===============================
+@app.route("/editar_paciente/<int:id>", methods=["GET","POST"])
+@login_required(role="admin")
+def editar_paciente(id):
+
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        cursor.execute("""
+            UPDATE paciente
+            SET nombre=%s, apellido=%s, correo=%s, telefono=%s, fecha_nacimiento=%s
+            WHERE id_paciente=%s
+        """, (
+            request.form["nombre"],
+            request.form["apellido"],
+            request.form["correo"],
+            request.form["telefono"],
+            request.form["fecha_nacimiento"],
+            id
+        ))
+
+        conn.commit()
+        cursor.close()
+        return redirect("/pacientes")
+
+    cursor.execute("""
+        SELECT nombre, apellido, correo, telefono, fecha_nacimiento
+        FROM paciente
+        WHERE id_paciente=%s
+    """, (id,))
+
+    paciente = cursor.fetchone()
+    cursor.close()
+
+    return render_template("editar_paciente.html", paciente=paciente)
+
+
+# ===============================
+# ELIMINAR PACIENTE
+# ===============================
+@app.route("/eliminar_paciente/<int:id>")
+@login_required(role="admin")
+def eliminar_paciente(id):
+
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM cita WHERE id_paciente=%s", (id,))
+    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
+
+    conn.commit()
+    cursor.close()
+
+    return redirect("/pacientes")
 
 
 # ===============================
