@@ -7,77 +7,31 @@
 
 <body>
 
-<!-- NAVBAR -->
 <div class="navbar">
     <h2>🏥 MediClover</h2>
+
     <div>
-        <a href="#">Inicio</a>
-        <a href="#nosotros">Nosotros</a>
-        <a href="#servicios">Servicios</a>
-        <a href="#especialidades">Especialidades</a>
-        <a href="#doctor">Doctor</a>
-        <a href="/login_paciente" class="btn">Agendar Cita</a>
+        <a href="/login_paciente" class="btn">Paciente</a>
+        <a href="/login" class="btn">Admin</a>
     </div>
 </div>
 
-<!-- HERO -->
 <div class="hero">
     <h1>Tu salud, nuestra prioridad</h1>
-    <p>Agenda tu cita médica con el Dr. Luis Suárez</p>
-    <a href="/login_paciente" class="btn">Agendar ahora</a>
+    <p>Agenda tu cita médica fácilmente</p>
 </div>
 
-<!-- NOSOTROS -->
-<section id="nosotros" class="section">
-    <h2>Nosotros</h2>
-    <p>
-        MediClover es un sistema desarrollado para gestionar citas médicas 
-        de forma eficiente, permitiendo a los pacientes agendar consultas 
-        con el Dr. Luis Suárez de manera rápida y organizada.
-    </p>
-</section>
+<div class="container">
 
-<!-- SERVICIOS -->
-<section id="servicios" class="section">
-    <h2>Servicios</h2>
-    <div class="grid">
-        <div class="card">Consulta médica</div>
-        <div class="card">Emergencias</div>
-        <div class="card">Control general</div>
-        <div class="card">Seguimiento</div>
+    <div class="card">
+        <h2>Sobre MediClover</h2>
+        <p>
+            Sistema web para gestionar citas médicas de forma rápida,
+            segura y organizada.
+        </p>
     </div>
-</section>
 
-<!-- ESPECIALIDADES -->
-<section id="especialidades" class="section">
-    <h2>Especialidades</h2>
-    <div class="grid">
-        <div class="card">Medicina General</div>
-        <div class="card">Chequeos</div>
-        <div class="card">Diagnóstico</div>
-        <div class="card">Tratamientos</div>
-    </div>
-</section>
-
-<!-- DOCTOR -->
-<section id="doctor" class="section">
-    <h2>Doctor</h2>
-
-    <div class="grid">
-        <div class="card">
-            <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
-            <h3>Dr. Luis Suárez</h3>
-            <p>Médico General</p>
-        </div>
-    </div>
-</section>
-
-<!-- FOOTER -->
-<footer class="footer">
-    <p>📍 Quito - Ecuador</p>
-    <p>📞 098 000 0000</p>
-    <p>© 2026 MediClover</p>
-</footer>
+</div>
 
 </body>
 </html>

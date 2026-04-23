@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MediClover - Panel Paciente</title>
+    <title>Panel Paciente - MediClover</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
@@ -9,15 +9,11 @@
 
 <div class="navbar">
     <h2>🏥 MediClover</h2>
-    <div>
-        <a href="/">Inicio</a>
-        <a href="/panel_paciente">Panel</a>
-        <a href="/reservar">Reservar</a>
-        <a href="/logout">Cerrar sesión</a>
-    </div>
+    <a href="/logout">Cerrar sesión</a>
 </div>
 
-    <!-- BIENVENIDA -->
+<div class="container">
+
     <div class="card">
         <h3>👤 Bienvenido {{ session["paciente_nombre"] }}</h3>
         <p>Gestiona tus citas de forma rápida.</p>
@@ -27,13 +23,12 @@
         <a href="/reservar" class="btn">➕ Reservar cita</a>
     </div>
 
-    <h2 style="margin-top:20px;">📅 Tus Citas</h2>
+    <h2>📅 Tus Citas</h2>
 
     {% for c in citas %}
-
     <div class="card">
 
-        <p><b>📆 Fecha:</b> {{ c[1] }}</p>
+        <p><b>📅 Fecha:</b> {{ c[1] }}</p>
         <p><b>⏰ Hora:</b> {{ c[2] }}</p>
         <p><b>📝 Motivo:</b> {{ c[4] }}</p>
 
@@ -41,18 +36,14 @@
             {{ c[3] }}
         </span>
 
-        <!-- BOTÓN CANCELAR -->
         {% if c[3] == "pendiente" %}
             <br><br>
-            <a href="/cancelar_cita_paciente/{{ c[0] }}"
-               class="btn"
-               onclick="return confirm('¿Cancelar esta cita?')">
-               ❌ Cancelar
+            <a href="/cancelar_cita_paciente/{{ c[0] }}" class="btn">
+                ❌ Cancelar
             </a>
         {% endif %}
 
     </div>
-
     {% endfor %}
 
 </div>

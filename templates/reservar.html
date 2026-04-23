@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Reservar Cita</title>
+    <title>Reservar Cita - MediClover</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
@@ -9,28 +9,23 @@
 
 <div class="navbar">
     <h2>🏥 MediClover</h2>
-    <div>
-        <a href="/panel_paciente">Volver</a>
-        <a href="/">Inicio</a>
-        <a href="/logout">Cerrar sesión</a>
-    </div>
+    <a href="/panel_paciente">⬅ Volver</a>
 </div>
 
 <div class="container">
 
     <div class="card">
         <h2>📅 Reservar cita</h2>
-        <p><b>Doctor asignado:</b> Dr. Luis Suárez</p>
+        <p><b>Doctor:</b> Dr. Luis Suárez</p>
     </div>
 
     {% if mensaje %}
-        <div class="{{ tipo }}">
-            {{ mensaje }}
-        </div>
+    <div class="{{ tipo }}">
+        {{ mensaje }}
+    </div>
     {% endif %}
 
     <div class="card">
-
         <form method="POST">
 
             <label>Fecha</label>
@@ -45,7 +40,6 @@
             <button class="btn">Reservar</button>
 
         </form>
-
     </div>
 
 </div>

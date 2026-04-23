@@ -7,21 +7,30 @@
 
 <body>
 
-<div style="background:#1b4332; padding:15px; color:white; display:flex; justify-content:space-between; align-items:center;">
-    <h3>🏥 MediClover</h3>
+<div class="navbar">
+    <h2>🏥 MediClover</h2>
 
-    <div style="background:#1b4332; padding:15px; color:white; display:flex; justify-content:space-between;">
-    <h3>🏥 MediClover</h3>
     <div>
         <a href="/">Inicio</a>
-        <a href="/admin">Dashboard</a>
-        <a href="/pacientes">Pacientes</a>
-        <a href="/citas">Citas</a>
-        <a href="/logout">Salir</a>
+
+        {% if session.get("usuario") %}
+            <a href="/admin">Panel Admin</a>
+        {% endif %}
+
+        {% if session.get("paciente_id") %}
+            <a href="/panel_paciente">Mi Panel</a>
+        {% endif %}
+
+        {% if session.get("usuario") or session.get("paciente_id") %}
+            <a href="/logout">Cerrar sesión</a>
+        {% else %}
+            <a href="/login">Admin</a>
+            <a href="/login_paciente">Paciente</a>
+        {% endif %}
     </div>
 </div>
 
-<div style="padding:20px;">
+<div class="container">
     {% block contenido %}{% endblock %}
 </div>
 
