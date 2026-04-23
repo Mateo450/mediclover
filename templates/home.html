@@ -6,31 +6,61 @@
 </head>
 
 <body>
+
 {% extends "base.html" %}
 
 {% block contenido %}
 
+<!-- HERO -->
 <div class="hero">
     <h1>Tu salud, nuestra prioridad</h1>
-    <p>Agenda tu cita médica fácilmente</p>
+    <p>Agenda tu cita médica de forma rápida y segura</p>
+
+    <br>
+
+    <a href="/login_paciente" class="btn">Agendar cita</a>
 </div>
 
-<div class="container">
+<!-- INFO -->
+<section class="section">
+    <h2>¿Qué es MediClover?</h2>
+    <p>
+        MediClover es un sistema web que permite gestionar citas médicas 
+        de manera eficiente, brindando una experiencia rápida, organizada 
+        y accesible para todos los pacientes.
+    </p>
+</section>
 
-    <div class="card">
-        <h2>Sobre MediClover</h2>
-        <p>
-            Sistema web para gestionar citas médicas de forma rápida,
-            segura y organizada.
-        </p>
+<!-- SERVICIOS -->
+<section class="section">
+    <h2>Servicios</h2>
+
+    <div class="grid">
+        <div class="card">Consulta médica</div>
+        <div class="card">Control general</div>
+        <div class="card">Seguimiento</div>
+        <div class="card">Atención personalizada</div>
     </div>
+</section>
 
-    <div style="margin-top:20px;">
-        <a href="/login_paciente" class="btn">Paciente</a>
-        <a href="/login" class="btn">Admin</a>
+<!-- DOCTOR -->
+<section class="section">
+    <h2>Nuestro Doctor</h2>
+
+    <div class="card" style="text-align:center;">
+        <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
+        <h3>Dr. Luis Suárez</h3>
+        <p>Médico General</p>
     </div>
+</section>
 
-</div>
+<!-- ACCESO -->
+<section class="section">
+    <h2>Acceder al sistema</h2>
+
+    <a href="/login_paciente" class="btn">Paciente</a>
+    <a href="/login" class="btn">Administrador</a>
+</section>
 
 {% endblock %}
 

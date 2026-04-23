@@ -7,24 +7,28 @@
 
 <body>
 
+{% extends "base.html" %}
+
+{% block contenido %}
+
 <div class="login-box">
 
-    <h2>🏥 MediClover</h2>
-    <p>Panel de Administración</p>
+    <h2>Panel Admin</h2>
 
     <form method="POST">
+        <input type="text" name="usuario" placeholder="Usuario" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
 
-        <input type="text" name="usuario" placeholder="👤 Usuario" required>
-
-        <input type="password" name="password" placeholder="🔒 Contraseña" required>
-
-        <button class="btn" type="submit">Ingresar</button>
-
+        <button class="btn">Ingresar</button>
     </form>
 
     {% if error %}
-    <p class="error">{{ error }}</p>
+        <div class="error">{{ error }}</div>
     {% endif %}
+
+</div>
+
+{% endblock %}
 
 </div>
 

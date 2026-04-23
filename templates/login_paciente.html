@@ -8,21 +8,27 @@
 <body>
 
 <div class="container">
-    <div class="card">
+    {% extends "base.html" %}
 
-        <h2>Login Paciente</h2>
+{% block contenido %}
 
-        <form method="POST">
-            <input type="email" name="correo" placeholder="Correo" required>
-            <button class="btn" type="submit">Ingresar</button>
-        </form>
+<div class="card">
+    <h2>Login Paciente</h2>
 
-        {% if error %}
-        <p class="error">{{ error }}</p>
-        {% endif %}
+    <form method="POST">
+        <input type="email" name="correo" placeholder="Correo" required>
+        <button class="btn">Ingresar</button>
+    </form>
 
-    </div>
+    <br>
+    <a href="/registro_paciente">Crear cuenta</a>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
 </div>
+
+{% endblock %}
 
 </body>
 </html>

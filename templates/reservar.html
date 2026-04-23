@@ -9,35 +9,41 @@
 
 <div class="navbar">
     <h2>🏥 MediClover</h2>
-    <a href="/panel_paciente">⬅ Volver</a>
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<a href="/panel_paciente" class="btn">⬅ Volver</a>
+
+<div class="card">
+    <h2>Reservar cita</h2>
+    <p><b>Doctor:</b> Dr. Luis Suárez</p>
 </div>
 
-<div class="container">
-
-    <div class="card">
-        <h2>📅 Reservar cita</h2>
-        <p><b>Doctor:</b> Dr. Luis Suárez</p>
-    </div>
-
-    {% if mensaje %}
+{% if mensaje %}
     <div class="{{ tipo }}">
         {{ mensaje }}
     </div>
-    {% endif %}
+{% endif %}
 
-    <div class="card">
-        <form method="POST">
+<div class="card">
+    <form method="POST">
 
-            <label>Fecha</label>
-            <input type="date" name="fecha" required>
+        <label>Fecha</label>
+        <input type="date" name="fecha" required>
 
-            <label>Hora</label>
-            <input type="time" name="hora" required>
+        <label>Hora</label>
+        <input type="time" name="hora" required>
 
-            <label>Descripción</label>
-            <textarea name="descripcion"></textarea>
+        <label>Descripción</label>
+        <textarea name="descripcion"></textarea>
 
-            <button class="btn">Reservar</button>
+        <button class="btn">Reservar</button>
+
+    </form>
+</div>
+
+{% endblock %}
 
         </form>
     </div>

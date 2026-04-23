@@ -9,32 +9,33 @@
 
 <div class="container">
 
-    <div class="card">
-        <h2>📝 Crear cuenta</h2>
+    {% extends "base.html" %}
 
-        <form method="POST">
+{% block contenido %}
 
-            <input name="nombre" placeholder="Nombre" required>
-            <input name="apellido" placeholder="Apellido" required>
-            <input name="correo" placeholder="Correo" required>
-            <input name="telefono" placeholder="Teléfono">
+<div class="card">
+    <h2>Crear cuenta</h2>
 
-            <button class="btn">Registrarse</button>
+    <form method="POST">
+        <input name="nombre" placeholder="Nombre" required>
+        <input name="apellido" placeholder="Apellido" required>
+        <input name="correo" placeholder="Correo" required>
+        <input name="telefono" placeholder="Teléfono">
 
-        </form>
+        <button class="btn">Registrarse</button>
+    </form>
 
-        {% if error %}
-        <div class="error">{{ error }}</div>
-        {% endif %}
+    {% if mensaje %}
+        <div class="{{ tipo }}">
+            {{ mensaje }}
+        </div>
+    {% endif %}
 
-        {% if success %}
-        <div class="success">{{ success }}</div>
-        {% endif %}
+    <br>
+    <a href="/login_paciente">Ya tengo cuenta</a>
+</div>
 
-        <br>
-        
-        <a href="/login_paciente">Ya tengo cuenta</a>
-    </div>
+{% endblock %}
 
 </div>
 

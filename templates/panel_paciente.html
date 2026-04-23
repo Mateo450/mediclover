@@ -14,37 +14,35 @@
 
 <div class="container">
 
-    <div class="card">
-        <h3>👤 Bienvenido {{ session["paciente_nombre"] }}</h3>
-        <p>Gestiona tus citas de forma rápida.</p>
+   {% extends "base.html" %}
 
-        <br>
+{% block contenido %}
 
-        <a href="/reservar" class="btn">➕ Reservar cita</a>
-    </div>
+<div class="card">
+    <h3>Bienvenido {{ session["paciente_nombre"] }}</h3>
+    <a href="/reservar" class="btn">➕ Reservar cita</a>
+</div>
 
-    <h2>📅 Tus Citas</h2>
+<h2>Tus citas</h2>
 
-    {% for c in citas %}
-    <div class="card">
+{% for c in citas %}
+<div class="card">
 
-        <p><b>📅 Fecha:</b> {{ c[1] }}</p>
-        <p><b>⏰ Hora:</b> {{ c[2] }}</p>
-        <p><b>📝 Motivo:</b> {{ c[4] }}</p>
+    <p>📅 {{ c[1] }}</p>
+    <p>⏰ {{ c[2] }}</p>
+    <p>{{ c[4] }}</p>
 
-        <span class="estado {{ c[3] }}">
-            {{ c[3] }}
-        </span>
+    <span class="estado {{ c[3] }}">{{ c[3] }}</span>
 
-        {% if c[3] == "pendiente" %}
-            <br><br>
-            <a href="/cancelar_cita_paciente/{{ c[0] }}" class="btn">
-                ❌ Cancelar
-            </a>
-        {% endif %}
+    {% if c[3] == "pendiente" %}
+        <br><br>
+        <a href="/cancelar_cita_paciente/{{ c[0] }}" class="btn">Cancelar</a>
+    {% endif %}
 
-    </div>
-    {% endfor %}
+</div>
+{% endfor %}
+
+{% endblock %}
 
 </div>
 
