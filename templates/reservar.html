@@ -1,29 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Reservar Cita - MediClover</title>
+    <title>Reservar Cita</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
 
 <div class="navbar">
-    <div>🏥 MediClover</div>
-    <div>
-        <a href="/panel_paciente">Inicio</a>
-        <a href="/reservar">Reservar</a>
-        <a href="/logout">Salir</a>
-    </div>
+    <h2>🏥 MediClover</h2>
+    <a href="/panel_paciente">Inicio</a>
 </div>
 
 <div class="container">
 
     <div class="card">
-        <h2>📅 Reservar cita médica</h2>
-        <p>Selecciona fecha y hora disponible</p>
+        <h2>📅 Reservar cita</h2>
+        <p><b>Doctor asignado:</b> Dr. Luis Suárez</p>
     </div>
 
-    <!-- MENSAJE BONITO -->
     {% if mensaje %}
         <div class="{{ tipo }}">
             {{ mensaje }}
@@ -34,18 +29,16 @@
 
         <form method="POST">
 
-            <label>📆 Fecha</label>
+            <label>Fecha</label>
             <input type="date" name="fecha" required>
 
-            <label>⏰ Hora</label>
+            <label>Hora</label>
             <input type="time" name="hora" required>
 
-            <label>📝 Descripción</label>
-            <textarea name="descripcion" placeholder="Motivo de la cita..."></textarea>
+            <label>Descripción</label>
+            <textarea name="descripcion"></textarea>
 
-            <br>
-
-            <button class="btn" type="submit">➕ Reservar cita</button>
+            <button class="btn">Reservar</button>
 
         </form>
 

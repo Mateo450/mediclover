@@ -15,7 +15,7 @@
         <a href="#nosotros">Nosotros</a>
         <a href="#servicios">Servicios</a>
         <a href="#especialidades">Especialidades</a>
-        <a href="#doctores">Doctores</a>
+        <a href="#doctor">Doctor</a>
         <a href="/login_paciente" class="btn">Agendar Cita</a>
     </div>
 </div>
@@ -23,7 +23,7 @@
 <!-- HERO -->
 <div class="hero">
     <h1>Tu salud, nuestra prioridad</h1>
-    <p>Agenda tu cita médica de forma rápida y segura</p>
+    <p>Agenda tu cita médica con el Dr. Luis Suárez</p>
     <a href="/login_paciente" class="btn">Agendar ahora</a>
 </div>
 
@@ -31,8 +31,9 @@
 <section id="nosotros" class="section">
     <h2>Nosotros</h2>
     <p>
-        MediClover es un sistema moderno que mejora la gestión médica,
-        brindando atención organizada, rápida y eficiente.
+        MediClover es un sistema desarrollado para gestionar citas médicas 
+        de forma eficiente, permitiendo a los pacientes agendar consultas 
+        con el Dr. Luis Suárez de manera rápida y organizada.
     </p>
 </section>
 
@@ -42,8 +43,8 @@
     <div class="grid">
         <div class="card">Consulta médica</div>
         <div class="card">Emergencias</div>
-        <div class="card">Laboratorio</div>
-        <div class="card">Farmacia</div>
+        <div class="card">Control general</div>
+        <div class="card">Seguimiento</div>
     </div>
 </section>
 
@@ -51,61 +52,23 @@
 <section id="especialidades" class="section">
     <h2>Especialidades</h2>
     <div class="grid">
-        <div class="card">Cardiología</div>
-        <div class="card">Pediatría</div>
-        <div class="card">Dermatología</div>
-        <div class="card">Odontología</div>
+        <div class="card">Medicina General</div>
+        <div class="card">Chequeos</div>
+        <div class="card">Diagnóstico</div>
+        <div class="card">Tratamientos</div>
     </div>
 </section>
 
-<!-- DOCTORES -->
-<section id="doctores" class="section">
-    <h2>Nuestros Especialistas</h2>
+<!-- DOCTOR -->
+<section id="doctor" class="section">
+    <h2>Doctor</h2>
 
     <div class="grid">
-
         <div class="card">
             <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
             <h3>Dr. Luis Suárez</h3>
             <p>Médico General</p>
         </div>
-
-        <div class="card">
-            <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
-            <h3>Dra. María López</h3>
-            <p>Pediatra</p>
-        </div>
-
-        <div class="card">
-            <img src="{{ url_for('static', filename='img/doctor.jpg') }}" class="doctor-img">
-            <h3>Dr. Carlos Pérez</h3>
-            <p>Cardiólogo</p>
-        </div>
-
-    </div>
-</section>
-
-<!-- TESTIMONIOS -->
-<section class="section">
-    <h2>Opiniones de pacientes</h2>
-
-    <div class="grid">
-
-        <div class="card">
-            <p>"Excelente atención y rapidez."</p>
-            <b>- Ana Torres</b>
-        </div>
-
-        <div class="card">
-            <p>"El sistema es fácil de usar."</p>
-            <b>- Juan Pérez</b>
-        </div>
-
-        <div class="card">
-            <p>"Muy buena experiencia médica."</p>
-            <b>- Sofía Gómez</b>
-        </div>
-
     </div>
 </section>
 
