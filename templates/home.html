@@ -6,15 +6,9 @@
 </head>
 
 <body>
+{% extends "base.html" %}
 
-<div class="navbar">
-    <h2>🏥 MediClover</h2>
-
-    <div>
-        <a href="/login_paciente" class="btn">Paciente</a>
-        <a href="/login" class="btn">Admin</a>
-    </div>
-</div>
+{% block contenido %}
 
 <div class="hero">
     <h1>Tu salud, nuestra prioridad</h1>
@@ -31,7 +25,14 @@
         </p>
     </div>
 
+    <div style="margin-top:20px;">
+        <a href="/login_paciente" class="btn">Paciente</a>
+        <a href="/login" class="btn">Admin</a>
+    </div>
+
 </div>
+
+{% endblock %}
 
 </body>
 </html>
