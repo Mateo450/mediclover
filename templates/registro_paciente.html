@@ -24,7 +24,11 @@
         </form>
 
         {% if error %}
-            <p style="color:red;">{{ error }}</p>
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if success %}
+        <div class="success">{{ success }}</div>
         {% endif %}
 
         <br>
