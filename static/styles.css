@@ -440,3 +440,20 @@ h3{
     transform: translateY(-5px);
     transition: 0.3s;
 }
+/* IMAGEN DOCTOR */
+.doctor-img {
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+    border-radius: 15px;
+    margin: 10px auto;
+    display: block;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+.doctor-img {
+    width: 100%;
+    max-width: 220px;
+    border-radius: 15px;
+    display: block;
+    margin: auto;
+}

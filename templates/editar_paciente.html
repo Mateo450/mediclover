@@ -1,17 +1,33 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Editar Paciente</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
 
-{% block contenido %}
+<body>
 
-<h2>Editar Paciente</h2>
+<div class="container">
 
-<form method="POST">
-<input name="nombre" value="{{ paciente[1] }}"><br>
-<input name="apellido" value="{{ paciente[2] }}"><br>
-<input name="correo" value="{{ paciente[3] }}"><br>
-<input name="telefono" value="{{ paciente[4] }}"><br>
-<input type="date" name="fecha_nacimiento" value="{{ paciente[5] }}"><br>
+    <div class="card">
+        <h2>✏️ Editar Paciente</h2>
 
-<button>Actualizar</button>
-</form>
+        <form method="POST">
+            <input name="nombre" value="{{ paciente[0] }}" required>
+            <input name="apellido" value="{{ paciente[1] }}" required>
+            <input name="correo" value="{{ paciente[2] }}" required>
+            <input name="telefono" value="{{ paciente[3] }}">
+            <input type="date" name="fecha_nacimiento" value="{{ paciente[4] }}">
 
-{% endblock %}
+            <button class="btn">Guardar cambios</button>
+        </form>
+
+        <br>
+        <a href="/pacientes" class="btn">⬅ Volver</a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

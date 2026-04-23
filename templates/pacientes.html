@@ -1,37 +1,63 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pacientes - MediClover</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
 
-{% block contenido %}
+<body>
 
-<h1>👥 Pacientes</h1>
+<div class="layout">
 
-<div class="card">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>🏥 MediClover</h2>
+        <a href="/admin">📊 Dashboard</a>
+        <a href="/pacientes" class="active">👥 Pacientes</a>
+        <a href="/citas">📅 Citas</a>
+        <a href="/logout">🚪 Salir</a>
+    </div>
 
-<table>
+    <!-- CONTENIDO -->
+    <div class="main">
 
-<tr>
-<th>Nombre</th>
-<th>Apellido</th>
-<th>Correo</th>
-<th>Acciones</th>
-</tr>
+        <h1>👥 Lista de Pacientes</h1>
 
-{% for paciente in pacientes %}
+        <div class="card">
 
-<tr>
-<td>{{ paciente[1] }}</td>
-<td>{{ paciente[2] }}</td>
-<td>{{ paciente[3] }}</td>
+            <table>
 
-<td>
-<a href="/editar_paciente/{{ paciente[0] }}">Editar</a>
-<a href="/eliminar_paciente/{{ paciente[0] }}">Eliminar</a>
-</td>
-</tr>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Fecha Nac.</th>
+                    <th>Acciones</th>
+                </tr>
 
-{% endfor %}
+                {% for p in pacientes %}
+                <tr>
+                    <td>{{ p[1] }}</td>
+                    <td>{{ p[2] }}</td>
+                    <td>{{ p[3] }}</td>
+                    <td>{{ p[4] }}</td>
+                    <td>{{ p[5] }}</td>
 
-</table>
+                    <td>
+                        <a href="/editar_paciente/{{ p[0] }}">✏️</a>
+                        <a href="/eliminar_paciente/{{ p[0] }}" onclick="return confirm('¿Eliminar paciente?')">🗑️</a>
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </table>
+
+        </div>
+
+    </div>
 
 </div>
 
-{% endblock %}
+</body>
+</html>
