@@ -88,6 +88,43 @@ def panel_paciente():
     return render_template("panel_paciente.html", citas=citas)
 
 # ===============================
+# REGISTRO PACIENTE
+# ===============================
+@app.route("/registro_paciente", methods=["GET","POST"])
+def registro_paciente():
+
+    if request.method == "POST":
+
+        nombre = request.form["nombre"]
+        apellido = request.form["apellido"]
+        correo = request.form["correo"]
+        telefono = request.form["telefono"]
+
+        cursor = conn.cursor()
+
+        # evitar correos duplicados
+        cursor.execute("SELECT id_paciente FROM paciente WHERE correo=%s",(correo,))
+        if cursor.fetchone():
+            cursor.close()
+            return render_template("registro_paciente.html",
+                error="El correo ya está registrado"
+            )
+
+        cursor.execute("""
+            INSERT INTO paciente (nombre,apellido,correo,telefono)
+            VALUES (%s,%s,%s,%s)
+        """,(nombre,apellido,correo,telefono))
+
+        conn.commit()
+        cursor.close()
+
+        return render_template("registro_paciente.html",
+            error="Cuenta creada correctamente"
+        )
+
+    return render_template("registro_paciente.html")
+
+# ===============================
 # RESERVAR CITA
 # ===============================
 @app.route("/reservar", methods=["GET","POST"])
