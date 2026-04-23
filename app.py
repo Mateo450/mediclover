@@ -75,6 +75,22 @@ def index():
         citas_pendientes=citas_pendientes
     )
 
+@app.route("/paciente/citas/<int:id_paciente>")
+def citas_paciente(id_paciente):
+
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id_cita, fecha, hora, estado, descripcion
+        FROM cita
+        WHERE id_paciente = %s
+    """, (id_paciente,))
+
+    citas = cursor.fetchall()
+    cursor.close()
+
+    return {"citas": citas}
+
 # ===============================
 # PACIENTES
 # ===============================
