@@ -9,8 +9,20 @@ app.secret_key = "Mediclover_19"
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
+# ===============================
+# CONEXIÓN BD SEGURA
+# ===============================
 DATABASE_URL = os.getenv("DATABASE_URL")
-conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+conn = None
+
+try:
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+        print("✅ Conectado a PostgreSQL")
+    else:
+        print("❌ No hay DATABASE_URL")
+except Exception as e:
+    print("❌ Error de conexión:", e)
 
 # ===============================
 # LOGIN REQUIRED
@@ -20,7 +32,7 @@ def login_required(role=None):
         @wraps(func)
         def wrapper(*args, **kwargs):
 
-            if "usuario" not in session and "paciente_id" not in session:
+            if "usuario" not in session:
                 return redirect("/login")
 
             if role == "admin":
@@ -45,6 +57,9 @@ def home():
 @login_required(role="admin")
 def index():
 
+    if not conn:
+        return "❌ Error de conexión a la base de datos"
+
     cursor = conn.cursor()
 
     cursor.execute("SELECT COUNT(*) FROM paciente")
@@ -67,6 +82,9 @@ def index():
 @login_required(role="admin")
 def pacientes():
 
+    if not conn:
+        return "❌ Error de conexión a la base de datos"
+
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -85,6 +103,9 @@ def pacientes():
 @app.route("/editar_paciente/<int:id>", methods=["GET","POST"])
 @login_required(role="admin")
 def editar_paciente(id):
+
+    if not conn:
+        return "❌ Error de conexión a la base de datos"
 
     cursor = conn.cursor()
 
@@ -124,6 +145,9 @@ def editar_paciente(id):
 @login_required(role="admin")
 def eliminar_paciente(id):
 
+    if not conn:
+        return "❌ Error de conexión a la base de datos"
+
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM cita WHERE id_paciente=%s",(id,))
@@ -140,6 +164,9 @@ def eliminar_paciente(id):
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
+
+    if not conn:
+        return "❌ Error de conexión a la base de datos"
 
     cursor = conn.cursor()
 
@@ -162,6 +189,9 @@ def citas():
 @login_required(role="admin")
 def completar_cita(id):
 
+    if not conn:
+        return "❌ Error de conexión a la base de datos"
+
     cursor = conn.cursor()
     cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
     conn.commit()
@@ -172,6 +202,9 @@ def completar_cita(id):
 @app.route("/cancelar_cita/<int:id>")
 @login_required(role="admin")
 def cancelar_cita(id):
+
+    if not conn:
+        return "❌ Error de conexión a la base de datos"
 
     cursor = conn.cursor()
     cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
