@@ -457,3 +457,7 @@ h3{
     display: block;
     margin: auto;
 }
+.container {
+    max-width: 900px;
+    margin: auto;
+}

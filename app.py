@@ -62,6 +62,7 @@ def login():
 # ===============================
 @app.route("/login_paciente", methods=["GET","POST"])
 def login_paciente():
+
     if request.method == "POST":
 
         cursor = conn.cursor()
@@ -147,7 +148,6 @@ def reservar():
     if request.method == "POST":
         cursor = conn.cursor()
 
-        # evitar doble reserva
         cursor.execute("""
         SELECT * FROM cita
         WHERE fecha=%s AND hora=%s AND estado='pendiente'
@@ -219,12 +219,47 @@ def admin():
     )
 
 # ===============================
+# 🔥 NUEVAS RUTAS QUE TE FALTABAN
+# ===============================
+
+@app.route("/pacientes")
+@login_required(role="admin")
+def pacientes():
+
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
+    FROM paciente
+    """)
+    pacientes = cursor.fetchall()
+    cursor.close()
+
+    return render_template("pacientes.html", pacientes=pacientes)
+
+
+@app.route("/citas")
+@login_required(role="admin")
+def citas():
+
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT c.id_cita,p.nombre,p.apellido,c.fecha,c.hora,c.estado,c.descripcion
+    FROM cita c
+    JOIN paciente p ON c.id_paciente = p.id_paciente
+    ORDER BY c.fecha,c.hora
+    """)
+    citas = cursor.fetchall()
+    cursor.close()
+
+    return render_template("citas.html", citas=citas)
+
+# ===============================
 # LOGOUT
 # ===============================
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
-    
+
 if __name__ == "__main__":
     app.run(debug=True)
