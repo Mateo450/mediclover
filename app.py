@@ -58,6 +58,92 @@ def login():
     return render_template("login.html")
 
 # ===============================
+# VER PACIENTES (ADMIN)
+# ===============================
+@app.route("/pacientes")
+@login_required(role="admin")
+def pacientes():
+
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id_paciente, nombre, apellido, correo, telefono
+        FROM paciente
+    """)
+    pacientes = cursor.fetchall()
+    cursor.close()
+
+    return render_template("pacientes.html", pacientes=pacientes)
+
+
+# ===============================
+# ELIMINAR PACIENTE
+# ===============================
+@app.route("/eliminar_paciente/<int:id>")
+@login_required(role="admin")
+def eliminar_paciente(id):
+
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM cita WHERE id_paciente=%s", (id,))
+    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
+
+    conn.commit()
+    cursor.close()
+
+    return redirect("/pacientes")
+
+
+# ===============================
+# VER CITAS (ADMIN)
+# ===============================
+@app.route("/citas")
+@login_required(role="admin")
+def citas():
+
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT c.id_cita, p.nombre, p.apellido, c.fecha, c.hora, c.estado, c.descripcion
+        FROM cita c
+        JOIN paciente p ON c.id_paciente = p.id_paciente
+        ORDER BY c.fecha, c.hora
+    """)
+    citas = cursor.fetchall()
+    cursor.close()
+
+    return render_template("citas.html", citas=citas)
+
+
+# ===============================
+# COMPLETAR CITA
+# ===============================
+@app.route("/completar_cita/<int:id>")
+@login_required(role="admin")
+def completar_cita(id):
+
+    cursor = conn.cursor()
+    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s", (id,))
+    conn.commit()
+    cursor.close()
+
+    return redirect("/citas")
+
+
+# ===============================
+# CANCELAR CITA (ADMIN)
+# ===============================
+@app.route("/cancelar_cita/<int:id>")
+@login_required(role="admin")
+def cancelar_cita(id):
+
+    cursor = conn.cursor()
+    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s", (id,))
+    conn.commit()
+    cursor.close()
+
+    return redirect("/citas")
+
+
+# ===============================
 # LOGIN PACIENTE
 # ===============================
 @app.route("/login_paciente", methods=["GET","POST"])
