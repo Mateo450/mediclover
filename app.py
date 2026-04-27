@@ -10,10 +10,19 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
 # ===============================
-# CONEXIÓN BD
+# CONEXIÓN BD SEGURA
 # ===============================
 DATABASE_URL = os.getenv("DATABASE_URL")
-conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+conn = None
+
+try:
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+        print("✅ Conectado a PostgreSQL")
+    else:
+        print("❌ No hay DATABASE_URL")
+except Exception as e:
+    print("❌ Error de conexión:", e)
 
 # ===============================
 # LOGIN REQUIRED
@@ -58,222 +67,15 @@ def login():
     return render_template("login.html")
 
 # ===============================
-# PACIENTES (ADMIN)
-# ===============================
-@app.route("/pacientes")
-@login_required(role="admin")
-def pacientes():
-
-    cursor = conn.cursor()
-    cursor.execute("""
-    SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
-    FROM paciente
-    """)
-    pacientes = cursor.fetchall()
-    cursor.close()
-
-    return render_template("pacientes.html", pacientes=pacientes)
-
-
-# ===============================
-# EDITAR PACIENTE
-# ===============================
-@app.route("/editar_paciente/<int:id>", methods=["GET","POST"])
-@login_required(role="admin")
-def editar_paciente(id):
-
-    cursor = conn.cursor()
-
-    if request.method == "POST":
-        cursor.execute("""
-        UPDATE paciente
-        SET nombre=%s, apellido=%s, correo=%s, telefono=%s, fecha_nacimiento=%s
-        WHERE id_paciente=%s
-        """,(
-            request.form["nombre"],
-            request.form["apellido"],
-            request.form["correo"],
-            request.form["telefono"],
-            request.form["fecha_nacimiento"],
-            id
-        ))
-
-        conn.commit()
-        cursor.close()
-        return redirect("/pacientes")
-
-    cursor.execute("""
-    SELECT nombre,apellido,correo,telefono,fecha_nacimiento
-    FROM paciente
-    WHERE id_paciente=%s
-    """,(id,))
-
-    paciente = cursor.fetchone()
-    cursor.close()
-
-    return render_template("editar_paciente.html", paciente=paciente)
-
-
-# ===============================
-# ELIMINAR PACIENTE
-# ===============================
-@app.route("/eliminar_paciente/<int:id>")
-@login_required(role="admin")
-def eliminar_paciente(id):
-
-    cursor = conn.cursor()
-
-    cursor.execute("DELETE FROM cita WHERE id_paciente=%s",(id,))
-    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s",(id,))
-
-    conn.commit()
-    cursor.close()
-
-    return redirect("/pacientes")
-
-
-# ===============================
-# CITAS ADMIN
-# ===============================
-@app.route("/citas")
-@login_required(role="admin")
-def citas():
-
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    SELECT c.id_cita,p.nombre,p.apellido,c.fecha,c.hora,c.estado,c.descripcion
-    FROM cita c
-    JOIN paciente p ON c.id_paciente = p.id_paciente
-    ORDER BY c.fecha,c.hora
-    """)
-
-    citas = cursor.fetchall()
-    cursor.close()
-
-    return render_template("citas.html", citas=citas)
-
-
-# ===============================
-# ACCIONES CITAS
-# ===============================
-@app.route("/completar_cita/<int:id>")
-@login_required(role="admin")
-def completar_cita(id):
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-
-@app.route("/cancelar_cita/<int:id>")
-@login_required(role="admin")
-def cancelar_cita(id):
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-# ===============================
-# VER PACIENTES (ADMIN)
-# ===============================
-@app.route("/pacientes")
-@login_required(role="admin")
-def pacientes():
-
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id_paciente, nombre, apellido, correo, telefono
-        FROM paciente
-    """)
-    pacientes = cursor.fetchall()
-    cursor.close()
-
-    return render_template("pacientes.html", pacientes=pacientes)
-
-
-# ===============================
-# ELIMINAR PACIENTE
-# ===============================
-@app.route("/eliminar_paciente/<int:id>")
-@login_required(role="admin")
-def eliminar_paciente(id):
-
-    cursor = conn.cursor()
-
-    cursor.execute("DELETE FROM cita WHERE id_paciente=%s", (id,))
-    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
-
-    conn.commit()
-    cursor.close()
-
-    return redirect("/pacientes")
-
-
-# ===============================
-# VER CITAS (ADMIN)
-# ===============================
-@app.route("/citas")
-@login_required(role="admin")
-def citas():
-
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT c.id_cita, p.nombre, p.apellido, c.fecha, c.hora, c.estado, c.descripcion
-        FROM cita c
-        JOIN paciente p ON c.id_paciente = p.id_paciente
-        ORDER BY c.fecha, c.hora
-    """)
-    citas = cursor.fetchall()
-    cursor.close()
-
-    return render_template("citas.html", citas=citas)
-
-
-# ===============================
-# COMPLETAR CITA
-# ===============================
-@app.route("/completar_cita/<int:id>")
-@login_required(role="admin")
-def completar_cita(id):
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s", (id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-
-# ===============================
-# CANCELAR CITA (ADMIN)
-# ===============================
-@app.route("/cancelar_cita/<int:id>")
-@login_required(role="admin")
-def cancelar_cita(id):
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s", (id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-
-# ===============================
 # LOGIN PACIENTE
 # ===============================
 @app.route("/login_paciente", methods=["GET","POST"])
 def login_paciente():
 
-    if request.method == "POST":
+    if not conn:
+        return "Error BD"
 
+    if request.method == "POST":
         cursor = conn.cursor()
         cursor.execute("SELECT id_paciente, nombre FROM paciente WHERE correo=%s",
                        (request.form["correo"],))
@@ -295,6 +97,9 @@ def login_paciente():
 # ===============================
 @app.route("/registro_paciente", methods=["GET","POST"])
 def registro_paciente():
+
+    if not conn:
+        return "Error BD"
 
     if request.method == "POST":
         cursor = conn.cursor()
@@ -334,6 +139,9 @@ def registro_paciente():
 @login_required(role="paciente")
 def panel_paciente():
 
+    if not conn:
+        return "Error BD"
+
     cursor = conn.cursor()
     cursor.execute("""
         SELECT id_cita, fecha, hora, estado, descripcion
@@ -353,6 +161,9 @@ def panel_paciente():
 @app.route("/reservar", methods=["GET","POST"])
 @login_required(role="paciente")
 def reservar():
+
+    if not conn:
+        return "Error BD"
 
     if request.method == "POST":
         cursor = conn.cursor()
@@ -394,6 +205,9 @@ def reservar():
 @login_required(role="paciente")
 def cancelar_cita_paciente(id):
 
+    if not conn:
+        return "Error BD"
+
     cursor = conn.cursor()
     cursor.execute("""
     UPDATE cita
@@ -406,11 +220,14 @@ def cancelar_cita_paciente(id):
     return redirect("/panel_paciente")
 
 # ===============================
-# ADMIN
+# ADMIN DASHBOARD
 # ===============================
 @app.route("/admin")
 @login_required(role="admin")
 def admin():
+
+    if not conn:
+        return "Error BD"
 
     cursor = conn.cursor()
 
@@ -428,12 +245,14 @@ def admin():
     )
 
 # ===============================
-# 🔥 NUEVAS RUTAS QUE TE FALTABAN
+# PACIENTES ADMIN
 # ===============================
-
 @app.route("/pacientes")
 @login_required(role="admin")
 def pacientes():
+
+    if not conn:
+        return "Error BD"
 
     cursor = conn.cursor()
     cursor.execute("""
@@ -445,10 +264,15 @@ def pacientes():
 
     return render_template("pacientes.html", pacientes=pacientes)
 
-
+# ===============================
+# CITAS ADMIN
+# ===============================
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
+
+    if not conn:
+        return "Error BD"
 
     cursor = conn.cursor()
     cursor.execute("""
@@ -461,6 +285,37 @@ def citas():
     cursor.close()
 
     return render_template("citas.html", citas=citas)
+
+# ===============================
+# ACCIONES CITAS
+# ===============================
+@app.route("/completar_cita/<int:id>")
+@login_required(role="admin")
+def completar_cita(id):
+
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
+    conn.commit()
+    cursor.close()
+
+    return redirect("/citas")
+
+@app.route("/cancelar_cita/<int:id>")
+@login_required(role="admin")
+def cancelar_cita(id):
+
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
+    conn.commit()
+    cursor.close()
+
+    return redirect("/citas")
 
 # ===============================
 # LOGOUT
