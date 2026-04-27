@@ -10,6 +10,9 @@ app.secret_key = "Mediclover_19"
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
+# ===============================
+# CONEXIÓN BD
+# ===============================
 DATABASE_URL = os.getenv("DATABASE_URL")
 conn = None
 
@@ -91,7 +94,7 @@ def login_paciente():
     return render_template("login_paciente.html")
 
 # ===============================
-# REGISTRO PACIENTE (VALIDADO)
+# REGISTRO PACIENTE
 # ===============================
 @app.route("/registro_paciente", methods=["GET","POST"])
 def registro_paciente():
@@ -105,35 +108,25 @@ def registro_paciente():
         correo = request.form["correo"]
         telefono = request.form["telefono"]
 
-        # 🔥 VALIDACIONES
+        # VALIDACIONES
         if len(nombre) < 3 or not nombre.replace(" ", "").isalpha():
-            return render_template("registro_paciente.html",
-                                   mensaje="Nombre inválido",
-                                   tipo="error")
+            return render_template("registro_paciente.html", mensaje="Nombre inválido", tipo="error")
 
         if len(apellido) < 3 or not apellido.replace(" ", "").isalpha():
-            return render_template("registro_paciente.html",
-                                   mensaje="Apellido inválido",
-                                   tipo="error")
+            return render_template("registro_paciente.html", mensaje="Apellido inválido", tipo="error")
 
         if "@" not in correo:
-            return render_template("registro_paciente.html",
-                                   mensaje="Correo inválido",
-                                   tipo="error")
+            return render_template("registro_paciente.html", mensaje="Correo inválido", tipo="error")
 
         if not telefono.isdigit() or len(telefono) < 7:
-            return render_template("registro_paciente.html",
-                                   mensaje="Teléfono inválido",
-                                   tipo="error")
+            return render_template("registro_paciente.html", mensaje="Teléfono inválido", tipo="error")
 
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM paciente WHERE correo=%s",(correo,))
+        cursor.execute("SELECT 1 FROM paciente WHERE correo=%s",(correo,))
         if cursor.fetchone():
             cursor.close()
-            return render_template("registro_paciente.html",
-                                   mensaje="Correo ya registrado",
-                                   tipo="error")
+            return render_template("registro_paciente.html", mensaje="Correo ya registrado", tipo="error")
 
         cursor.execute("""
         INSERT INTO paciente(nombre,apellido,correo,telefono)
@@ -194,7 +187,6 @@ def cancelar_cita_paciente(id):
 
     return redirect("/panel_paciente")
 
-
 # ===============================
 # ADMIN DASHBOARD
 # ===============================
@@ -220,9 +212,8 @@ def admin():
         citas_pendientes=citas_pendientes
     )
 
-
 # ===============================
-# VER PACIENTES
+# VER PACIENTES (FIX)
 # ===============================
 @app.route("/pacientes")
 @login_required(role="admin")
@@ -240,7 +231,6 @@ def pacientes():
     cursor.close()
 
     return render_template("pacientes.html", pacientes=pacientes)
-
 
 # ===============================
 # VER CITAS
@@ -264,13 +254,15 @@ def citas():
 
     return render_template("citas.html", citas=citas)
 
-
 # ===============================
 # COMPLETAR CITA
 # ===============================
 @app.route("/completar_cita/<int:id>")
 @login_required(role="admin")
 def completar_cita(id):
+
+    if not conn:
+        return "Error BD"
 
     cursor = conn.cursor()
     cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
@@ -279,13 +271,15 @@ def completar_cita(id):
 
     return redirect("/citas")
 
-
 # ===============================
 # CANCELAR CITA ADMIN
 # ===============================
 @app.route("/cancelar_cita/<int:id>")
 @login_required(role="admin")
 def cancelar_cita(id):
+
+    if not conn:
+        return "Error BD"
 
     cursor = conn.cursor()
     cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
@@ -294,17 +288,8 @@ def cancelar_cita(id):
 
     return redirect("/citas")
 
-
 # ===============================
-# LOGOUT
-# ===============================
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
-# ===============================
-# RESERVAR CITA (VALIDADO)
+# RESERVAR CITA
 # ===============================
 @app.route("/reservar", methods=["GET","POST"])
 @login_required(role="paciente")
@@ -317,7 +302,6 @@ def reservar():
         fecha = request.form["fecha"]
         descripcion = request.form["descripcion"]
 
-        # 🔥 VALIDACIONES
         if fecha < str(date.today()):
             return render_template("reservar.html",
                                    mensaje="No puedes reservar fechas pasadas",
@@ -333,7 +317,7 @@ def reservar():
         cursor = conn.cursor()
 
         cursor.execute("""
-        SELECT * FROM cita
+        SELECT 1 FROM cita
         WHERE fecha=%s AND hora=%s AND estado='pendiente'
         """,(request.form["fecha"], request.form["hora"]))
 
@@ -363,3 +347,14 @@ def reservar():
                                fecha_hoy=date.today())
 
     return render_template("reservar.html", fecha_hoy=date.today())
+
+# ===============================
+# LOGOUT
+# ===============================
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+if __name__ == "__main__":
+    app.run(debug=True)
