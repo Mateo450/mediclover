@@ -155,32 +155,55 @@ def panel_paciente():
 
     return render_template("panel_paciente.html", citas=citas)
 
+# ===============================
+# EDITAR PACIENTE (FIXED)
+# ===============================
 @app.route('/editar_paciente/<int:id>', methods=['GET', 'POST'])
+@login_required(role="admin")
 def editar_paciente(id):
+
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+
     if request.method == 'POST':
         nombre = request.form['nombre']
-        email = request.form['email']
+        correo = request.form['correo']
 
         cursor.execute("""
-            UPDATE pacientes 
-            SET nombre=%s, email=%s 
-            WHERE id=%s
-        """, (nombre, email, id))
+            UPDATE paciente
+            SET nombre=%s, correo=%s
+            WHERE id_paciente=%s
+        """, (nombre, correo, id))
+
         conn.commit()
+        cursor.close()
 
-        return redirect('/admin')
+        return redirect('/pacientes')
 
-    cursor.execute("SELECT * FROM pacientes WHERE id=%s", (id,))
+    cursor.execute("SELECT * FROM paciente WHERE id_paciente=%s", (id,))
     paciente = cursor.fetchone()
+    cursor.close()
 
     return render_template('editar_paciente.html', paciente=paciente)
 
+# ===============================
+# ELIMINAR PACIENTE (FIXED)
+# ===============================
 @app.route('/eliminar_paciente/<int:id>')
+@login_required(role="admin")
 def eliminar_paciente(id):
-    cursor.execute("DELETE FROM pacientes WHERE id=%s", (id,))
-    conn.commit()
 
-    return redirect('/admin')
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
+    conn.commit()
+    cursor.close()
+
+    return redirect('/pacientes')
 
 # ===============================
 # RESERVAR CITA
