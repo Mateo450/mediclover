@@ -173,6 +173,137 @@ def panel_paciente():
     return render_template("panel_paciente.html", citas=citas)
 
 # ===============================
+# CANCELAR CITA PACIENTE
+# ===============================
+@app.route("/cancelar_cita_paciente/<int:id>")
+@login_required(role="paciente")
+def cancelar_cita_paciente(id):
+
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+    cursor.execute("""
+    UPDATE cita
+    SET estado='cancelada'
+    WHERE id_cita=%s AND id_paciente=%s
+    """,(id, session["paciente_id"]))
+
+    conn.commit()
+    cursor.close()
+
+    return redirect("/panel_paciente")
+
+
+# ===============================
+# ADMIN DASHBOARD
+# ===============================
+@app.route("/admin")
+@login_required(role="admin")
+def admin():
+
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM paciente")
+    total_pacientes = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM cita WHERE estado='pendiente'")
+    citas_pendientes = cursor.fetchone()[0]
+
+    cursor.close()
+
+    return render_template("index.html",
+        total_pacientes=total_pacientes,
+        citas_pendientes=citas_pendientes
+    )
+
+
+# ===============================
+# VER PACIENTES
+# ===============================
+@app.route("/pacientes")
+@login_required(role="admin")
+def pacientes():
+
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT id_paciente,nombre,apellido,correo,telefono
+    FROM paciente
+    """)
+    pacientes = cursor.fetchall()
+    cursor.close()
+
+    return render_template("pacientes.html", pacientes=pacientes)
+
+
+# ===============================
+# VER CITAS
+# ===============================
+@app.route("/citas")
+@login_required(role="admin")
+def citas():
+
+    if not conn:
+        return "Error BD"
+
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT c.id_cita,p.nombre,p.apellido,c.fecha,c.hora,c.estado,c.descripcion
+    FROM cita c
+    JOIN paciente p ON c.id_paciente = p.id_paciente
+    ORDER BY c.fecha,c.hora
+    """)
+    citas = cursor.fetchall()
+    cursor.close()
+
+    return render_template("citas.html", citas=citas)
+
+
+# ===============================
+# COMPLETAR CITA
+# ===============================
+@app.route("/completar_cita/<int:id>")
+@login_required(role="admin")
+def completar_cita(id):
+
+    cursor = conn.cursor()
+    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
+    conn.commit()
+    cursor.close()
+
+    return redirect("/citas")
+
+
+# ===============================
+# CANCELAR CITA ADMIN
+# ===============================
+@app.route("/cancelar_cita/<int:id>")
+@login_required(role="admin")
+def cancelar_cita(id):
+
+    cursor = conn.cursor()
+    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
+    conn.commit()
+    cursor.close()
+
+    return redirect("/citas")
+
+
+# ===============================
+# LOGOUT
+# ===============================
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+# ===============================
 # RESERVAR CITA (VALIDADO)
 # ===============================
 @app.route("/reservar", methods=["GET","POST"])
