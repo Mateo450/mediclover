@@ -1,15 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Reservar Cita - MediClover</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-
-<body>
-
-<div class="navbar">
-    <h2>🏥 MediClover</h2>
-    
 {% extends "base.html" %}
 
 {% block contenido %}
@@ -39,15 +27,9 @@
         <label>Descripción</label>
         <textarea name="descripcion" required minlength="5"></textarea>
 
-        <button type="submit">Reservar</button>
+        <button type="submit" class="btn">Reservar</button>
 
     </form>
 </div>
 
 {% endblock %}
-      
-
-</div>
-
-</body>
-</html>
