@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 from functools import wraps
 import psycopg2
 import os
+from datetime import date
 
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
@@ -9,9 +10,6 @@ app.secret_key = "Mediclover_19"
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-# ===============================
-# CONEXIÓN BD SEGURA
-# ===============================
 DATABASE_URL = os.getenv("DATABASE_URL")
 conn = None
 
@@ -93,7 +91,7 @@ def login_paciente():
     return render_template("login_paciente.html")
 
 # ===============================
-# REGISTRO PACIENTE
+# REGISTRO PACIENTE (VALIDADO)
 # ===============================
 @app.route("/registro_paciente", methods=["GET","POST"])
 def registro_paciente():
@@ -102,11 +100,35 @@ def registro_paciente():
         return "Error BD"
 
     if request.method == "POST":
+        nombre = request.form["nombre"]
+        apellido = request.form["apellido"]
+        correo = request.form["correo"]
+        telefono = request.form["telefono"]
+
+        # 🔥 VALIDACIONES
+        if len(nombre) < 3 or not nombre.replace(" ", "").isalpha():
+            return render_template("registro_paciente.html",
+                                   mensaje="Nombre inválido",
+                                   tipo="error")
+
+        if len(apellido) < 3 or not apellido.replace(" ", "").isalpha():
+            return render_template("registro_paciente.html",
+                                   mensaje="Apellido inválido",
+                                   tipo="error")
+
+        if "@" not in correo:
+            return render_template("registro_paciente.html",
+                                   mensaje="Correo inválido",
+                                   tipo="error")
+
+        if not telefono.isdigit() or len(telefono) < 7:
+            return render_template("registro_paciente.html",
+                                   mensaje="Teléfono inválido",
+                                   tipo="error")
+
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM paciente WHERE correo=%s",
-                       (request.form["correo"],))
-
+        cursor.execute("SELECT * FROM paciente WHERE correo=%s",(correo,))
         if cursor.fetchone():
             cursor.close()
             return render_template("registro_paciente.html",
@@ -116,12 +138,7 @@ def registro_paciente():
         cursor.execute("""
         INSERT INTO paciente(nombre,apellido,correo,telefono)
         VALUES(%s,%s,%s,%s)
-        """,(
-            request.form["nombre"],
-            request.form["apellido"],
-            request.form["correo"],
-            request.form["telefono"]
-        ))
+        """,(nombre,apellido,correo,telefono))
 
         conn.commit()
         cursor.close()
@@ -156,63 +173,7 @@ def panel_paciente():
     return render_template("panel_paciente.html", citas=citas)
 
 # ===============================
-# EDITAR PACIENTE (FIXED)
-# ===============================
-@app.route('/editar_paciente/<int:id>', methods=['GET', 'POST'])
-@login_required(role="admin")
-def editar_paciente(id):
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        correo = request.form['correo']
-
-        cursor.execute("""
-            UPDATE paciente
-            SET nombre=%s, correo=%s
-            WHERE id_paciente=%s
-        """, (nombre, correo, id))
-
-        conn.commit()
-        cursor.close()
-
-        return redirect('/pacientes')
-
-    cursor.execute("SELECT * FROM paciente WHERE id_paciente=%s", (id,))
-    paciente = cursor.fetchone()
-    cursor.close()
-
-    return render_template('editar_paciente.html', paciente=paciente)
-
-# ===============================
-# ELIMINAR PACIENTE (FIXED)
-# ===============================
-@app.route('/eliminar_paciente/<int:id>')
-@login_required(role="admin")
-def eliminar_paciente(id):
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-
-    # 🔥 eliminar citas primero
-    cursor.execute("DELETE FROM cita WHERE id_paciente=%s", (id,))
-
-    # luego eliminar paciente
-    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
-
-    conn.commit()
-    cursor.close()
-
-    return redirect('/pacientes')
-
-# ===============================
-# RESERVAR CITA
+# RESERVAR CITA (VALIDADO)
 # ===============================
 @app.route("/reservar", methods=["GET","POST"])
 @login_required(role="paciente")
@@ -222,6 +183,22 @@ def reservar():
         return "Error BD"
 
     if request.method == "POST":
+        fecha = request.form["fecha"]
+        descripcion = request.form["descripcion"]
+
+        # 🔥 VALIDACIONES
+        if fecha < str(date.today()):
+            return render_template("reservar.html",
+                                   mensaje="No puedes reservar fechas pasadas",
+                                   tipo="error",
+                                   fecha_hoy=date.today())
+
+        if len(descripcion) < 5:
+            return render_template("reservar.html",
+                                   mensaje="Descripción muy corta",
+                                   tipo="error",
+                                   fecha_hoy=date.today())
+
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -233,7 +210,8 @@ def reservar():
             cursor.close()
             return render_template("reservar.html",
                                    mensaje="Horario ocupado",
-                                   tipo="error")
+                                   tipo="error",
+                                   fecha_hoy=date.today())
 
         cursor.execute("""
         INSERT INTO cita(id_paciente,fecha,hora,estado,descripcion)
@@ -242,7 +220,7 @@ def reservar():
             session["paciente_id"],
             request.form["fecha"],
             request.form["hora"],
-            request.form["descripcion"]
+            descripcion
         ))
 
         conn.commit()
@@ -250,136 +228,7 @@ def reservar():
 
         return render_template("reservar.html",
                                mensaje="Cita reservada correctamente",
-                               tipo="success")
+                               tipo="success",
+                               fecha_hoy=date.today())
 
-    return render_template("reservar.html")
-
-# ===============================
-# CANCELAR CITA PACIENTE
-# ===============================
-@app.route("/cancelar_cita_paciente/<int:id>")
-@login_required(role="paciente")
-def cancelar_cita_paciente(id):
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-    cursor.execute("""
-    UPDATE cita
-    SET estado='cancelada'
-    WHERE id_cita=%s AND estado='pendiente'
-    """,(id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/panel_paciente")
-
-# ===============================
-# ADMIN DASHBOARD
-# ===============================
-@app.route("/admin")
-@login_required(role="admin")
-def admin():
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT COUNT(*) FROM paciente")
-    total_pacientes = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM cita WHERE estado='pendiente'")
-    citas_pendientes = cursor.fetchone()[0]
-
-    cursor.close()
-
-    return render_template("index.html",
-        total_pacientes=total_pacientes,
-        citas_pendientes=citas_pendientes
-    )
-
-# ===============================
-# PACIENTES ADMIN
-# ===============================
-@app.route("/pacientes")
-@login_required(role="admin")
-def pacientes():
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-    cursor.execute("""
-    SELECT id_paciente,nombre,apellido,correo,telefono,fecha_nacimiento
-    FROM paciente
-    """)
-    pacientes = cursor.fetchall()
-    cursor.close()
-
-    return render_template("pacientes.html", pacientes=pacientes)
-
-# ===============================
-# CITAS ADMIN
-# ===============================
-@app.route("/citas")
-@login_required(role="admin")
-def citas():
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-    cursor.execute("""
-    SELECT c.id_cita,p.nombre,p.apellido,c.fecha,c.hora,c.estado,c.descripcion
-    FROM cita c
-    JOIN paciente p ON c.id_paciente = p.id_paciente
-    ORDER BY c.fecha,c.hora
-    """)
-    citas = cursor.fetchall()
-    cursor.close()
-
-    return render_template("citas.html", citas=citas)
-
-# ===============================
-# ACCIONES CITAS
-# ===============================
-@app.route("/completar_cita/<int:id>")
-@login_required(role="admin")
-def completar_cita(id):
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-@app.route("/cancelar_cita/<int:id>")
-@login_required(role="admin")
-def cancelar_cita(id):
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-# ===============================
-# LOGOUT
-# ===============================
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    return render_template("reservar.html", fecha_hoy=date.today())

@@ -17,12 +17,21 @@
     <h2>Crear cuenta</h2>
 
     <form method="POST">
-        <input name="nombre" placeholder="Nombre" required>
-        <input name="apellido" placeholder="Apellido" required>
-        <input name="correo" placeholder="Correo" required>
-        <input name="telefono" placeholder="Teléfono">
 
-        <button class="btn">Registrarse</button>
+    <input type="text" name="nombre" placeholder="Nombre"
+    required minlength="3"
+    pattern="[A-Za-zÁÉÍÓÚáéíóúñÑ ]+">
+
+    <input type="text" name="apellido" placeholder="Apellido"
+    required minlength="3"
+    pattern="[A-Za-zÁÉÍÓÚáéíóúñÑ ]+">
+
+    <input type="email" name="correo" placeholder="Correo" required>
+
+    <input type="text" name="telefono" placeholder="Teléfono"
+    required pattern="[0-9]{7,10}">
+    <button type="submit">Registrarse</button>
+
     </form>
 
     {% if mensaje %}

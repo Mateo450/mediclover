@@ -29,16 +29,16 @@
 <div class="card">
     <form method="POST">
 
-        <label>Fecha</label>
-        <input type="date" name="fecha" required>
+    <label>Fecha</label>
+    <input type="date" name="fecha" required min="{{ fecha_hoy }}">
 
-        <label>Hora</label>
-        <input type="time" name="hora" required>
+    <label>Hora</label>
+    <input type="time" name="hora" required>
 
-        <label>Descripción</label>
-        <textarea name="descripcion"></textarea>
+    <label>Descripción</label>
+    <textarea name="descripcion" required minlength="5"></textarea>
 
-        <button class="btn">Reservar</button>
+    <button type="submit">Reservar</button>
 
     </form>
 </div>

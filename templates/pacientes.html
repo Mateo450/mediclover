@@ -40,7 +40,10 @@
                 <td>{{ p[5] }}</td>
                 <td>
                     <a href="/editar_paciente/{{ p[0] }}">✏️</a>
-                    <a href="/eliminar_paciente/{{ p[0] }}">🗑️</a>
+                    <a href="/eliminar_paciente/{{ paciente.id_paciente }}"
+                        onclick="return confirm('¿Seguro que quieres eliminar este paciente?')">
+                        Eliminar
+                    </a>
                 </td>
             </tr>
             {% endfor %}
