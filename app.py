@@ -155,6 +155,33 @@ def panel_paciente():
 
     return render_template("panel_paciente.html", citas=citas)
 
+@app.route('/editar_paciente/<int:id>', methods=['GET', 'POST'])
+def editar_paciente(id):
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        email = request.form['email']
+
+        cursor.execute("""
+            UPDATE pacientes 
+            SET nombre=%s, email=%s 
+            WHERE id=%s
+        """, (nombre, email, id))
+        conn.commit()
+
+        return redirect('/admin')
+
+    cursor.execute("SELECT * FROM pacientes WHERE id=%s", (id,))
+    paciente = cursor.fetchone()
+
+    return render_template('editar_paciente.html', paciente=paciente)
+
+@app.route('/eliminar_paciente/<int:id>')
+def eliminar_paciente(id):
+    cursor.execute("DELETE FROM pacientes WHERE id=%s", (id,))
+    conn.commit()
+
+    return redirect('/admin')
+
 # ===============================
 # RESERVAR CITA
 # ===============================
