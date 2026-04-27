@@ -9,13 +9,15 @@
 
 <div class="navbar">
 
-    <div style="display:flex; align-items:center; gap:10px;">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" 
-             style="height:45px; border-radius:10px;">
-        <h2 style="margin:0;">MediClover</h2>
+    <!-- LOGO -->
+    <div class="logo">
+        <img src="{{ url_for('static', filename='img/logo.png') }}">
+        <span>MediClover</span>
     </div>
 
-    <div>
+    <!-- LINKS -->
+    <div class="nav-links">
+
         <a href="/">Inicio</a>
 
         {% if session.get("usuario") %}
@@ -32,6 +34,7 @@
             <a href="/login">Admin</a>
             <a href="/login_paciente">Paciente</a>
         {% endif %}
+
     </div>
 
 </div>

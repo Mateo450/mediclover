@@ -14,30 +14,47 @@ body{
 
 /* ===== NAVBAR ===== */
 .navbar{
-    background:linear-gradient(90deg,#1b4332,#2d6a4f);
-    color:white;
-    padding:15px 30px;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    box-shadow:0 4px 12px rgba(0,0,0,0.2);
+    background:#2c3e50;
+    padding:12px 25px;
+    border-radius:10px;
+    margin:20px;
 }
 
-.navbar a{
+/* LOGO */
+.logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
     color:white;
-    margin-left:15px;
-    text-decoration:none;
-    font-weight:600;
-    transition:0.3s;
+    font-size:20px;
+    font-weight:bold;
 }
 
-.navbar a:hover{
-    color:#95d5b2;
+.logo img{
+    height:40px;
+    border-radius:10px;
+}
+
+/* LINKS */
+.nav-links a{
+    margin-left:20px;
+    text-decoration:none;
+    color:white;
+    font-weight:bold;
+}
+
+.nav-links a:hover{
+    color:#2ecc71;
 }
 
 /* ===== CONTAINER ===== */
 .container{
-    padding:30px;
+    max-width:900px;
+    margin:auto;
+    padding:20px;
 }
 
 /* ===== TITULOS ===== */
@@ -49,9 +66,9 @@ h2, h3{
 .card{
     background:white;
     padding:20px;
-    border-radius:16px;
+    border-radius:15px;
     margin-bottom:20px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.08);
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
     transition:0.3s;
 }
 
@@ -59,46 +76,21 @@ h2, h3{
     transform:translateY(-5px);
 }
 
-/* ===== GRID ===== */
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
-    gap:20px;
-}
-
-/* ===== STAT CARDS ===== */
-.stat-card{
-    background:linear-gradient(135deg,#1b4332,#40916c);
-    color:white;
-    padding:25px;
-    border-radius:16px;
-    text-align:center;
-    font-size:18px;
-}
-
-.stat-card span{
-    font-size:35px;
-    display:block;
-    margin-top:10px;
-}
-
 /* ===== BOTONES ===== */
 .btn{
     background:linear-gradient(135deg,#52b788,#40916c);
     color:white;
-    padding:10px 18px;
+    padding:10px 16px;
     border-radius:10px;
     text-decoration:none;
-    display:inline-block;
     font-weight:bold;
+    display:inline-block;
     border:none;
     cursor:pointer;
-    transition:0.3s;
 }
 
 .btn:hover{
     transform:scale(1.05);
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
 }
 
 /* ===== FORMULARIOS ===== */
@@ -108,10 +100,9 @@ input, select, textarea{
     margin:8px 0;
     border-radius:10px;
     border:1px solid #ccc;
-    transition:0.3s;
 }
 
-input:focus, select:focus, textarea:focus{
+input:focus, textarea:focus{
     border:1px solid #52b788;
     outline:none;
     box-shadow:0 0 8px #95d5b2;
@@ -122,9 +113,8 @@ table{
     width:100%;
     border-collapse:collapse;
     background:white;
-    border-radius:12px;
+    border-radius:10px;
     overflow:hidden;
-    margin-top:15px;
 }
 
 th{
@@ -138,23 +128,6 @@ td{
     text-align:center;
     border-bottom:1px solid #eee;
 }
-
-tr:hover{
-    background:#f1faee;
-}
-
-/* ===== ESTADOS ===== */
-.estado{
-    padding:6px 12px;
-    border-radius:10px;
-    color:white;
-    font-size:12px;
-    font-weight:bold;
-}
-
-.pendiente{ background:#f4a261; }
-.completada{ background:#2a9d8f; }
-.cancelada{ background:#e63946; }
 
 /* ===== MENSAJES ===== */
 .success{
@@ -178,12 +151,7 @@ tr:hover{
     background:white;
     padding:30px;
     border-radius:16px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.1);
     text-align:center;
-}
-
-.login-box h2{
-    margin-bottom:20px;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -191,273 +159,15 @@ tr:hover{
     .container{
         padding:15px;
     }
-}
-/* ===== LAYOUT ===== */
-.layout{
-    display:flex;
-}
 
-/* ===== SIDEBAR ===== */
-.sidebar{
-    width:220px;
-    height:100vh;
-    background:#1b4332;
-    color:white;
-    padding:20px;
-    position:fixed;
-}
-
-.sidebar h2{
-    margin-bottom:30px;
-}
-
-.sidebar a{
-    display:block;
-    color:white;
-    padding:10px;
-    margin-bottom:10px;
-    text-decoration:none;
-    border-radius:8px;
-    transition:0.3s;
-}
-
-.sidebar a:hover{
-    background:#2d6a4f;
-}
-
-.sidebar .active{
-    background:#40916c;
-}
-
-/* ===== MAIN ===== */
-.main{
-    margin-left:220px;
-    padding:30px;
-    width:100%;
-}
-
-/* ===== STATS ===== */
-.stat{
-    text-align:center;
-}
-
-.stat h2{
-    font-size:28px;
-    margin-top:10px;
-}
-
-/* ===== ACTIONS ===== */
-.actions{
-    display:flex;
-    gap:10px;
-    margin-top:10px;
-}
-/* ===== ANIMACIONES GENERALES ===== */
-*{
-    transition: all 0.25s ease;
-}
-
-/* ===== CARDS MÁS PRO ===== */
-.card{
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
-
-/* HOVER CARD */
-.card:hover{
-    transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(0,0,0,0.3);
-}
-
-/* ===== BOTONES PRO ===== */
-.btn{
-    background: linear-gradient(135deg, #52b788, #40916c);
-    color:white;
-    padding:10px 16px;
-    border-radius:10px;
-    text-decoration:none;
-    font-weight:bold;
-    display:inline-block;
-}
-
-/* HOVER BOTÓN */
-.btn:hover{
-    transform: scale(1.05);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-/* ===== SIDEBAR HOVER ===== */
-.sidebar a{
-    position: relative;
-    overflow:hidden;
-}
-
-.sidebar a::after{
-    content:"";
-    position:absolute;
-    left:0;
-    bottom:0;
-    width:0%;
-    height:3px;
-    background:#52b788;
-    transition:0.3s;
-}
-
-.sidebar a:hover::after{
-    width:100%;
-}
-
-/* ===== TITULOS ===== */
-h1{
-    font-size:28px;
-    margin-bottom:20px;
-}
-
-h3{
-    margin-bottom:10px;
-    color:#2d6a4f;
-}
-/* ===============================
-   📱 RESPONSIVE DESIGN
-   =============================== */
-
-@media (max-width: 768px){
-
-    /* LAYOUT GENERAL */
-    .layout{
-        flex-direction: column;
+    .navbar{
+        flex-direction:column;
+        gap:10px;
     }
 
-    /* SIDEBAR */
-    .sidebar{
-        width: 100%;
-        height: auto;
-        display: flex;
-        flex-direction: row;
-        overflow-x: auto;
-        padding: 10px;
+    .nav-links{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:center;
     }
-
-    .sidebar h2{
-        display: none; /* ocultamos título para ahorrar espacio */
-    }
-
-    .sidebar a{
-        flex: 1;
-        text-align: center;
-        font-size: 14px;
-        padding: 10px;
-        white-space: nowrap;
-    }
-
-    /* CONTENIDO */
-    .main{
-        padding: 15px;
-    }
-
-    /* CARDS */
-    .grid{
-        grid-template-columns: 1fr;
-    }
-
-    .card{
-        padding: 15px;
-    }
-
-    /* TABLAS */
-    table{
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    /* BOTONES */
-    .btn{
-        display: block;
-        width: 100%;
-        margin-top: 10px;
-        text-align: center;
-    }
-
-}
-.estado {
-    padding: 5px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: capitalize;
-}
-
-/* PENDIENTE */
-.estado.pendiente {
-    background: #fff3cd;
-    color: #856404;
-}
-
-/* COMPLETADA */
-.estado.completada {
-    background: #d4edda;
-    color: #155724;
-}
-
-/* CANCELADA */
-.estado.cancelada {
-    background: #f8d7da;
-    color: #721c24;
-}
-.hero {
-    height: 300px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: white;
-    text-align: center;
-}
-
-.section {
-    padding: 40px;
-    text-align: center;
-}
-
-.footer {
-    padding: 20px;
-    text-align: center;
-    background: #0f172a;
-    color: white;
-}
-.doctor-img {
-    width: 100%;
-    border-radius: 10px;
-    margin-bottom: 10px;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    transition: 0.3s;
-}
-/* IMAGEN DOCTOR */
-.doctor-img {
-    width: 100%;
-    max-width: 220px;
-    height: auto;
-    border-radius: 15px;
-    margin: 10px auto;
-    display: block;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
-.doctor-img {
-    width: 100%;
-    max-width: 220px;
-    border-radius: 15px;
-    display: block;
-    margin: auto;
-}
-.container {
-    max-width: 900px;
-    margin: auto;
 }
