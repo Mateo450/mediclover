@@ -199,7 +199,13 @@ def eliminar_paciente(id):
         return "Error BD"
 
     cursor = conn.cursor()
+
+    # 🔥 eliminar citas primero
+    cursor.execute("DELETE FROM cita WHERE id_paciente=%s", (id,))
+
+    # luego eliminar paciente
     cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
+
     conn.commit()
     cursor.close()
 
