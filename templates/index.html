@@ -11,10 +11,10 @@
 
     <!-- SIDEBAR -->
     <div class="sidebar">
-        <h2> MediClover</h2>
+        <h2>MediClover</h2>
 
-        <a href="/" class="active">📊 Dashboard</a>
-        <a href="/pacientes" class="btn">👥 Ver Pacientes</a>
+        <a href="/admin" class="active">📊 Dashboard</a>
+        <a href="/pacientes">👥 Pacientes</a>
         <a href="/citas">📅 Citas</a>
         <a href="/logout">🚪 Salir</a>
     </div>
@@ -33,11 +33,6 @@
             </div>
 
             <div class="card stat">
-                <p>📅 Citas Hoy</p>
-                <h2>{{ citas_hoy }}</h2>
-            </div>
-
-            <div class="card stat">
                 <p>⏳ Pendientes</p>
                 <h2>{{ citas_pendientes }}</h2>
             </div>
@@ -49,53 +44,15 @@
             <h3>⚡ Acciones rápidas</h3>
 
             <div class="actions">
-                <a href="/registro" class="btn">➕ Paciente</a>
+                <a href="/registro_paciente" class="btn">➕ Paciente</a>
                 <a href="/citas" class="btn">📅 Citas</a>
                 <a href="/pacientes" class="btn">👥 Ver</a>
             </div>
         </div>
 
-        <!-- GRÁFICO -->
-        <div class="card">
-            <h3>📊 Estadísticas</h3>
-
-            <!-- DATOS SEGUROS -->
-            <div id="data"
-                data-pacientes="{{ total_pacientes }}"
-                data-hoy="{{ citas_hoy }}"
-                data-pendientes="{{ citas_pendientes }}">
-            </div>
-
-            <canvas id="grafico"></canvas>
-        </div>
-
     </div>
 
 </div>
-
-<!-- CHART JS -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-const dataDiv = document.getElementById("data");
-
-const pacientes = Number(dataDiv.dataset.pacientes);
-const hoy = Number(dataDiv.dataset.hoy);
-const pendientes = Number(dataDiv.dataset.pendientes);
-
-const ctx = document.getElementById('grafico');
-
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: ['Pacientes', 'Citas Hoy', 'Pendientes'],
-        datasets: [{
-            label: 'Datos del sistema',
-            data: [pacientes, hoy, pendientes]
-        }]
-    }
-});
-</script>
 
 </body>
 </html>
