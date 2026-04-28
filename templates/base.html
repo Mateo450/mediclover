@@ -14,7 +14,11 @@
 <nav class="navbar">
   <!-- Logo -->
   <a href="/" class="nav-brand">
-    <div class="nav-brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <img src="{{ url_for('static', filename='img/logomediclover.png') }}"
+         alt="MediClover"
+         style="height:36px; width:auto; border-radius:8px;"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="nav-brand-icon" style="display:none;"><i class="bi bi-heart-pulse-fill"></i></div>
     Medi<span class="accent">Clover</span>
   </a>
 

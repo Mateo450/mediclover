@@ -412,6 +412,40 @@
   </div>
 </section>
 
+<!-- NUESTRO DOCTOR -->
+<section class="sec" style="background:var(--white)">
+  <div class="sec-inner">
+    <div class="sec-head text-center">
+      <div class="sec-label" style="margin:0 auto .9rem"><i class="bi bi-person-badge"></i> Equipo médico</div>
+      <h2 class="sec-title">Nuestro Doctor</h2>
+    </div>
+    <div style="max-width:320px; margin:0 auto; text-align:center;">
+      <div style="position:relative; display:inline-block;">
+        <img src="{{ url_for('static', filename='img/doctor.png') }}"
+             alt="Dr. Luis Suárez"
+             style="width:180px; height:180px; object-fit:cover; border-radius:50%;
+                    border:4px solid var(--teal-light); box-shadow:var(--shadow-md);
+                    display:block; margin:0 auto;">
+        <div style="position:absolute; bottom:6px; right:6px; width:24px; height:24px;
+                    background:var(--teal); border-radius:50%; border:2px solid var(--white);"></div>
+      </div>
+      <h3 style="font-family:var(--font-display); font-size:1.3rem; color:var(--navy); margin-top:1.1rem;">
+        Dr. Luis Suárez
+      </h3>
+      <p style="color:var(--teal); font-weight:600; font-size:.875rem; margin:.2rem 0 .6rem;">
+        Médico General
+      </p>
+      <p style="color:var(--gray-500); font-size:.85rem; line-height:1.65;">
+        Especialista en medicina general con amplia experiencia en atención primaria
+        y seguimiento de pacientes crónicos.
+      </p>
+      <a href="/registro_paciente" class="btn" style="margin-top:1.2rem; display:inline-flex;">
+        <i class="bi bi-calendar-plus"></i> Reservar consulta
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta">
   <div class="cta-inner">
@@ -429,3 +463,4 @@
 </section>
 
 {% endblock %}
+
