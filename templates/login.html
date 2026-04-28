@@ -1,36 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login Admin</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-
-<body>
-
 {% extends "base.html" %}
+{% block title %}Admin — MediClover{% endblock %}
 
 {% block contenido %}
+<div class="auth-wrap">
+  <div class="auth-card">
 
-<div class="login-box">
+    <div class="auth-top">
+      <div class="auth-emblem"><i class="bi bi-shield-lock-fill"></i></div>
+      <h2>Panel Administrativo</h2>
+      <p>Acceso restringido al equipo médico</p>
+    </div>
 
-    <h2>Panel Admin</h2>
+    <div class="auth-body">
+      {% if error %}
+        <div class="alert error">
+          <i class="bi bi-x-circle-fill"></i> {{ error }}
+        </div>
+      {% endif %}
 
-    <form method="POST">
-        <input type="text" name="usuario" placeholder="Usuario" required>
-        <input type="password" name="password" placeholder="Contraseña" required>
+      <form method="POST">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" name="usuario" placeholder="admin" required autofocus>
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-block" style="margin-top:.5rem;">
+          <i class="bi bi-box-arrow-in-right"></i> Ingresar
+        </button>
+      </form>
 
-        <button class="btn">Ingresar</button>
-    </form>
+      <div class="auth-footer">
+        <a href="/">← Volver al inicio</a>
+      </div>
+    </div>
 
-    {% if error %}
-        <div class="error">{{ error }}</div>
-    {% endif %}
-
+  </div>
 </div>
-
 {% endblock %}
-
-</div>
-
-</body>
-</html>

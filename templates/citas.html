@@ -1,65 +1,76 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Citas - MediClover</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
+{% extends "base.html" %}
+{% block title %}Citas — MediClover{% endblock %}
 
-<body>
-
+{% block contenido %}
 <div class="layout">
 
-    <div class="sidebar">
-        <h2>🏥 MediClover</h2>
-        <a href="/admin">📊 Dashboard</a>
-        <a href="/pacientes">👥 Pacientes</a>
-        <a href="/citas" class="active">📅 Citas</a>
-        <a href="/logout">🚪 Salir</a>
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
+    <a href="/admin"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/pacientes"><i class="bi bi-people"></i> Pacientes</a>
+    <a href="/citas" class="active"><i class="bi bi-calendar3"></i> Citas</a>
+    <hr style="border-color:rgba(255,255,255,.1); margin:.75rem 1.25rem;">
+    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+  </aside>
+
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <h1>Gestión de Citas</h1>
+        <p>Todas las citas del sistema</p>
+      </div>
     </div>
 
-    <div class="main">
-
-        <h1>📅 Gestión de Citas</h1>
-
-        <div class="card">
-
-            <table>
-                <tr>
-                    <th>Paciente</th>
-                    <th>Doctor</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-
-                {% for c in citas %}
-                <tr>
-                    <td>{{ c[1] }} {{ c[2] }}</td>
-                    <td>Dr. Luis Suárez</td>
-                    <td>{{ c[3] }}</td>
-                    <td>{{ c[4] }}</td>
-
-                    <td>
-                        <span class="estado {{ c[5] }}">
-                            {{ c[5] }}
-                        </span>
-                    </td>
-
-                    <td>
-                        <a href="/completar_cita/{{ c[0] }}">✔</a>
-                        <a href="/cancelar_cita/{{ c[0] }}">❌</a>
-                    </td>
-                </tr>
-                {% endfor %}
-
-            </table>
-
-        </div>
-
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Paciente</th>
+            <th>Doctor</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in citas %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td><strong>{{ c[1] }} {{ c[2] }}</strong></td>
+            <td>Dr. Luis Suárez</td>
+            <td>{{ c[3] }}</td>
+            <td>{{ c[4] }}</td>
+            <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              {{ c[6] }}
+            </td>
+            <td>
+              <span class="badge estado {{ c[5] }}">{{ c[5] }}</span>
+            </td>
+            <td>
+              <div style="display:flex; gap:.4rem;">
+                {% if c[5] == "pendiente" %}
+                  <a href="/completar_cita/{{ c[0] }}" class="btn btn-sm"
+                     title="Completar" onclick="return confirm('¿Marcar como completada?')">
+                    <i class="bi bi-check-lg"></i>
+                  </a>
+                  <a href="/cancelar_cita/{{ c[0] }}" class="btn btn-danger btn-sm"
+                     title="Cancelar" onclick="return confirm('¿Cancelar esta cita?')">
+                    <i class="bi bi-x-lg"></i>
+                  </a>
+                {% else %}
+                  <span class="text-muted" style="font-size:.8rem;">—</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
+  </div>
 </div>
-
-</body>
-</html>
+{% endblock %}

@@ -1,34 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login Paciente</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <a href="/registro_paciente">Crear cuenta</a>
-</head>
-<body>
-
-<div class="container">
-    {% extends "base.html" %}
+{% extends "base.html" %}
+{% block title %}Iniciar sesión — MediClover{% endblock %}
 
 {% block contenido %}
+<div class="auth-wrap">
+  <div class="auth-card">
 
-<div class="card">
-    <h2>Login Paciente</h2>
+    <div class="auth-top">
+      <div class="auth-emblem"><i class="bi bi-person-circle"></i></div>
+      <h2>Bienvenido de vuelta</h2>
+      <p>Ingresa con tu correo registrado</p>
+    </div>
 
-    <form method="POST">
-        <input type="email" name="correo" placeholder="Correo" required>
-        <button class="btn">Ingresar</button>
-    </form>
+    <div class="auth-body">
+      {% if error %}
+        <div class="alert error">
+          <i class="bi bi-x-circle-fill"></i> {{ error }}
+        </div>
+      {% endif %}
 
-    <br>
-    <a href="/registro_paciente">Crear cuenta</a>
+      <form method="POST">
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" name="correo" placeholder="tucorreo@ejemplo.com" required autofocus>
+        </div>
+        <button type="submit" class="btn btn-block" style="margin-top:.5rem;">
+          <i class="bi bi-box-arrow-in-right"></i> Ingresar
+        </button>
+      </form>
 
-    {% if error %}
-        <div class="error">{{ error }}</div>
-    {% endif %}
+      <div class="auth-footer">
+        ¿No tienes cuenta? <a href="/registro_paciente">Regístrate gratis</a>
+      </div>
+    </div>
+
+  </div>
 </div>
-
 {% endblock %}
-
-</body>
-</html>

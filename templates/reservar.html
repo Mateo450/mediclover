@@ -1,35 +1,52 @@
 {% extends "base.html" %}
+{% block title %}Reservar cita — MediClover{% endblock %}
 
 {% block contenido %}
+<div class="auth-wrap" style="align-items:flex-start; padding-top:2.5rem;">
+  <div class="auth-card" style="max-width:480px;">
 
-<a href="/panel_paciente" class="btn">⬅ Volver</a>
-
-<div class="card">
-    <h2>Reservar cita</h2>
-    <p><b>Doctor:</b> Dr. Luis Suárez</p>
-</div>
-
-{% if mensaje %}
-    <div class="{{ tipo }}">
-        {{ mensaje }}
+    <div class="auth-top">
+      <div class="auth-emblem"><i class="bi bi-calendar-plus-fill"></i></div>
+      <h2>Reservar Cita</h2>
+      <p>Dr. Luis Suárez &mdash; Médico General</p>
     </div>
-{% endif %}
 
-<div class="card">
-    <form method="POST">
+    <div class="auth-body">
+      {% if mensaje %}
+        <div class="alert {{ tipo }}">
+          {% if tipo == 'success' %}<i class="bi bi-check-circle-fill"></i>
+          {% else %}<i class="bi bi-x-circle-fill"></i>{% endif %}
+          {{ mensaje }}
+        </div>
+      {% endif %}
 
-        <label>Fecha</label>
-        <input type="date" name="fecha" required min="{{ fecha_hoy }}">
+      <form method="POST">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem;">
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" name="fecha" required min="{{ fecha_hoy }}">
+          </div>
+          <div class="form-group">
+            <label>Hora</label>
+            <input type="time" name="hora" required min="07:00" max="18:00">
+          </div>
+        </div>
 
-        <label>Hora</label>
-        <input type="time" name="hora" required>
+        <div class="form-group">
+          <label>Motivo de consulta</label>
+          <textarea name="descripcion" placeholder="Describe brevemente el motivo de tu cita..." required minlength="5"></textarea>
+        </div>
 
-        <label>Descripción</label>
-        <textarea name="descripcion" required minlength="5"></textarea>
+        <button type="submit" class="btn btn-block">
+          <i class="bi bi-calendar-check-fill"></i> Confirmar reserva
+        </button>
+      </form>
 
-        <button type="submit" class="btn">Reservar</button>
+      <div class="auth-footer">
+        <a href="/panel_paciente">← Volver a mi panel</a>
+      </div>
+    </div>
 
-    </form>
+  </div>
 </div>
-
 {% endblock %}

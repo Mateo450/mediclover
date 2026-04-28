@@ -1,52 +1,75 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Panel Paciente - MediClover</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-
-<body>
-
-<div class="navbar">
-    <h2>🏥 MediClover</h2>
-    <a href="/logout">Cerrar sesión</a>
-</div>
-
-<div class="container">
-
-   {% extends "base.html" %}
+{% extends "base.html" %}
+{% block title %}Mi Panel — MediClover{% endblock %}
 
 {% block contenido %}
+<div class="page-content">
+  <div class="container">
 
-<div class="card">
-    <h3>Bienvenido {{ session["paciente_nombre"] }}</h3>
-    <a href="/reservar" class="btn">➕ Reservar cita</a>
-</div>
+    <div class="page-header">
+      <div>
+        <h1>Mi Panel</h1>
+        <p>Bienvenido, <strong>{{ session["paciente_nombre"] }}</strong></p>
+      </div>
+      <a href="/reservar" class="btn">
+        <i class="bi bi-plus-circle-fill"></i> Nueva cita
+      </a>
+    </div>
 
-<h2>Tus citas</h2>
+    {% if citas %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in citas %}
+            <tr>
+              <td><i class="bi bi-calendar3 text-teal"></i> {{ c[1] }}</td>
+              <td><i class="bi bi-clock text-teal"></i> {{ c[2] }}</td>
+              <td>{{ c[4] }}</td>
+              <td>
+                <span class="badge estado {{ c[3] }}">{{ c[3] }}</span>
+              </td>
+              <td>
+                {% if c[3] == "pendiente" %}
+                  <a href="/cancelar_cita_paciente/{{ c[0] }}"
+                     class="btn btn-danger btn-sm"
+                     onclick="return confirm('¿Cancelar esta cita?')">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                  </a>
+                {% else %}
+                  <span class="text-muted" style="font-size:.8rem;">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-{% for c in citas %}
-<div class="card">
-
-    <p>📅 {{ c[1] }}</p>
-    <p>⏰ {{ c[2] }}</p>
-    <p>{{ c[4] }}</p>
-
-    <span class="estado {{ c[3] }}">{{ c[3] }}</span>
-
-    {% if c[3] == "pendiente" %}
-        <br><br>
-        <a href="/cancelar_cita_paciente/{{ cita[0] }}" class="btn">
-            Cancelar
-        </a>
+    {% else %}
+      <div class="card">
+        <div class="card-body" style="text-align:center; padding:3.5rem 2rem;">
+          <div style="font-size:2.5rem; margin-bottom:1rem; opacity:.3;">📅</div>
+          <h3 style="font-family:var(--font-display); color:var(--navy); margin-bottom:.5rem;">
+            Sin citas registradas
+          </h3>
+          <p class="text-muted" style="margin-bottom:1.5rem;">
+            Aún no tienes ninguna cita. ¡Reserva tu primera ahora!
+          </p>
+          <a href="/reservar" class="btn">
+            <i class="bi bi-plus-circle-fill"></i> Reservar cita
+          </a>
+        </div>
+      </div>
     {% endif %}
 
+  </div>
 </div>
-{% endfor %}
-
 {% endblock %}
-
-</div>
-
-</body>
-</html>

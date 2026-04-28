@@ -1,47 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>MediClover</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}MediClover{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  {% block extra_head %}{% endblock %}
 </head>
-
 <body>
 
-<div class="navbar">
+{% if not hide_navbar %}
+<nav class="navbar">
+  <!-- Logo -->
+  <a href="/" class="nav-brand">
+    <div class="nav-brand-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    Medi<span class="accent">Clover</span>
+  </a>
 
-    <!-- LOGO -->
-    <div class="logo">
-        <img src="{{ url_for('static', filename='img/logo.png') }}">
-        <span>MediClover</span>
-    </div>
+  <!-- Links según rol -->
+  <div class="nav-links">
+    {% if session.get("usuario") %}
+      <a href="/admin"     {% if request.path == '/admin'     %}class="active"{% endif %}>
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+      <a href="/pacientes" {% if request.path == '/pacientes' %}class="active"{% endif %}>
+        <i class="bi bi-people"></i> Pacientes
+      </a>
+      <a href="/citas"     {% if request.path == '/citas'     %}class="active"{% endif %}>
+        <i class="bi bi-calendar3"></i> Citas
+      </a>
+    {% elif session.get("paciente_id") %}
+      <a href="/panel_paciente" {% if request.path == '/panel_paciente' %}class="active"{% endif %}>
+        <i class="bi bi-house"></i> Mi Panel
+      </a>
+      <a href="/reservar" {% if request.path == '/reservar' %}class="active"{% endif %}>
+        <i class="bi bi-plus-circle"></i> Nueva Cita
+      </a>
+    {% else %}
+      <a href="/">Inicio</a>
+    {% endif %}
+  </div>
 
-    <!-- LINKS -->
-    <div class="nav-links">
+  <!-- Lado derecho -->
+  <div class="nav-end">
+    {% if session.get("usuario") %}
+      <span class="nav-user">
+        <i class="bi bi-shield-check text-teal"></i> Administrador
+      </span>
+      <a href="/logout" class="btn btn-ghost btn-sm">
+        <i class="bi bi-box-arrow-right"></i> Salir
+      </a>
+    {% elif session.get("paciente_id") %}
+      <span class="nav-user">
+        <i class="bi bi-person-circle text-teal"></i>
+        {{ session.get("paciente_nombre", "Paciente") }}
+      </span>
+      <a href="/logout" class="btn btn-ghost btn-sm">
+        <i class="bi bi-box-arrow-right"></i> Salir
+      </a>
+    {% else %}
+      <a href="/login_paciente" class="btn btn-outline btn-sm">
+        <i class="bi bi-person"></i> Ingresar
+      </a>
+      <a href="/registro_paciente" class="btn btn-sm">
+        Registrarse
+      </a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
 
-        <a href="/">Inicio</a>
+<main style="flex:1; display:flex; flex-direction:column;">
+  {% block contenido %}{% endblock %}
+</main>
 
-        {% if session.get("usuario") %}
-            <a href="/admin">Panel Admin</a>
-        {% endif %}
-
-        {% if session.get("paciente_id") %}
-            <a href="/panel_paciente">Mi Panel</a>
-        {% endif %}
-
-        {% if session.get("usuario") or session.get("paciente_id") %}
-            <a href="/logout">Cerrar sesión</a>
-        {% else %}
-            <a href="/login">Admin</a>
-            <a href="/login_paciente">Paciente</a>
-        {% endif %}
-
-    </div>
-
-</div>
-
-<div class="container">
-    {% block contenido %}{% endblock %}
-</div>
+<footer>
+  <strong>MediClover</strong> &mdash; Sistema de Gestión de Citas Médicas &copy; 2025
+</footer>
 
 </body>
 </html>
