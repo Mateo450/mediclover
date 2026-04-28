@@ -10,9 +10,6 @@ app.secret_key = "Mediclover_19"
 ADMIN_USER = "admin"
 ADMIN_PASS = "1234"
 
-# ===============================
-# CONEXIÓN BD
-# ===============================
 DATABASE_URL = os.getenv("DATABASE_URL")
 conn = None
 
@@ -94,7 +91,7 @@ def login_paciente():
     return render_template("login_paciente.html")
 
 # ===============================
-# REGISTRO PACIENTE
+# REGISTRO PACIENTE (CON CÉDULA)
 # ===============================
 @app.route("/registro_paciente", methods=["GET","POST"])
 def registro_paciente():
@@ -107,6 +104,7 @@ def registro_paciente():
         apellido = request.form["apellido"]
         correo = request.form["correo"]
         telefono = request.form["telefono"]
+        cedula = request.form["cedula"]
 
         # VALIDACIONES
         if len(nombre) < 3 or not nombre.replace(" ", "").isalpha():
@@ -118,27 +116,28 @@ def registro_paciente():
         if "@" not in correo:
             return render_template("registro_paciente.html", mensaje="Correo inválido", tipo="error")
 
-        if not telefono.isdigit() or len(telefono) < 7:
+        if not telefono.isdigit():
             return render_template("registro_paciente.html", mensaje="Teléfono inválido", tipo="error")
+
+        if not cedula.isdigit() or len(cedula) != 10:
+            return render_template("registro_paciente.html", mensaje="Cédula inválida", tipo="error")
 
         cursor = conn.cursor()
 
-        cursor.execute("SELECT 1 FROM paciente WHERE correo=%s",(correo,))
+        cursor.execute("SELECT * FROM paciente WHERE correo=%s OR cedula=%s",(correo, cedula))
         if cursor.fetchone():
             cursor.close()
-            return render_template("registro_paciente.html", mensaje="Correo ya registrado", tipo="error")
+            return render_template("registro_paciente.html", mensaje="Usuario ya existe", tipo="error")
 
         cursor.execute("""
-        INSERT INTO paciente(nombre,apellido,correo,telefono)
-        VALUES(%s,%s,%s,%s)
-        """,(nombre,apellido,correo,telefono))
+        INSERT INTO paciente(nombre,apellido,correo,telefono,cedula)
+        VALUES(%s,%s,%s,%s,%s)
+        """,(nombre,apellido,correo,telefono,cedula))
 
         conn.commit()
         cursor.close()
 
-        return render_template("registro_paciente.html",
-                               mensaje="Cuenta creada correctamente",
-                               tipo="success")
+        return render_template("registro_paciente.html", mensaje="Cuenta creada correctamente", tipo="success")
 
     return render_template("registro_paciente.html")
 
@@ -148,9 +147,6 @@ def registro_paciente():
 @app.route("/panel_paciente")
 @login_required(role="paciente")
 def panel_paciente():
-
-    if not conn:
-        return "Error BD"
 
     cursor = conn.cursor()
     cursor.execute("""
@@ -172,9 +168,6 @@ def panel_paciente():
 @login_required(role="paciente")
 def cancelar_cita_paciente(id):
 
-    if not conn:
-        return "Error BD"
-
     cursor = conn.cursor()
     cursor.execute("""
     UPDATE cita
@@ -188,14 +181,11 @@ def cancelar_cita_paciente(id):
     return redirect("/panel_paciente")
 
 # ===============================
-# ADMIN DASHBOARD
+# ADMIN DASHBOARD (FIX)
 # ===============================
 @app.route("/admin")
 @login_required(role="admin")
 def admin():
-
-    if not conn:
-        return "Error BD"
 
     cursor = conn.cursor()
 
@@ -205,26 +195,27 @@ def admin():
     cursor.execute("SELECT COUNT(*) FROM cita WHERE estado='pendiente'")
     citas_pendientes = cursor.fetchone()[0]
 
+    cursor.execute("SELECT COUNT(*) FROM cita WHERE fecha = CURRENT_DATE")
+    citas_hoy = cursor.fetchone()[0]
+
     cursor.close()
 
     return render_template("index.html",
         total_pacientes=total_pacientes,
-        citas_pendientes=citas_pendientes
+        citas_pendientes=citas_pendientes,
+        citas_hoy=citas_hoy
     )
 
 # ===============================
-# VER PACIENTES (FIX)
+# PACIENTES ADMIN (FIX ERROR)
 # ===============================
 @app.route("/pacientes")
 @login_required(role="admin")
 def pacientes():
 
-    if not conn:
-        return "Error BD"
-
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT id_paciente,nombre,apellido,correo,telefono
+    SELECT id_paciente,nombre,apellido,correo,telefono,cedula
     FROM paciente
     """)
     pacientes = cursor.fetchall()
@@ -233,14 +224,11 @@ def pacientes():
     return render_template("pacientes.html", pacientes=pacientes)
 
 # ===============================
-# VER CITAS
+# CITAS ADMIN
 # ===============================
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
-
-    if not conn:
-        return "Error BD"
 
     cursor = conn.cursor()
     cursor.execute("""
@@ -255,106 +243,52 @@ def citas():
     return render_template("citas.html", citas=citas)
 
 # ===============================
-# COMPLETAR CITA
-# ===============================
-@app.route("/completar_cita/<int:id>")
-@login_required(role="admin")
-def completar_cita(id):
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s",(id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-# ===============================
-# CANCELAR CITA ADMIN
-# ===============================
-@app.route("/cancelar_cita/<int:id>")
-@login_required(role="admin")
-def cancelar_cita(id):
-
-    if not conn:
-        return "Error BD"
-
-    cursor = conn.cursor()
-    cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s",(id,))
-    conn.commit()
-    cursor.close()
-
-    return redirect("/citas")
-
-# ===============================
-# RESERVAR CITA
-# ===============================
-@app.route("/reservar", methods=["GET","POST"])
-@login_required(role="paciente")
-def reservar():
-
-    if not conn:
-        return "Error BD"
-
-    if request.method == "POST":
-        fecha = request.form["fecha"]
-        descripcion = request.form["descripcion"]
-
-        if fecha < str(date.today()):
-            return render_template("reservar.html",
-                                   mensaje="No puedes reservar fechas pasadas",
-                                   tipo="error",
-                                   fecha_hoy=date.today())
-
-        if len(descripcion) < 5:
-            return render_template("reservar.html",
-                                   mensaje="Descripción muy corta",
-                                   tipo="error",
-                                   fecha_hoy=date.today())
-
-        cursor = conn.cursor()
-
-        cursor.execute("""
-        SELECT 1 FROM cita
-        WHERE fecha=%s AND hora=%s AND estado='pendiente'
-        """,(request.form["fecha"], request.form["hora"]))
-
-        if cursor.fetchone():
-            cursor.close()
-            return render_template("reservar.html",
-                                   mensaje="Horario ocupado",
-                                   tipo="error",
-                                   fecha_hoy=date.today())
-
-        cursor.execute("""
-        INSERT INTO cita(id_paciente,fecha,hora,estado,descripcion)
-        VALUES(%s,%s,%s,'pendiente',%s)
-        """,(
-            session["paciente_id"],
-            request.form["fecha"],
-            request.form["hora"],
-            descripcion
-        ))
-
-        conn.commit()
-        cursor.close()
-
-        return render_template("reservar.html",
-                               mensaje="Cita reservada correctamente",
-                               tipo="success",
-                               fecha_hoy=date.today())
-
-    return render_template("reservar.html", fecha_hoy=date.today())
-
-# ===============================
 # LOGOUT
 # ===============================
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
+
+# ===============================
+# RESERVAR (VALIDADO)
+# ===============================
+@app.route("/reservar", methods=["GET","POST"])
+@login_required(role="paciente")
+def reservar():
+
+    if request.method == "POST":
+        fecha = request.form["fecha"]
+        descripcion = request.form["descripcion"]
+
+        if fecha < str(date.today()):
+            return render_template("reservar.html", mensaje="Fecha inválida", tipo="error", fecha_hoy=date.today())
+
+        if len(descripcion) < 5:
+            return render_template("reservar.html", mensaje="Descripción muy corta", tipo="error", fecha_hoy=date.today())
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT * FROM cita
+        WHERE fecha=%s AND hora=%s AND estado='pendiente'
+        """,(request.form["fecha"], request.form["hora"]))
+
+        if cursor.fetchone():
+            cursor.close()
+            return render_template("reservar.html", mensaje="Horario ocupado", tipo="error", fecha_hoy=date.today())
+
+        cursor.execute("""
+        INSERT INTO cita(id_paciente,fecha,hora,estado,descripcion)
+        VALUES(%s,%s,%s,'pendiente',%s)
+        """,(session["paciente_id"], request.form["fecha"], request.form["hora"], descripcion))
+
+        conn.commit()
+        cursor.close()
+
+        return render_template("reservar.html", mensaje="Cita creada", tipo="success", fecha_hoy=date.today())
+
+    return render_template("reservar.html", fecha_hoy=date.today())
 
 if __name__ == "__main__":
     app.run(debug=True)
