@@ -7,37 +7,30 @@ from datetime import date, datetime
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
 
-ADMIN_USER = "Luis54"
-ADMIN_PASS = "L2008S"
+ADMIN_USER = "admin"
+ADMIN_PASS = "1234"
 DURACION_CITA = 35  # minutos
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 conn = None
 
-def get_conn():
-    global conn
-    try:
-        if conn is None or conn.closed != 0:
-            raise Exception("reconectar")
-        conn.cursor().execute("SELECT 1")
-    except Exception:
-        try:
-            conn = psycopg2.connect(DATABASE_URL, sslmode="require", connect_timeout=10)
-            print("✅ Conectado a PostgreSQL")
-        except Exception as e:
-            print("❌ Error de conexión:", e)
-            conn = None
-    return conn
+try:
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+        print("✅ Conectado a PostgreSQL")
+    else:
+        print("❌ No hay DATABASE_URL")
+except Exception as e:
+    print("❌ Error de conexión:", e)
 
 
 # ===============================
 # CREAR TABLAS SI NO EXISTEN
 # ===============================
 def init_db():
-    c = get_conn()
-    if not c:
+    if not conn:
         return
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS doctor (
             id_doctor    SERIAL PRIMARY KEY,
@@ -59,13 +52,14 @@ def init_db():
     """)
     cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_doctor INTEGER REFERENCES doctor(id_doctor)")
     cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
+    # Hacer fecha/hora opcionales ya que ahora vienen del slot
     cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
     cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
-    c.commit()
+    conn.commit()
     cursor.close()
     print("✅ BD inicializada")
 
-# init_db()  ← comentada, las tablas ya existen en Supabase
+init_db()
 
 
 # ===============================
@@ -87,7 +81,8 @@ def login_required(role=None):
 
 
 def slot_solapado(id_doctor, fecha, hora_str, excluir_id=None):
-    cursor = get_conn().cursor()
+    """True si la hora choca con un slot existente del doctor (±35 min)."""
+    cursor = conn.cursor()
     q = "SELECT hora FROM slot WHERE id_doctor=%s AND fecha=%s"
     params = [id_doctor, fecha]
     if excluir_id:
@@ -129,7 +124,7 @@ def login():
 @app.route("/admin")
 @login_required(role="admin")
 def admin():
-    cursor = get_conn().cursor()
+    cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM paciente")
     total_pacientes = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM cita WHERE estado='pendiente'")
@@ -153,31 +148,24 @@ def admin():
 @app.route("/pacientes")
 @login_required(role="admin")
 def pacientes():
-    cedula_busqueda = request.args.get("cedula", "").strip()
-    cursor = get_conn().cursor()
-    if cedula_busqueda:
-        cursor.execute(
-            "SELECT id_paciente,nombre,apellido,correo,telefono,cedula FROM paciente WHERE cedula=%s",
-            (cedula_busqueda,)
-        )
-    else:
-        cursor.execute("SELECT id_paciente,nombre,apellido,correo,telefono,cedula FROM paciente")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id_paciente,nombre,apellido,correo,telefono,cedula FROM paciente")
     lista = cursor.fetchall()
     cursor.close()
-    return render_template("pacientes.html", pacientes=lista, cedula_busqueda=cedula_busqueda)
+    return render_template("pacientes.html", pacientes=lista)
 
 
 @app.route("/editar_paciente/<int:id>", methods=["GET", "POST"])
 @login_required(role="admin")
 def editar_paciente(id):
-    cursor = get_conn().cursor()
+    cursor = conn.cursor()
     if request.method == "POST":
         cursor.execute("""
             UPDATE paciente SET nombre=%s,apellido=%s,correo=%s,telefono=%s,cedula=%s
             WHERE id_paciente=%s
         """, (request.form["nombre"], request.form["apellido"], request.form["correo"],
               request.form["telefono"], request.form["cedula"], id))
-        get_conn().commit()
+        conn.commit()
         cursor.close()
         return redirect("/pacientes")
     cursor.execute("SELECT nombre,apellido,correo,telefono,cedula FROM paciente WHERE id_paciente=%s", (id,))
@@ -189,11 +177,10 @@ def editar_paciente(id):
 @app.route("/eliminar_paciente/<int:id>")
 @login_required(role="admin")
 def eliminar_paciente(id):
-    c = get_conn()
-    cursor = c.cursor()
-    cursor.execute("DELETE FROM cita     WHERE id_paciente=%s", (id,))
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM cita    WHERE id_paciente=%s", (id,))
     cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
-    c.commit()
+    conn.commit()
     cursor.close()
     return redirect("/pacientes")
 
@@ -201,7 +188,7 @@ def eliminar_paciente(id):
 @app.route("/citas")
 @login_required(role="admin")
 def citas():
-    cursor = get_conn().cursor()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT c.id_cita, p.nombre, p.apellido, s.fecha, s.hora,
                c.estado, c.descripcion, d.nombre, d.apellido
@@ -219,10 +206,9 @@ def citas():
 @app.route("/completar_cita/<int:id>")
 @login_required(role="admin")
 def completar_cita(id):
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s", (id,))
-    c.commit()
+    conn.commit()
     cursor.close()
     return redirect("/citas")
 
@@ -230,11 +216,10 @@ def completar_cita(id):
 @app.route("/cancelar_cita/<int:id>")
 @login_required(role="admin")
 def cancelar_cita(id):
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("UPDATE slot SET disponible=TRUE WHERE id_slot=(SELECT id_slot FROM cita WHERE id_cita=%s)", (id,))
     cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s", (id,))
-    c.commit()
+    conn.commit()
     cursor.close()
     return redirect("/citas")
 
@@ -243,7 +228,7 @@ def cancelar_cita(id):
 @app.route("/admin/doctores")
 @login_required(role="admin")
 def admin_doctores():
-    cursor = get_conn().cursor()
+    cursor = conn.cursor()
     cursor.execute("SELECT id_doctor,nombre,apellido,correo,especialidad FROM doctor")
     lista = cursor.fetchall()
     cursor.close()
@@ -254,8 +239,7 @@ def admin_doctores():
 @login_required(role="admin")
 def crear_doctor():
     if request.method == "POST":
-        c = get_conn()
-        cursor = c.cursor()
+        cursor = conn.cursor()
         cursor.execute("SELECT id_doctor FROM doctor WHERE correo=%s", (request.form["correo"],))
         if cursor.fetchone():
             cursor.close()
@@ -265,7 +249,7 @@ def crear_doctor():
             VALUES(%s,%s,%s,%s,%s)
         """, (request.form["nombre"], request.form["apellido"], request.form["correo"],
               request.form["password"], request.form["especialidad"]))
-        c.commit()
+        conn.commit()
         cursor.close()
         return redirect("/admin/doctores")
     return render_template("crear_doctor.html")
@@ -274,12 +258,11 @@ def crear_doctor():
 @app.route("/admin/eliminar_doctor/<int:id>")
 @login_required(role="admin")
 def eliminar_doctor(id):
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("UPDATE cita SET id_doctor=NULL WHERE id_doctor=%s", (id,))
     cursor.execute("DELETE FROM slot   WHERE id_doctor=%s", (id,))
     cursor.execute("DELETE FROM doctor WHERE id_doctor=%s", (id,))
-    c.commit()
+    conn.commit()
     cursor.close()
     return redirect("/admin/doctores")
 
@@ -289,8 +272,10 @@ def eliminar_doctor(id):
 # ================================================================
 @app.route("/login_doctor", methods=["GET", "POST"])
 def login_doctor():
+    if not conn:
+        return "Error BD"
     if request.method == "POST":
-        cursor = get_conn().cursor()
+        cursor = conn.cursor()
         cursor.execute("SELECT id_doctor,nombre FROM doctor WHERE correo=%s AND password=%s",
                        (request.form["correo"], request.form["password"]))
         doc = cursor.fetchone()
@@ -307,7 +292,7 @@ def login_doctor():
 @app.route("/doctor/panel")
 @login_required(role="doctor")
 def doctor_panel():
-    cursor = get_conn().cursor()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT c.id_cita, p.nombre, p.apellido, p.cedula,
                s.fecha, s.hora, c.estado, c.descripcion
@@ -332,11 +317,10 @@ def doctor_panel():
 @app.route("/doctor/completar/<int:id>")
 @login_required(role="doctor")
 def doctor_completar(id):
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s AND id_doctor=%s",
                    (id, session["doctor_id"]))
-    c.commit()
+    conn.commit()
     cursor.close()
     return redirect("/doctor/panel")
 
@@ -344,12 +328,11 @@ def doctor_completar(id):
 @app.route("/doctor/cancelar/<int:id>")
 @login_required(role="doctor")
 def doctor_cancelar(id):
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("UPDATE slot SET disponible=TRUE WHERE id_slot=(SELECT id_slot FROM cita WHERE id_cita=%s)", (id,))
     cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s AND id_doctor=%s",
                    (id, session["doctor_id"]))
-    c.commit()
+    conn.commit()
     cursor.close()
     return redirect("/doctor/panel")
 
@@ -365,7 +348,7 @@ def doctor_historial():
         if not cedula.isdigit() or len(cedula) != 10:
             error = "Ingresa una cédula válida de 10 dígitos"
         else:
-            cursor = get_conn().cursor()
+            cursor = conn.cursor()
             cursor.execute("""
                 SELECT id_paciente,nombre,apellido,correo,telefono,cedula
                 FROM paciente WHERE cedula=%s
@@ -397,11 +380,10 @@ def crear_slot():
     if fecha < str(date.today()):
         return redirect("/doctor/panel")
     if not slot_solapado(session["doctor_id"], fecha, hora):
-        c = get_conn()
-        cursor = c.cursor()
+        cursor = conn.cursor()
         cursor.execute("INSERT INTO slot(id_doctor,fecha,hora) VALUES(%s,%s,%s)",
                        (session["doctor_id"], fecha, hora))
-        c.commit()
+        conn.commit()
         cursor.close()
     return redirect("/doctor/panel")
 
@@ -409,13 +391,12 @@ def crear_slot():
 @app.route("/doctor/slots/eliminar/<int:id>")
 @login_required(role="doctor")
 def eliminar_slot(id):
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("SELECT id_cita FROM cita WHERE id_slot=%s AND estado='pendiente'", (id,))
     if not cursor.fetchone():
         cursor.execute("DELETE FROM slot WHERE id_slot=%s AND id_doctor=%s",
                        (id, session["doctor_id"]))
-        c.commit()
+        conn.commit()
     cursor.close()
     return redirect("/doctor/panel")
 
@@ -425,8 +406,10 @@ def eliminar_slot(id):
 # ================================================================
 @app.route("/login_paciente", methods=["GET", "POST"])
 def login_paciente():
+    if not conn:
+        return "Error BD"
     if request.method == "POST":
-        cursor = get_conn().cursor()
+        cursor = conn.cursor()
         cursor.execute("SELECT id_paciente,nombre FROM paciente WHERE correo=%s",
                        (request.form["correo"],))
         user = cursor.fetchone()
@@ -442,6 +425,8 @@ def login_paciente():
 
 @app.route("/registro_paciente", methods=["GET", "POST"])
 def registro_paciente():
+    if not conn:
+        return "Error BD"
     if request.method == "POST":
         nombre   = request.form["nombre"]
         apellido = request.form["apellido"]
@@ -460,8 +445,7 @@ def registro_paciente():
         if not cedula.isdigit() or len(cedula) != 10:
             return render_template("registro_paciente.html", mensaje="Cédula inválida (10 dígitos)", tipo="error")
 
-        c = get_conn()
-        cursor = c.cursor()
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM paciente WHERE correo=%s OR cedula=%s", (correo, cedula))
         if cursor.fetchone():
             cursor.close()
@@ -470,7 +454,7 @@ def registro_paciente():
             INSERT INTO paciente(nombre,apellido,correo,telefono,cedula)
             VALUES(%s,%s,%s,%s,%s)
         """, (nombre, apellido, correo, telefono, cedula))
-        c.commit()
+        conn.commit()
         cursor.close()
         return render_template("registro_paciente.html",
             mensaje="¡Cuenta creada! Ya puedes iniciar sesión.", tipo="success")
@@ -480,7 +464,7 @@ def registro_paciente():
 @app.route("/panel_paciente")
 @login_required(role="paciente")
 def panel_paciente():
-    cursor = get_conn().cursor()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT c.id_cita, s.fecha, s.hora, c.estado, c.descripcion,
                d.nombre, d.apellido, d.especialidad
@@ -498,12 +482,11 @@ def panel_paciente():
 @app.route("/cancelar_cita_paciente/<int:id>")
 @login_required(role="paciente")
 def cancelar_cita_paciente(id):
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     cursor.execute("UPDATE slot SET disponible=TRUE WHERE id_slot=(SELECT id_slot FROM cita WHERE id_cita=%s)", (id,))
     cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s AND id_paciente=%s",
                    (id, session["paciente_id"]))
-    c.commit()
+    conn.commit()
     cursor.close()
     return redirect("/panel_paciente")
 
@@ -511,14 +494,13 @@ def cancelar_cita_paciente(id):
 @app.route("/reservar", methods=["GET", "POST"])
 @login_required(role="paciente")
 def reservar():
-    c = get_conn()
-    cursor = c.cursor()
+    cursor = conn.cursor()
     if request.method == "POST":
         id_slot     = request.form.get("id_slot")
         descripcion = request.form.get("descripcion", "").strip()
 
         def reload(msg, tipo):
-            cursor2 = get_conn().cursor()
+            cursor2 = conn.cursor()
             cursor2.execute("""
                 SELECT s.id_slot,s.fecha,s.hora,d.nombre,d.apellido,d.especialidad
                 FROM slot s JOIN doctor d ON s.id_doctor=d.id_doctor
@@ -545,7 +527,7 @@ def reservar():
             INSERT INTO cita(id_paciente,id_doctor,id_slot,estado,descripcion)
             VALUES(%s,%s,%s,'pendiente',%s)
         """, (session["paciente_id"], slot[1], slot[0], descripcion))
-        c.commit()
+        conn.commit()
         cursor.close()
         return render_template("reservar.html", slots=[], mensaje="¡Cita reservada con éxito!", tipo="success")
 
@@ -570,5 +552,4 @@ def logout():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
