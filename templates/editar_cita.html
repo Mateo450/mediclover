@@ -1,74 +1,61 @@
 {% extends "base.html" %}
-{% block titulo %}Editar Cita · Admin · MediClover{% endblock %}
-{% block portal_class %}portal-admin{% endblock %}
-{% block topbar_title %}Editar Cita{% endblock %}
-
-{% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon"><i class="bi bi-shield-lock-fill"></i></div>
-    <div>
-      <span class="logo-text">MediClover</span>
-      <span class="logo-sub">Admin · {{ session.get('usuario') }}</span>
-    </div>
-  </div>
-  <nav class="sidebar-nav">
-    <span class="nav-label">Sistema</span>
-    <a href="/index"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
-      <a href="/pacientes"><i class="bi bi-people"></i><span>Pacientes</span></a>
-    <a href="/citas" class="active"><i class="bi bi-calendar2-check"></i><span>Citas</span></a>
-  </nav>
-  <div class="sidebar-footer">
-    <a href="/logout"><i class="bi bi-box-arrow-left"></i><span>Cerrar sesión</span></a>
-  </div>
-</aside>
-{% endblock %}
-
-{% block topbar_right %}
-<span style="font-size:.75rem;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-mid);border-radius:100px;padding:3px 10px;font-weight:600;">
-  <i class="bi bi-shield-check"></i> Administrador
-</span>
-{% endblock %}
+{% block title %}Editar Cita — MediClover{% endblock %}
 
 {% block contenido %}
-<div class="page-header fade-up">
-  <h1>Editar cita</h1>
-  <p>Modifica el estado o información de esta cita médica</p>
-</div>
+<div class="layout">
 
-<div style="max-width:520px;" class="fade-up delay-1">
-  <div class="card">
-    <div class="card-body">
-      <!-- INFO READONLY -->
-      <div style="background:var(--accent-light);border-radius:10px;padding:16px;margin-bottom:20px;">
-        <div style="font-size:.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Información de la cita</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.875rem;">
-          <div><span style="color:var(--text-muted);">Paciente:</span> <strong>{{ cita.paciente_nombre }}</strong></div>
-          <div><span style="color:var(--text-muted);">Doctor:</span> <strong>Dr. {{ cita.doctor_nombre }}</strong></div>
-          <div><span style="color:var(--text-muted);">Fecha:</span> {{ cita.fecha }}</div>
-          <div><span style="color:var(--text-muted);">Hora:</span> {{ cita.hora }}</div>
-        </div>
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
+    <a href="/admin"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/pacientes"><i class="bi bi-people"></i> Pacientes</a>
+    <a href="/citas" class="active"><i class="bi bi-calendar3"></i> Citas</a>
+    <hr style="border-color:rgba(255,255,255,.1); margin:.75rem 1.25rem;">
+    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+  </aside>
+
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <h1>Editar Cita</h1>
+        <p>Modifica los datos de la cita</p>
       </div>
-
-      <form method="POST" action="/editar_cita/{{ cita.id }}">
-        <div class="form-group">
-          <label class="form-label">Estado de la cita</label>
-          <select name="estado" class="form-control" style="padding-left:14px;">
-            <option value="pendiente" {{ 'selected' if cita.estado == 'pendiente' }}>Pendiente</option>
-            <option value="confirmada" {{ 'selected' if cita.estado == 'confirmada' }}>Confirmada</option>
-            <option value="cancelada" {{ 'selected' if cita.estado == 'cancelada' }}>Cancelada</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Motivo</label>
-          <textarea name="motivo" class="form-control" style="padding:10px 14px;resize:vertical;min-height:80px;">{{ cita.motivo or '' }}</textarea>
-        </div>
-        <div style="display:flex;gap:12px;">
-          <button type="submit" class="btn-primary"><i class="bi bi-check2"></i> Guardar</button>
-          <a href="/citas" class="btn-outline"><i class="bi bi-arrow-left"></i> Volver</a>
-        </div>
-      </form>
+      <a href="/citas" class="btn btn-ghost">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
     </div>
+
+    <div class="card" style="max-width:480px;">
+      <div class="card-body">
+        <form method="POST">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem;">
+            <div class="form-group">
+              <label>Fecha</label>
+              <input type="date" name="fecha" value="{{ cita[2] }}" required>
+            </div>
+            <div class="form-group">
+              <label>Hora</label>
+              <input type="time" name="hora" value="{{ cita[3] }}" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select name="estado">
+              <option {% if cita[4] == 'pendiente'  %}selected{% endif %}>pendiente</option>
+              <option {% if cita[4] == 'completada' %}selected{% endif %}>completada</option>
+              <option {% if cita[4] == 'cancelada'  %}selected{% endif %}>cancelada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea name="descripcion">{{ cita[5] if cita[5] else cita[4] }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-block">
+            <i class="bi bi-floppy-fill"></i> Actualizar cita
+          </button>
+        </form>
+      </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}

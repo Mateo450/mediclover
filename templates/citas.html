@@ -1,86 +1,68 @@
 {% extends "base.html" %}
-{% block titulo %}Citas · Admin · MediClover{% endblock %}
-{% block portal_class %}portal-admin{% endblock %}
-{% block topbar_title %}Gestión de Citas{% endblock %}
-
-{% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon"><i class="bi bi-shield-lock-fill"></i></div>
-    <div>
-      <span class="logo-text">MediClover</span>
-      <span class="logo-sub">Admin · {{ session.get('usuario') }}</span>
-    </div>
-  </div>
-  <nav class="sidebar-nav">
-    <span class="nav-label">Sistema</span>
-    <a href="/index"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
-    <a href="/pacientes"><i class="bi bi-people"></i><span>Pacientes</span></a>
-    <a href="/citas" class="active"><i class="bi bi-calendar2-check"></i><span>Citas</span></a>
-  </nav>
-  <div class="sidebar-footer">
-    <a href="/logout"><i class="bi bi-box-arrow-left"></i><span>Cerrar sesión</span></a>
-  </div>
-</aside>
-{% endblock %}
-
-{% block topbar_right %}
-<span style="font-size:.75rem;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-mid);border-radius:100px;padding:3px 10px;font-weight:600;">
-  <i class="bi bi-shield-check"></i> Administrador
-</span>
-{% endblock %}
+{% block title %}Citas — MediClover{% endblock %}
 
 {% block contenido %}
-<div class="page-header fade-up">
-  <h1>Citas del sistema</h1>
-  <p>Visualiza y gestiona todas las citas médicas registradas</p>
-</div>
+<div class="layout">
 
-<div class="card fade-up delay-1">
-  <div class="card-header-custom" style="padding-bottom:16px;">
-    <span class="card-title">Todas las citas</span>
-    <span style="font-size:.8rem;color:var(--text-muted);">{{ citas|length if citas else 0 }} registros</span>
-  </div>
-  <div class="card-body" style="padding-top:0;">
-    {% if citas %}
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
+    <a href="/admin"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/pacientes"><i class="bi bi-people"></i> Pacientes</a>
+    <a href="/citas" class="active"><i class="bi bi-calendar3"></i> Citas</a>
+    <hr style="border-color:rgba(255,255,255,.1); margin:.75rem 1.25rem;">
+    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+  </aside>
+
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <h1>Gestión de Citas</h1>
+        <p>Todas las citas del sistema</p>
+      </div>
+    </div>
+
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
+            <th>#</th>
             <th>Paciente</th>
             <th>Doctor</th>
             <th>Fecha</th>
             <th>Hora</th>
-            <th>Motivo</th>
+            <th>Descripción</th>
             <th>Estado</th>
-            <th>Acción</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for c in citas %}
           <tr>
-            <td style="font-weight:600;">{{ c.paciente_nombre }}</td>
-            <td style="color:var(--text-muted);">Dr. {{ c.doctor_nombre }}</td>
-            <td><i class="bi bi-calendar3" style="color:var(--accent);margin-right:5px;"></i>{{ c.fecha }}</td>
-            <td>{{ c.hora }}</td>
-            <td style="color:var(--text-muted);font-size:.83rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.motivo or '—' }}</td>
-            <td>
-              {% if c.estado == 'confirmada' %}
-                <span class="badge badge-success"><i class="bi bi-check-circle"></i> Confirmada</span>
-              {% elif c.estado == 'pendiente' %}
-                <span class="badge badge-warn"><i class="bi bi-hourglass"></i> Pendiente</span>
-              {% else %}
-                <span class="badge badge-danger"><i class="bi bi-x-circle"></i> Cancelada</span>
-              {% endif %}
+            <td class="text-muted">{{ loop.index }}</td>
+            <td><strong>{{ c[1] }} {{ c[2] }}</strong></td>
+            <td>Dr. Luis Suárez</td>
+            <td>{{ c[3] }}</td>
+            <td>{{ c[4] }}</td>
+            <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              {{ c[6] }}
             </td>
             <td>
-              <div style="display:flex;gap:6px;">
-                <a href="/editar_cita/{{ c.id }}" class="btn-outline btn-sm"><i class="bi bi-pencil"></i></a>
-                <form method="POST" action="/cancelar_cita/{{ c.id }}" style="display:inline;">
-                  <button type="submit" class="btn-danger btn-sm" onclick="return confirm('¿Cancelar esta cita?')">
-                    <i class="bi bi-x"></i>
-                  </button>
-                </form>
+              <span class="badge estado {{ c[5] }}">{{ c[5] }}</span>
+            </td>
+            <td>
+              <div style="display:flex; gap:.4rem;">
+                {% if c[5] == "pendiente" %}
+                  <a href="/completar_cita/{{ c[0] }}" class="btn btn-sm"
+                     title="Completar" onclick="return confirm('¿Marcar como completada?')">
+                    <i class="bi bi-check-lg"></i>
+                  </a>
+                  <a href="/cancelar_cita/{{ c[0] }}" class="btn btn-danger btn-sm"
+                     title="Cancelar" onclick="return confirm('¿Cancelar esta cita?')">
+                    <i class="bi bi-x-lg"></i>
+                  </a>
+                {% else %}
+                  <span class="text-muted" style="font-size:.8rem;">—</span>
+                {% endif %}
               </div>
             </td>
           </tr>
@@ -88,13 +70,7 @@
         </tbody>
       </table>
     </div>
-    {% else %}
-    <div class="empty-state">
-      <i class="bi bi-calendar-x"></i>
-      <h3>Sin citas registradas</h3>
-      <p>Aún no hay citas en el sistema. Se registrarán cuando los pacientes agenden desde su portal.</p>
-    </div>
-    {% endif %}
+
   </div>
 </div>
 {% endblock %}

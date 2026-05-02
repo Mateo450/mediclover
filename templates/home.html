@@ -1,306 +1,431 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MediClover — Agenda tu cita médica</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
-  <style>
-    :root {
-      --blue:  #2563EB;
-      --blue2: #1D4ED8;
-      --green: #059669;
-      --purple:#7C3AED;
-      --dark:  #0F172A;
-      --muted: #64748B;
-      --bg:    #F8FAFC;
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh;}
-    a{text-decoration:none;color:inherit;}
+{% extends "base.html" %}
+{% block title %}Inicio — MediClover{% endblock %}
 
-    /* NAV */
-    nav{
-      background:#fff;
-      border-bottom:1px solid rgba(0,0,0,.06);
-      padding:0 40px;
-      height:64px;
-      display:flex;align-items:center;justify-content:space-between;
-      position:sticky;top:0;z-index:99;
-    }
-    .nav-logo{display:flex;align-items:center;gap:10px;}
-    .nav-logo .icon{
-      width:36px;height:36px;background:var(--blue);border-radius:10px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:18px;color:#fff;
-    }
-    .nav-logo span{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.3px;}
-    .nav-cta{
-      background:var(--blue);color:#fff;border:none;border-radius:8px;
-      padding:9px 20px;font-size:.875rem;font-weight:600;cursor:pointer;
-      transition:background .2s;
-    }
-    .nav-cta:hover{background:var(--blue2);}
+{% block extra_head %}
+<style>
+.hero {
+  background: linear-gradient(140deg, var(--navy) 0%, #163860 55%, #1a4e78 100%);
+  color: var(--white);
+  padding: 5.5rem 0 4.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 55% at 90% 35%, rgba(10,124,92,.22) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 35% at 5%  85%, rgba(10,124,92,.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 4rem;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #82e0c4;
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding: .3rem .85rem;
+  border-radius: 99px;
+  margin-bottom: 1.3rem;
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.8vw, 3.1rem);
+  line-height: 1.08;
+  margin-bottom: 1.1rem;
+  color: var(--white);
+}
+.hero h1 em { font-style: italic; color: #82e0c4; }
+.hero-sub {
+  font-size: 1rem;
+  color: rgba(255,255,255,.7);
+  line-height: 1.75;
+  max-width: 500px;
+  margin-bottom: 2rem;
+}
+.hero-btns { display: flex; gap: .75rem; flex-wrap: wrap; }
+.btn-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .75rem 1.75rem;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: .95rem;
+  font-weight: 700;
+  transition: all var(--transition);
+  cursor: pointer;
+  border: none;
+}
+.btn-hero-green {
+  background: var(--teal);
+  color: var(--white);
+}
+.btn-hero-green:hover {
+  background: var(--teal-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(10,124,92,.4);
+}
+.btn-hero-outline {
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid rgba(255,255,255,.22);
+  color: var(--white);
+}
+.btn-hero-outline:hover {
+  background: rgba(255,255,255,.15);
+  transform: translateY(-2px);
+}
 
-    /* HERO */
-    .hero{
-      padding:80px 40px 60px;
-      text-align:center;
-      max-width:720px;
-      margin:0 auto;
-    }
-    .hero-badge{
-      display:inline-flex;align-items:center;gap:6px;
-      background:#EFF6FF;color:var(--blue);
-      border:1px solid #BFDBFE;
-      border-radius:100px;padding:5px 14px;
-      font-size:.78rem;font-weight:600;
-      margin-bottom:24px;
-      animation:fadeUp .5s ease both;
-    }
-    .hero h1{
-      font-family:'Syne',sans-serif;
-      font-size:clamp(2rem,5vw,3rem);
-      font-weight:800;
-      line-height:1.15;
-      color:var(--dark);
-      margin-bottom:18px;
-      animation:fadeUp .5s .1s ease both;
-    }
-    .hero h1 .highlight{color:var(--blue);}
-    .hero p{
-      font-size:1.05rem;
-      color:var(--muted);
-      line-height:1.7;
-      margin-bottom:36px;
-      animation:fadeUp .5s .2s ease both;
-    }
-    .hero-btns{
-      display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
-      animation:fadeUp .5s .3s ease both;
-    }
-    .btn-hero-main{
-      background:var(--blue);color:#fff;border:none;border-radius:10px;
-      padding:13px 28px;font-size:.95rem;font-weight:600;
-      display:inline-flex;align-items:center;gap:8px;
-      cursor:pointer;transition:all .2s;
-      box-shadow:0 4px 20px rgba(37,99,235,.3);
-    }
-    .btn-hero-main:hover{background:var(--blue2);transform:translateY(-2px);}
-    .btn-hero-out{
-      background:transparent;color:var(--dark);
-      border:1.5px solid rgba(0,0,0,.12);border-radius:10px;
-      padding:13px 28px;font-size:.95rem;font-weight:600;
-      display:inline-flex;align-items:center;gap:8px;
-      cursor:pointer;transition:all .2s;
-    }
-    .btn-hero-out:hover{background:#fff;border-color:var(--blue);color:var(--blue);}
+/* Hero floating card */
+.hero-panel {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(14px);
+  border-radius: var(--r-lg);
+  padding: 1.75rem;
+}
+.hero-panel-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--white);
+  margin-bottom: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.hero-feat {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .8rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.hero-feat:last-child { border-bottom: none; padding-bottom: 0; }
+.hero-feat-ico {
+  width: 36px; height: 36px;
+  background: rgba(10,124,92,.28);
+  color: #82e0c4;
+  border-radius: var(--r-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .95rem;
+  flex-shrink: 0;
+}
+.hero-feat-name { font-size: .875rem; font-weight: 600; color: var(--white); }
+.hero-feat-desc { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .1rem; }
 
-    /* FEATURES */
-    .features{
-      padding:60px 40px;
-      max-width:1100px;
-      margin:0 auto;
-    }
-    .section-label{
-      text-align:center;
-      font-size:.75rem;
-      font-weight:700;
-      letter-spacing:1.5px;
-      text-transform:uppercase;
-      color:var(--blue);
-      margin-bottom:12px;
-    }
-    .section-title{
-      text-align:center;
-      font-family:'Syne',sans-serif;
-      font-size:1.7rem;
-      font-weight:700;
-      margin-bottom:40px;
-    }
-    .features-grid{
-      display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;
-    }
-    .feat-card{
-      background:#fff;border-radius:14px;padding:24px;
-      border:1px solid rgba(0,0,0,.05);
-      box-shadow:0 4px 20px rgba(0,0,0,.05);
-      transition:transform .2s,box-shadow .2s;
-      animation:fadeUp .5s ease both;
-    }
-    .feat-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,.1);}
-    .feat-icon{
-      width:44px;height:44px;border-radius:12px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:1.2rem;margin-bottom:14px;
-    }
-    .feat-card h3{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;margin-bottom:6px;}
-    .feat-card p{font-size:.83rem;color:var(--muted);line-height:1.6;}
+/* Stats strip */
+.strip {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 1.6rem 0;
+}
+.strip-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.strip-stat { text-align: center; }
+.strip-num {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  color: var(--navy);
+  line-height: 1;
+}
+.strip-lbl {
+  font-size: .75rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: .2rem;
+}
+.strip-sep { width: 1px; height: 36px; background: var(--gray-200); }
 
-    /* PORTALES */
-    .portales{
-      padding:60px 40px;
-      background:#fff;
-      border-top:1px solid rgba(0,0,0,.05);
-      border-bottom:1px solid rgba(0,0,0,.05);
-    }
-    .portales-inner{max-width:900px;margin:0 auto;}
-    .portales-grid{
-      display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;
-      margin-top:40px;
-    }
-    .portal-card{
-      border-radius:16px;padding:28px;
-      display:flex;flex-direction:column;gap:12px;
-      transition:transform .2s,box-shadow .2s;
-      animation:fadeUp .5s ease both;
-    }
-    .portal-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.12);}
-    .portal-card.pac{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1px solid #BFDBFE;}
-    .portal-card.doc{background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border:1px solid #A7F3D0;}
-    .portal-card.adm{background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:1px solid #DDD6FE;}
-    .portal-card .p-icon{
-      width:48px;height:48px;border-radius:14px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:1.4rem;color:#fff;
-    }
-    .pac .p-icon{background:var(--blue);}
-    .doc .p-icon{background:var(--green);}
-    .adm .p-icon{background:var(--purple);}
-    .portal-card h3{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;}
-    .pac h3{color:#1E3A8A;}
-    .doc h3{color:#064E3B;}
-    .adm h3{color:#3B0764;}
-    .portal-card p{font-size:.83rem;color:var(--muted);line-height:1.6;}
-    .portal-link{
-      display:inline-flex;align-items:center;gap:6px;
-      font-size:.83rem;font-weight:600;
-      border:none;background:none;cursor:pointer;
-      padding:0;margin-top:4px;
-      transition:gap .15s;
-    }
-    .pac .portal-link{color:var(--blue);}
-    .doc .portal-link{color:var(--green);}
-    .adm .portal-link{color:var(--purple);}
-    .portal-link:hover{gap:10px;}
+/* Sections */
+.sec { padding: 4.5rem 0; }
+.sec-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+.sec-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding: .28rem .75rem;
+  border-radius: 99px;
+  margin-bottom: .9rem;
+}
+.sec-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  color: var(--navy);
+  line-height: 1.15;
+  margin-bottom: .65rem;
+}
+.sec-desc {
+  color: var(--gray-500);
+  font-size: .93rem;
+  max-width: 540px;
+  line-height: 1.75;
+}
+.sec-head { margin-bottom: 2.75rem; }
 
-    /* FOOTER */
-    footer{
-      text-align:center;
-      padding:32px 20px;
-      font-size:.8rem;
-      color:var(--muted);
-    }
-    .staff-access{
-      margin-top:12px;
-      display:flex;align-items:center;justify-content:center;gap:10px;
-    }
-    .staff-access a{
-      font-size:.78rem;color:var(--muted);
-      border-bottom:1px dashed currentColor;
-      transition:color .2s;
-    }
-    .staff-access a:hover{color:var(--dark);}
-    .staff-access span{color:var(--muted);opacity:.4;}
+/* Steps */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
+.step { text-align: center; padding: 0 .75rem; }
+.step-n {
+  width: 50px; height: 50px;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 16px rgba(11,31,58,.25);
+}
+.step h3 { font-family: var(--font-display); color: var(--navy); font-size: .98rem; margin-bottom: .4rem; }
+.step p  { font-size: .83rem; color: var(--gray-500); line-height: 1.65; }
 
-    @keyframes fadeUp{
-      from{opacity:0;transform:translateY(16px);}
-      to{opacity:1;transform:translateY(0);}
-    }
-    @media(max-width:600px){
-      nav{padding:0 20px;}
-      .hero{padding:50px 20px 40px;}
-      .features,.portales{padding:40px 20px;}
-    }
-  </style>
-</head>
-<body>
+/* Services grid */
+.services { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+.svc-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  padding: 1.6rem;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.svc-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--teal);
+  transform: scaleX(0);
+  transition: transform var(--transition);
+}
+.svc-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.svc-card:hover::after { transform: scaleX(1); }
+.svc-ico {
+  width: 46px; height: 46px;
+  background: var(--teal-pale);
+  color: var(--teal);
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+.svc-card h3 { font-family: var(--font-display); font-size: 1rem; color: var(--navy); margin-bottom: .4rem; }
+.svc-card p  { font-size: .83rem; color: var(--gray-500); line-height: 1.6; }
 
-<nav>
-  <div class="nav-logo">
-    <div class="icon"><i class="bi bi-heart-pulse-fill"></i></div>
-    <span>MediClover</span>
-  </div>
-  <a href="/registro_paciente"><button class="nav-cta">Crear cuenta</button></a>
-</nav>
+/* CTA */
+.cta {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
+  padding: 4.5rem 0;
+  text-align: center;
+  color: var(--white);
+  position: relative;
+  overflow: hidden;
+}
+.cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 80% at 50% 120%, rgba(10,124,92,.22) 0%, transparent 65%);
+  pointer-events: none;
+}
+.cta-inner { max-width: 680px; margin: 0 auto; padding: 0 1.5rem; position: relative; }
+.cta h2 { font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: .65rem; }
+.cta p  { color: rgba(255,255,255,.6); font-size: .93rem; margin-bottom: 2rem; }
+.cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+@media(max-width:900px) {
+  .hero-inner { grid-template-columns: 1fr; }
+  .hero-panel { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block contenido %}
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge"><i class="bi bi-shield-check"></i> Sistema de salud digital</div>
-  <h1>Agenda tu cita médica<br/>de forma <span class="highlight">sencilla</span></h1>
-  <p>Reserva, gestiona y recibe recordatorios de tus citas con el Dr. Luis Suárez. Todo desde tu teléfono o computadora.</p>
-  <div class="hero-btns">
-    <a href="/registro_paciente"><button class="btn-hero-main"><i class="bi bi-person-plus"></i> Registrarse</button></a>
-    <a href="/login_paciente"><button class="btn-hero-out"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</button></a>
-  </div>
-</section>
-
-<!-- FEATURES -->
-<section class="features">
-  <p class="section-label">¿Por qué MediClover?</p>
-  <h2 class="section-title">Todo lo que necesitas, en un solo lugar</h2>
-  <div class="features-grid">
-    <div class="feat-card" style="animation-delay:.05s">
-      <div class="feat-icon" style="background:#EFF6FF;color:#2563EB;"><i class="bi bi-calendar-check"></i></div>
-      <h3>Reserva 24/7</h3>
-      <p>Agenda tu cita en cualquier momento, sin llamadas ni esperas. Elige el horario que más te convenga.</p>
-    </div>
-    <div class="feat-card" style="animation-delay:.1s">
-      <div class="feat-icon" style="background:#ECFDF5;color:#059669;"><i class="bi bi-clock-history"></i></div>
-      <h3>Historial completo</h3>
-      <p>Accede a todo el registro de tus citas anteriores y próximas desde tu panel personal.</p>
-    </div>
-    <div class="feat-card" style="animation-delay:.15s">
-      <div class="feat-icon" style="background:#FFF7ED;color:#EA580C;"><i class="bi bi-bell-fill"></i></div>
-      <h3>Sin sorpresas</h3>
-      <p>Conoce tus slots disponibles en tiempo real. Los turnos de 35 minutos garantizan atención de calidad.</p>
-    </div>
-    <div class="feat-card" style="animation-delay:.2s">
-      <div class="feat-icon" style="background:#F5F3FF;color:#7C3AED;"><i class="bi bi-lock-fill"></i></div>
-      <h3>100% seguro</h3>
-      <p>Tus datos médicos y personales están protegidos con acceso seguro por contraseña.</p>
-    </div>
-  </div>
-</section>
-
-<!-- PORTALES -->
-<section class="portales">
-  <div class="portales-inner">
-    <p class="section-label">Accesos del sistema</p>
-    <h2 class="section-title">Tres portales, una sola plataforma</h2>
-    <div class="portales-grid">
-      <div class="portal-card pac" style="animation-delay:.05s">
-        <div class="p-icon"><i class="bi bi-person-heart"></i></div>
-        <h3>Portal Paciente</h3>
-        <p>Regístrate, inicia sesión y gestiona tus citas médicas de forma autónoma.</p>
-        <a href="/login_paciente"><button class="portal-link pac"><i class="bi bi-box-arrow-in-right"></i> Acceder como paciente</button></a>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-pill"><i class="bi bi-heart-pulse"></i> Sistema Médico Digital</div>
+      <h1>Tu salud merece<br><em>atención inmediata</em></h1>
+      <p class="hero-sub">
+        Reserva y gestiona tus citas médicas de forma rápida, segura y desde cualquier lugar.
+        MediClover es la plataforma que conecta pacientes y clínica en un solo lugar.
+      </p>
+      <div class="hero-btns">
+        <a href="/registro_paciente" class="btn-hero btn-hero-green">
+          <i class="bi bi-person-plus-fill"></i> Crear cuenta gratis
+        </a>
+        <a href="/login_paciente" class="btn-hero btn-hero-outline">
+          <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+        </a>
       </div>
-      <div class="portal-card doc" style="animation-delay:.1s">
-        <div class="p-icon"><i class="bi bi-stethoscope"></i></div>
-        <h3>Portal Doctor</h3>
-        <p>Gestiona tu agenda, visualiza pacientes y administra los slots disponibles.</p>
-        <a href="/login_doctor"><button class="portal-link doc"><i class="bi bi-box-arrow-in-right"></i> Acceder como doctor</button></a>
+    </div>
+
+    <div class="hero-panel">
+      <p class="hero-panel-title"><i class="bi bi-stars" style="color:#82e0c4"></i> ¿Por qué MediClover?</p>
+      <div class="hero-feat">
+        <div class="hero-feat-ico"><i class="bi bi-calendar-check"></i></div>
+        <div>
+          <div class="hero-feat-name">Reserva en segundos</div>
+          <div class="hero-feat-desc">Agenda tu cita sin llamadas ni esperas.</div>
+        </div>
       </div>
-      <div class="portal-card adm" style="animation-delay:.15s">
-        <div class="p-icon"><i class="bi bi-shield-lock"></i></div>
-        <h3>Portal Admin</h3>
-        <p>Supervisión total del sistema: pacientes, citas y configuración general.</p>
-        <a href="/login"><button class="portal-link adm"><i class="bi bi-box-arrow-in-right"></i> Acceder como admin</button></a>
+      <div class="hero-feat">
+        <div class="hero-feat-ico"><i class="bi bi-shield-lock"></i></div>
+        <div>
+          <div class="hero-feat-name">Datos seguros</div>
+          <div class="hero-feat-desc">Tu información protegida con los más altos estándares.</div>
+        </div>
+      </div>
+      <div class="hero-feat">
+        <div class="hero-feat-ico"><i class="bi bi-bell"></i></div>
+        <div>
+          <div class="hero-feat-name">Seguimiento en tiempo real</div>
+          <div class="hero-feat-desc">Consulta el estado de tus citas desde tu panel.</div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<footer>
-  <p>© 2025 MediClover · Dr. Luis Suárez · Médico General</p>
-  <div class="staff-access">
-    <a href="/login_doctor">Acceso Doctor</a>
-    <span>·</span>
-    <a href="/login">Acceso Admin</a>
+<!-- STRIP STATS -->
+<div class="strip">
+  <div class="strip-inner">
+    <div class="strip-stat">
+      <div class="strip-num">500+</div>
+      <div class="strip-lbl">Pacientes atendidos</div>
+    </div>
+    <div class="strip-sep"></div>
+    <div class="strip-stat">
+      <div class="strip-num">98%</div>
+      <div class="strip-lbl">Satisfacción</div>
+    </div>
+    <div class="strip-sep"></div>
+    <div class="strip-stat">
+      <div class="strip-num">24/7</div>
+      <div class="strip-lbl">Disponibilidad</div>
+    </div>
+    <div class="strip-sep"></div>
+    <div class="strip-stat">
+      <div class="strip-num">&lt;2 min</div>
+      <div class="strip-lbl">Para reservar</div>
+    </div>
   </div>
-</footer>
+</div>
 
-</body>
-</html>
+<!-- CÓMO FUNCIONA -->
+<section class="sec" style="background:var(--white)">
+  <div class="sec-inner">
+    <div class="sec-head text-center">
+      <div class="sec-label" style="margin:0 auto .9rem"><i class="bi bi-map"></i> Proceso simple</div>
+      <h2 class="sec-title">Reservar nunca fue tan fácil</h2>
+      <p class="sec-desc" style="margin:0 auto">En solo tres pasos tienes tu cita confirmada.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">1</div>
+        <h3>Crea tu cuenta</h3>
+        <p>Regístrate en menos de un minuto con tus datos básicos.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <h3>Elige fecha y hora</h3>
+        <p>Selecciona el día y horario que mejor se adapte a tu agenda.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <h3>Confirma tu cita</h3>
+        <p>Recibe confirmación y gestiona todo desde tu panel personal.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="sec" style="background:var(--snow)">
+  <div class="sec-inner">
+    <div class="sec-head">
+      <div class="sec-label"><i class="bi bi-grid-3x3-gap"></i> Servicios</div>
+      <h2 class="sec-title">Todo lo que necesitas<br>en un solo lugar</h2>
+      <p class="sec-desc">MediClover centraliza la gestión de tu salud para que puedas enfocarte en lo que importa.</p>
+    </div>
+    <div class="services">
+      <div class="svc-card">
+        <div class="svc-ico"><i class="bi bi-calendar3"></i></div>
+        <h3>Gestión de Citas</h3>
+        <p>Reserva, consulta o cancela tus citas médicas desde cualquier dispositivo.</p>
+      </div>
+      <div class="svc-card">
+        <div class="svc-ico"><i class="bi bi-person-lines-fill"></i></div>
+        <h3>Historial Médico</h3>
+        <p>Accede a todas tus citas pasadas y futuras organizadas de forma clara.</p>
+      </div>
+      <div class="svc-card">
+        <div class="svc-ico"><i class="bi bi-shield-check"></i></div>
+        <h3>Datos Protegidos</h3>
+        <p>Tu información personal almacenada con los más altos estándares de seguridad.</p>
+      </div>
+      <div class="svc-card">
+        <div class="svc-ico"><i class="bi bi-headset"></i></div>
+        <h3>Atención Continua</h3>
+        <p>Plataforma disponible las 24 horas para que nunca pierdas una cita importante.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-inner">
+    <h2>¿Listo para cuidar tu salud?</h2>
+    <p>Únete a MediClover y gestiona tus citas médicas de forma moderna e inteligente.</p>
+    <div class="cta-btns">
+      <a href="/registro_paciente" class="btn-hero btn-hero-green">
+        <i class="bi bi-person-plus-fill"></i> Registrarse — es gratis
+      </a>
+      <a href="/login" class="btn-hero btn-hero-outline">
+        <i class="bi bi-shield-lock"></i> Acceso Administrativo
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

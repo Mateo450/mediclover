@@ -1,73 +1,63 @@
-{% extends "base.html" %}
-{% block titulo %}Editar Paciente · Admin · MediClover{% endblock %}
-{% block portal_class %}portal-admin{% endblock %}
-{% block topbar_title %}Editar Paciente{% endblock %}
-
-{% block sidebar %}
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon"><i class="bi bi-shield-lock-fill"></i></div>
-    <div>
-      <span class="logo-text">MediClover</span>
-      <span class="logo-sub">Admin · {{ session.get('usuario') }}</span>
-    </div>
-  </div>
-  <nav class="sidebar-nav">
-    <span class="nav-label">Sistema</span>
-    <a href="/index"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
-    <a href="/pacientes" class="active"><i class="bi bi-people"></i><span>Pacientes</span></a>
-    <a href="/citas"><i class="bi bi-calendar2-check"></i><span>Citas</span></a>
-  </nav>
-  <div class="sidebar-footer">
-    <a href="/logout"><i class="bi bi-box-arrow-left"></i><span>Cerrar sesión</span></a>
-  </div>
-</aside>
-{% endblock %}
-
-{% block topbar_right %}
-<span style="font-size:.75rem;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-mid);border-radius:100px;padding:3px 10px;font-weight:600;">
-  <i class="bi bi-shield-check"></i> Administrador
-</span>
-{% endblock %}
+}{% extends "base.html" %}
+{% block title %}Editar Paciente — MediClover{% endblock %}
 
 {% block contenido %}
-<div class="page-header fade-up">
-  <h1>Editar paciente</h1>
-  <p>Modifica la información del paciente registrado</p>
-</div>
+<div class="layout">
 
-<div style="max-width:560px;" class="fade-up delay-1">
-  <div class="card">
-    <div class="card-body">
-      <form method="POST" action="/editar_paciente/{{ paciente.id }}">
-        <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div class="form-group">
-            <label class="form-label">Nombre</label>
-            <input name="nombre" type="text" class="form-control" value="{{ paciente.nombre }}" required style="padding-left:14px;"/>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Apellido</label>
-            <input name="apellido" type="text" class="form-control" value="{{ paciente.apellido }}" required style="padding-left:14px;"/>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Cédula</label>
-          <input name="cedula" type="text" class="form-control" value="{{ paciente.cedula }}" required style="padding-left:14px;"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Correo electrónico</label>
-          <input name="correo" type="email" class="form-control" value="{{ paciente.correo or '' }}" style="padding-left:14px;"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Teléfono</label>
-          <input name="telefono" type="text" class="form-control" value="{{ paciente.telefono or '' }}" style="padding-left:14px;"/>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:8px;">
-          <button type="submit" class="btn-primary"><i class="bi bi-check2"></i> Guardar cambios</button>
-          <a href="/pacientes" class="btn-outline"><i class="bi bi-arrow-left"></i> Cancelar</a>
-        </div>
-      </form>
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
+    <a href="/admin"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/pacientes" class="active"><i class="bi bi-people"></i> Pacientes</a>
+    <a href="/citas"><i class="bi bi-calendar3"></i> Citas</a>
+    <hr style="border-color:rgba(255,255,255,.1); margin:.75rem 1.25rem;">
+    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+  </aside>
+
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <h1>Editar Paciente</h1>
+        <p>Modifica los datos del paciente</p>
+      </div>
+      <a href="/pacientes" class="btn btn-ghost">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
     </div>
+
+    <div class="card" style="max-width:560px;">
+      <div class="card-body">
+        <form method="POST">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem;">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input type="text" name="nombre" value="{{ paciente[0] }}" required>
+            </div>
+            <div class="form-group">
+              <label>Apellido</label>
+              <input type="text" name="apellido" value="{{ paciente[1] }}" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Correo</label>
+            <input type="email" name="correo" value="{{ paciente[2] }}" required>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0 1rem;">
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="text" name="telefono" value="{{ paciente[3] }}">
+            </div>
+            <div class="form-group">
+              <label>Cédula</label>
+              <input type="text" name="cedula" value="{{ paciente[4] }}">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-block">
+            <i class="bi bi-floppy-fill"></i> Guardar cambios
+          </button>
+        </form>
+      </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}
