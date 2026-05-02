@@ -42,7 +42,7 @@ def init_db():
         )
     """)
     # Agregar columna usuario si no existe (para login con usuario en vez de correo)
-    cursor.execute("ALTER TABLE doctor ADD COLUMN IF NOT EXISTS usuario VARCHAR(100) UNIQUE")
+    cursor.execute("ALTER TABLE doctor ADD COLUMN IF NOT EXISTS usuario VARCHAR(100)")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS slot (
             id_slot    SERIAL PRIMARY KEY,
