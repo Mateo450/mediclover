@@ -33,7 +33,7 @@ def get_conn():
 # ===============================
 # CREAR TABLAS SI NO EXISTEN
 # ===============================
-def init_db(): 
+def init_db():
     c = get_conn()
     if not c:
         return
@@ -65,7 +65,7 @@ def init_db():
     cursor.close()
     print("✅ BD inicializada")
 
-init_db() # init_db()  ← comentada, las tablas ya existen en Supabase
+# init_db()  ← comentada, las tablas ya existen en Supabase
 
 
 # ===============================
@@ -570,4 +570,5 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
