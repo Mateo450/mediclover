@@ -36,11 +36,13 @@ def init_db():
             id_doctor    SERIAL PRIMARY KEY,
             nombre       VARCHAR(100) NOT NULL,
             apellido     VARCHAR(100) NOT NULL,
-            correo       VARCHAR(150) UNIQUE NOT NULL,
+            correo       VARCHAR(150),
             password     VARCHAR(100) NOT NULL,
             especialidad VARCHAR(150) DEFAULT 'Médico General'
         )
     """)
+    # Agregar columna usuario si no existe (para login con usuario en vez de correo)
+    cursor.execute("ALTER TABLE doctor ADD COLUMN IF NOT EXISTS usuario VARCHAR(100) UNIQUE")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS slot (
             id_slot    SERIAL PRIMARY KEY,
@@ -247,14 +249,14 @@ def admin_doctores():
 def crear_doctor():
     if request.method == "POST":
         cursor = conn.cursor()
-        cursor.execute("SELECT id_doctor FROM doctor WHERE correo=%s", (request.form["correo"],))
+        cursor.execute("SELECT id_doctor FROM doctor WHERE usuario=%s", (request.form["usuario"],))
         if cursor.fetchone():
             cursor.close()
-            return render_template("crear_doctor.html", error="Correo ya registrado")
+            return render_template("crear_doctor.html", error="Ese usuario ya existe")
         cursor.execute("""
-            INSERT INTO doctor(nombre,apellido,correo,password,especialidad)
-            VALUES(%s,%s,%s,%s,%s)
-        """, (request.form["nombre"], request.form["apellido"], request.form["correo"],
+            INSERT INTO doctor(nombre, apellido, usuario, password, especialidad)
+            VALUES(%s, %s, %s, %s, %s)
+        """, (request.form["nombre"], request.form["apellido"], request.form["usuario"],
               request.form["password"], request.form["especialidad"]))
         conn.commit()
         cursor.close()
@@ -283,8 +285,8 @@ def login_doctor():
         return "Error BD"
     if request.method == "POST":
         cursor = conn.cursor()
-        cursor.execute("SELECT id_doctor,nombre FROM doctor WHERE correo=%s AND password=%s",
-                       (request.form["correo"], request.form["password"]))
+        cursor.execute("SELECT id_doctor,nombre FROM doctor WHERE usuario=%s AND password=%s",
+                       (request.form["usuario"], request.form["password"]))
         doc = cursor.fetchone()
         cursor.close()
         if doc:
@@ -292,7 +294,7 @@ def login_doctor():
             session["doctor_id"]     = doc[0]
             session["doctor_nombre"] = doc[1]
             return redirect("/doctor/panel")
-        return render_template("login_doctor.html", error="Credenciales incorrectas")
+        return render_template("login_doctor.html", error="Usuario o contraseña incorrectos")
     return render_template("login_doctor.html")
 
 
