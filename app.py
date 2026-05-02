@@ -7,8 +7,8 @@ from datetime import date, datetime
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
 
-ADMIN_USER = "admin"
-ADMIN_PASS = "1234"
+ADMIN_USER = "Luis54"
+ADMIN_PASS = "L2008S"
 DURACION_CITA = 35  # minutos
 
 DATABASE_URL = os.getenv("DATABASE_URL")
