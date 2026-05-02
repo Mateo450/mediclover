@@ -7,7 +7,6 @@
     <a href="/admin" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a>
     <a href="/pacientes"><i class="bi bi-people"></i> Pacientes</a>
     <a href="/citas"><i class="bi bi-calendar3"></i> Citas</a>
-    <a href="/admin/doctores"><i class="bi bi-person-badge"></i> Doctores</a>
     <hr style="border-color:rgba(255,255,255,.1);margin:.75rem 1.25rem;">
     <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
   </aside>
@@ -21,10 +20,6 @@
         <div><div class="stat-value">{{ total_pacientes }}</div><div class="stat-label">Pacientes</div></div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon navy"><i class="bi bi-person-badge-fill"></i></div>
-        <div><div class="stat-value">{{ total_doctores }}</div><div class="stat-label">Doctores</div></div>
-      </div>
-      <div class="stat-card">
         <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
         <div><div class="stat-value">{{ citas_pendientes }}</div><div class="stat-label">Pendientes</div></div>
       </div>
@@ -34,13 +29,13 @@
       </div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-title"><i class="bi bi-lightning-charge-fill text-teal"></i> Acciones rápidas</span></div>
+      <div class="card-header">
+        <span class="card-title"><i class="bi bi-lightning-charge-fill text-teal"></i> Acciones rápidas</span>
+      </div>
       <div class="card-body">
         <div class="actions">
-          <a href="/pacientes"         class="btn btn-outline"><i class="bi bi-people"></i> Ver pacientes</a>
-          <a href="/citas"             class="btn btn-outline"><i class="bi bi-calendar3"></i> Ver citas</a>
-          <a href="/admin/doctores"    class="btn btn-outline"><i class="bi bi-person-badge"></i> Ver doctores</a>
-          <a href="/admin/crear_doctor" class="btn btn-navy"><i class="bi bi-person-plus"></i> Nuevo doctor</a>
+          <a href="/pacientes" class="btn btn-outline"><i class="bi bi-people"></i> Ver pacientes</a>
+          <a href="/citas"     class="btn btn-outline"><i class="bi bi-calendar3"></i> Ver citas</a>
         </div>
       </div>
     </div>

@@ -92,8 +92,6 @@
   background: rgba(255,255,255,.15);
   transform: translateY(-2px);
 }
-
-/* Hero floating card */
 .hero-panel {
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.14);
@@ -131,8 +129,6 @@
 }
 .hero-feat-name { font-size: .875rem; font-weight: 600; color: var(--white); }
 .hero-feat-desc { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .1rem; }
-
-/* Stats strip */
 .strip {
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
@@ -163,8 +159,6 @@
   margin-top: .2rem;
 }
 .strip-sep { width: 1px; height: 36px; background: var(--gray-200); }
-
-/* Sections */
 .sec { padding: 4.5rem 0; }
 .sec-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
 .sec-label {
@@ -195,8 +189,6 @@
   line-height: 1.75;
 }
 .sec-head { margin-bottom: 2.75rem; }
-
-/* Steps */
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
 .step { text-align: center; padding: 0 .75rem; }
 .step-n {
@@ -214,8 +206,6 @@
 }
 .step h3 { font-family: var(--font-display); color: var(--navy); font-size: .98rem; margin-bottom: .4rem; }
 .step p  { font-size: .83rem; color: var(--gray-500); line-height: 1.65; }
-
-/* Services grid */
 .services { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
 .svc-card {
   background: var(--white);
@@ -248,8 +238,6 @@
 }
 .svc-card h3 { font-family: var(--font-display); font-size: 1rem; color: var(--navy); margin-bottom: .4rem; }
 .svc-card p  { font-size: .83rem; color: var(--gray-500); line-height: 1.6; }
-
-/* CTA */
 .cta {
   background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
   padding: 4.5rem 0;
@@ -269,7 +257,21 @@
 .cta h2 { font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: .65rem; }
 .cta p  { color: rgba(255,255,255,.6); font-size: .93rem; margin-bottom: 2rem; }
 .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-
+/* Accesos internos discretos al pie */
+.staff-access {
+  text-align: center;
+  padding: .75rem 0 1rem;
+  background: var(--snow);
+  border-top: 1px solid var(--gray-200);
+}
+.staff-access a {
+  font-size: .75rem;
+  color: var(--gray-400);
+  margin: 0 .6rem;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+.staff-access a:hover { color: var(--gray-600); }
 @media(max-width:900px) {
   .hero-inner { grid-template-columns: 1fr; }
   .hero-panel { display: none; }
@@ -279,7 +281,7 @@
 
 {% block contenido %}
 
-<!-- HERO -->
+<!-- HERO — solo paciente -->
 <section class="hero">
   <div class="hero-inner">
     <div>
@@ -298,7 +300,6 @@
         </a>
       </div>
     </div>
-
     <div class="hero-panel">
       <p class="hero-panel-title"><i class="bi bi-stars" style="color:#82e0c4"></i> ¿Por qué MediClover?</p>
       <div class="hero-feat">
@@ -446,7 +447,7 @@
   </div>
 </section>
 
-<!-- CTA -->
+<!-- CTA — solo paciente -->
 <section class="cta">
   <div class="cta-inner">
     <h2>¿Listo para cuidar tu salud?</h2>
@@ -455,12 +456,18 @@
       <a href="/registro_paciente" class="btn-hero btn-hero-green">
         <i class="bi bi-person-plus-fill"></i> Registrarse — es gratis
       </a>
-      <a href="/login" class="btn-hero btn-hero-outline">
-        <i class="bi bi-shield-lock"></i> Acceso Administrativo
+      <a href="/login_paciente" class="btn-hero btn-hero-outline">
+        <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
       </a>
     </div>
   </div>
 </section>
 
-{% endblock %}
+<!-- ACCESOS INTERNOS — discretos, solo para staff -->
+<div class="staff-access">
+  <a href="/login_doctor"><i class="bi bi-person-badge"></i> Acceso Doctor</a>
+  <span style="color:var(--gray-300);">·</span>
+  <a href="/login"><i class="bi bi-shield-lock"></i> Acceso Admin</a>
+</div>
 
+{% endblock %}
