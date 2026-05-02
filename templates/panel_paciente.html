@@ -1,63 +1,129 @@
-{% extends "base.html" %}
-{% block title %}Mi Panel — MediClover{% endblock %}
-{% block contenido %}
-<div class="page-content">
-  <div class="container">
-    <div class="page-header">
-      <div>
-        <h1>Mi Panel</h1>
-        <p>Bienvenido, <strong>{{ session["paciente_nombre"] }}</strong></p>
-      </div>
-      <!-- botón arriba eliminado -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Registro de Paciente · MediClover</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+  <style>
+    :root{--accent:#2563EB;--accent2:#1D4ED8;--light:#EFF6FF;--mid:#BFDBFE;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Sans',sans-serif;background:linear-gradient(135deg,#EFF6FF 0%,#F8FAFC 60%);min-height:100vh;display:flex;flex-direction:column;}
+    a{text-decoration:none;color:inherit;}
+    .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
+    .auth-card{
+      background:#fff;border-radius:20px;
+      box-shadow:0 8px 50px rgba(37,99,235,.12),0 2px 12px rgba(0,0,0,.06);
+      padding:36px;width:100%;max-width:460px;
+      animation:fadeUp .45s ease both;
+    }
+    .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+    .auth-logo .icon{width:40px;height:40px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;}
+    .auth-logo .brand{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;}
+    .auth-logo .portal-tag{font-size:.72rem;font-weight:600;background:var(--light);color:var(--accent);border:1px solid var(--mid);border-radius:100px;padding:2px 10px;margin-left:4px;}
+    .auth-card h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.3rem;margin-bottom:4px;}
+    .auth-card .subtitle{font-size:.875rem;color:#64748B;margin-bottom:24px;}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .form-group{margin-bottom:14px;}
+    .form-label{display:block;font-size:.78rem;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+    .input-wrap{position:relative;}
+    .input-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94A3B8;font-size:.95rem;}
+    .form-control{
+      width:100%;padding:10px 12px 10px 36px;
+      border:1.5px solid rgba(0,0,0,.1);border-radius:10px;
+      font-family:'DM Sans',sans-serif;font-size:.875rem;color:#0F172A;
+      outline:none;transition:border-color .2s,box-shadow .2s;
+    }
+    .form-control:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+    .btn-submit{
+      width:100%;padding:12px;background:var(--accent);color:#fff;
+      border:none;border-radius:10px;font-family:'DM Sans',sans-serif;
+      font-size:.95rem;font-weight:600;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:background .2s,transform .2s;margin-top:6px;
+    }
+    .btn-submit:hover{background:var(--accent2);transform:translateY(-1px);}
+    .auth-link{text-align:center;font-size:.875rem;color:#64748B;margin-top:16px;}
+    .auth-link a{color:var(--accent);font-weight:600;}
+    .alert{padding:11px 14px;border-radius:8px;font-size:.85rem;display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+    .alert-danger{background:#FEE2E2;color:#991B1B;}
+    .alert-success{background:#DCFCE7;color:#166534;}
+    .back-home{text-align:center;margin-top:12px;}
+    .back-home a{font-size:.8rem;color:#94A3B8;display:inline-flex;align-items:center;gap:5px;}
+    .back-home a:hover{color:var(--accent);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    @media(max-width:480px){.grid-2{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon"><i class="bi bi-heart-pulse-fill"></i></div>
+      <span class="brand">MediClover</span>
+      <span class="portal-tag">Registro</span>
     </div>
+    <h2>Crear cuenta de paciente</h2>
+    <p class="subtitle">Completa tu información para comenzar a agendar citas</p>
 
-    {% if citas %}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Fecha</th><th>Hora</th><th>Doctor</th><th>Motivo</th><th>Estado</th><th>Acción</th></tr>
-          </thead>
-          <tbody>
-            {% for c in citas %}
-            <tr>
-              <td><i class="bi bi-calendar3 text-teal"></i> {{ c[1] }}</td>
-              <td><i class="bi bi-clock text-teal"></i> {{ c[2] }}</td>
-              <td>
-                {% if c[5] %}
-                  <strong>Dr. {{ c[5] }} {{ c[6] }}</strong>
-                  <div style="font-size:.78rem;color:var(--gray-500);">{{ c[7] }}</div>
-                {% else %}
-                  <span class="text-muted">—</span>
-                {% endif %}
-              </td>
-              <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c[4] }}</td>
-              <td><span class="badge estado {{ c[3] }}">{{ c[3] }}</span></td>
-              <td>
-                {% if c[3] == "pendiente" %}
-                  <a href="/cancelar_cita_paciente/{{ c[0] }}"
-                     class="btn btn-danger btn-sm"
-                     onclick="return confirm('¿Cancelar esta cita?')">
-                    <i class="bi bi-x-circle"></i> Cancelar
-                  </a>
-                {% else %}
-                  <span class="text-muted" style="font-size:.8rem;">—</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="card">
-        <div class="card-body" style="text-align:center;padding:3.5rem 2rem;">
-          <div style="font-size:2.5rem;margin-bottom:1rem;opacity:.3;">📅</div>
-          <h3 style="font-family:var(--font-display);color:var(--navy);margin-bottom:.5rem;">Sin citas registradas</h3>
-          <p class="text-muted" style="margin-bottom:1.5rem;">Aún no tienes ninguna cita. ¡Reserva tu primera ahora!</p>
-          <a href="/reservar" class="btn"><i class="bi bi-calendar-plus-fill"></i> Reservar cita</a>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for c,m in messages %}
+        <div class="alert alert-{{ 'danger' if c=='error' else c }}"><i class="bi bi-{{ 'check-circle' if c=='success' else 'exclamation-triangle' }}"></i>{{ m }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/registro_paciente">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <div class="input-wrap">
+            <i class="bi bi-person"></i>
+            <input name="nombre" type="text" class="form-control" placeholder="Tu nombre" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido</label>
+          <div class="input-wrap">
+            <i class="bi bi-person"></i>
+            <input name="apellido" type="text" class="form-control" placeholder="Tu apellido" required/>
+          </div>
         </div>
       </div>
-    {% endif %}
+      <div class="form-group">
+        <label class="form-label">Cédula de identidad</label>
+        <div class="input-wrap">
+          <i class="bi bi-card-text"></i>
+          <input name="cedula" type="text" class="form-control" placeholder="Ej: 1712345678" required/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <div class="input-wrap">
+          <i class="bi bi-envelope"></i>
+          <input name="correo" type="email" class="form-control" placeholder="correo@ejemplo.com" required/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono</label>
+        <div class="input-wrap">
+          <i class="bi bi-telephone"></i>
+          <input name="telefono" type="text" class="form-control" placeholder="Ej: 0991234567"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock"></i>
+          <input name="password" type="password" class="form-control" placeholder="Mínimo 6 caracteres" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit"><i class="bi bi-person-check"></i> Crear cuenta</button>
+    </form>
+
+    <p class="auth-link">¿Ya tienes cuenta? <a href="/login_paciente">Inicia sesión</a></p>
+    <div class="back-home"><a href="/"><i class="bi bi-arrow-left"></i> Volver al inicio</a></div>
   </div>
 </div>
-{% endblock %}
+</body>
+</html>

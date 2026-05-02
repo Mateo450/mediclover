@@ -1,87 +1,133 @@
 {% extends "base.html" %}
-{% block title %}Pacientes — MediClover{% endblock %}
+{% block titulo %}Pacientes · Admin · MediClover{% endblock %}
+{% block portal_class %}portal-admin{% endblock %}
+{% block topbar_title %}Gestión de Pacientes{% endblock %}
+
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i class="bi bi-shield-lock-fill"></i></div>
+    <div>
+      <span class="logo-text">MediClover</span>
+      <span class="logo-sub">Admin · {{ session.get('usuario') }}</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <span class="nav-label">Sistema</span>
+    <a href="/index"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+    <a href="/pacientes" class="active"><i class="bi bi-people"></i><span>Pacientes</span></a>
+    <a href="/citas"><i class="bi bi-calendar2-check"></i><span>Citas</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="/logout"><i class="bi bi-box-arrow-left"></i><span>Cerrar sesión</span></a>
+  </div>
+</aside>
+{% endblock %}
+
+{% block topbar_right %}
+<span style="font-size:.75rem;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-mid);border-radius:100px;padding:3px 10px;font-weight:600;">
+  <i class="bi bi-shield-check"></i> Administrador
+</span>
+{% endblock %}
 
 {% block contenido %}
-<div class="layout">
+<div class="page-header fade-up">
+  <h1>Pacientes</h1>
+  <p>Busca y gestiona los pacientes registrados en el sistema</p>
+</div>
 
-  <aside class="sidebar">
-    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
-    <a href="/admin"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a href="/pacientes" class="active"><i class="bi bi-people"></i> Pacientes</a>
-    <a href="/citas"><i class="bi bi-calendar3"></i> Citas</a>
-    <hr style="border-color:rgba(255,255,255,.1); margin:.75rem 1.25rem;">
-    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
-  </aside>
-
-  <div class="main">
-    <div class="page-header">
-      <div>
-        <h1>Pacientes</h1>
-        <p>Listado completo de pacientes registrados</p>
-      </div>
-      <!-- BUSCADOR POR CÉDULA -->
-      <form method="GET" action="/pacientes" style="display:flex;gap:.5rem;align-items:center;">
-        <input type="text" name="cedula" placeholder="Buscar por cédula..."
-               value="{{ cedula_busqueda or '' }}"
-               style="padding:.45rem .85rem;border:1px solid var(--gray-200);border-radius:8px;font-size:.9rem;outline:none;">
-        <button type="submit" class="btn">
-          <i class="bi bi-search"></i> Buscar
-        </button>
-        {% if cedula_busqueda %}
-          <a href="/pacientes" class="btn btn-ghost">
-            <i class="bi bi-x-lg"></i> Limpiar
-          </a>
-        {% endif %}
-      </form>
-    </div>
-
-    {% if cedula_busqueda and not pacientes %}
-      <div class="card">
-        <div class="card-body" style="text-align:center;padding:2.5rem;">
-          <div style="font-size:2rem;opacity:.3;margin-bottom:.5rem;">🔍</div>
-          <p class="text-muted">No se encontró ningún paciente con la cédula <strong>{{ cedula_busqueda }}</strong></p>
+<!-- BUSCADOR -->
+<div class="card fade-up delay-1" style="margin-bottom:20px;">
+  <div class="card-body">
+    <form method="GET" action="/pacientes" style="display:flex;gap:12px;align-items:flex-end;">
+      <div style="flex:1;">
+        <label class="form-label">Buscar por cédula</label>
+        <div style="position:relative;">
+          <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9CA3AF;"></i>
+          <input type="text" name="cedula" value="{{ request.args.get('cedula','') }}"
+                 class="form-control" style="padding-left:36px;"
+                 placeholder="Ingresa la cédula del paciente..."/>
         </div>
       </div>
-    {% else %}
+      <button type="submit" class="btn-primary" style="flex-shrink:0;">
+        <i class="bi bi-search"></i> Buscar
+      </button>
+      {% if request.args.get('cedula') %}
+      <a href="/pacientes" class="btn-outline" style="flex-shrink:0;">
+        <i class="bi bi-x"></i> Limpiar
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- TABLA -->
+<div class="card fade-up delay-2">
+  <div class="card-header-custom" style="padding-bottom:16px;">
+    <span class="card-title">
+      {% if request.args.get('cedula') %}
+        Resultado de búsqueda
+      {% else %}
+        Todos los pacientes
+      {% endif %}
+    </span>
+    <span style="font-size:.8rem;color:var(--text-muted);">{{ pacientes|length if pacientes else 0 }} registros</span>
+  </div>
+  <div class="card-body" style="padding-top:0;">
+    {% if pacientes %}
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>#</th>
             <th>Nombre</th>
-            <th>Apellido</th>
+            <th>Cédula</th>
             <th>Correo</th>
             <th>Teléfono</th>
-            <th>Cédula</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for p in pacientes %}
           <tr>
-            <td class="text-muted">{{ loop.index }}</td>
-            <td>{{ p[1] }}</td>
-            <td>{{ p[2] }}</td>
-            <td>{{ p[3] }}</td>
-            <td>{{ p[4] }}</td>
-            <td>{{ p[5] }}</td>
             <td>
-              <a href="/editar_paciente/{{ p[0] }}" class="btn btn-ghost btn-sm">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <a href="/eliminar_paciente/{{ p[0] }}"
-                 class="btn btn-danger btn-sm"
-                 onclick="return confirm('¿Eliminar a {{ p[1] }} {{ p[2] }}?')">
-                <i class="bi bi-trash"></i>
-              </a>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;background:var(--accent-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);font-size:.82rem;flex-shrink:0;">
+                  {{ p.nombre[0]|upper }}
+                </div>
+                <span style="font-weight:600;">{{ p.nombre }} {{ p.apellido }}</span>
+              </div>
+            </td>
+            <td style="color:var(--text-muted);font-family:monospace;font-size:.85rem;">{{ p.cedula }}</td>
+            <td style="color:var(--text-muted);font-size:.85rem;">{{ p.correo or '—' }}</td>
+            <td style="color:var(--text-muted);font-size:.85rem;">{{ p.telefono or '—' }}</td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <a href="/editar_paciente/{{ p.id }}" class="btn-outline btn-sm"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="/eliminar_paciente/{{ p.id }}" style="display:inline;">
+                  <button type="submit" class="btn-danger btn-sm" onclick="return confirm('¿Eliminar paciente?')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-people"></i>
+      <h3>
+        {% if request.args.get('cedula') %}
+          No se encontró ningún paciente con esa cédula
+        {% else %}
+          Sin pacientes registrados
+        {% endif %}
+      </h3>
+      <p>Los pacientes se registran desde el portal público de MediClover.</p>
+    </div>
     {% endif %}
-
   </div>
 </div>
 {% endblock %}

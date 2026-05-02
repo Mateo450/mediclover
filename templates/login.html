@@ -1,42 +1,119 @@
-{% extends "base.html" %}
-{% block title %}Admin — MediClover{% endblock %}
-
-{% block contenido %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Acceso Administrador · MediClover</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+  <style>
+    :root{--accent:#7C3AED;--accent2:#6D28D9;--light:#F5F3FF;--mid:#DDD6FE;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      font-family:'DM Sans',sans-serif;
+      background:linear-gradient(135deg,#1E1033 0%,#2D1B69 50%,#1E1033 100%);
+      min-height:100vh;display:flex;flex-direction:column;
+    }
+    a{text-decoration:none;color:inherit;}
+    .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
+    .auth-card{
+      background:rgba(255,255,255,.97);
+      backdrop-filter:blur(20px);
+      border-radius:20px;
+      box-shadow:0 20px 80px rgba(0,0,0,.4),0 2px 12px rgba(0,0,0,.2);
+      padding:44px 40px;width:100%;max-width:420px;
+      animation:fadeUp .5s ease both;
+    }
+    .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+    .auth-logo .icon{width:44px;height:44px;background:var(--accent);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.4);}
+    .auth-logo .brand{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:#1E1033;}
+    .auth-logo .portal-tag{font-size:.72rem;font-weight:700;background:var(--light);color:var(--accent);border:1px solid var(--mid);border-radius:100px;padding:3px 11px;margin-left:4px;letter-spacing:.3px;}
+    .auth-card h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;margin-bottom:6px;color:#1E1033;}
+    .auth-card .subtitle{font-size:.875rem;color:#6B7280;margin-bottom:28px;}
+    .form-group{margin-bottom:16px;}
+    .form-label{display:block;font-size:.78rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;}
+    .input-wrap{position:relative;}
+    .input-wrap i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#9CA3AF;font-size:1rem;}
+    .form-control{
+      width:100%;padding:12px 14px 12px 40px;
+      border:1.5px solid rgba(0,0,0,.1);border-radius:10px;
+      font-family:'DM Sans',sans-serif;font-size:.875rem;color:#1E1033;
+      outline:none;transition:border-color .2s,box-shadow .2s;
+      background:#FAFAFA;
+    }
+    .form-control:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.12);background:#fff;}
+    .btn-submit{
+      width:100%;padding:14px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;border:none;border-radius:11px;
+      font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:opacity .2s,transform .2s,box-shadow .2s;margin-top:8px;
+      box-shadow:0 4px 20px rgba(124,58,237,.35);
+    }
+    .btn-submit:hover{opacity:.92;transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,.45);}
+    .alert{padding:11px 14px;border-radius:8px;font-size:.85rem;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+    .alert-danger{background:#FEE2E2;color:#991B1B;}
+    .security-note{
+      margin-top:20px;
+      background:var(--light);border:1px solid var(--mid);border-radius:10px;
+      padding:12px 14px;font-size:.78rem;color:#4C1D95;
+      display:flex;align-items:center;gap:8px;
+    }
+    .back-home{text-align:center;margin-top:16px;}
+    .back-home a{font-size:.8rem;color:#9CA3AF;display:inline-flex;align-items:center;gap:5px;}
+    .back-home a:hover{color:var(--accent);}
+    /* BG decoration */
+    body::before{
+      content:'';position:fixed;top:-200px;right:-200px;
+      width:600px;height:600px;
+      background:radial-gradient(circle,rgba(124,58,237,.15),transparent 70%);
+      pointer-events:none;
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+  </style>
+</head>
+<body>
 <div class="auth-wrap">
   <div class="auth-card">
-
-    <div class="auth-top">
-      <div class="auth-emblem"><i class="bi bi-shield-lock-fill"></i></div>
-      <h2>Panel Administrativo</h2>
-      <p>Acceso restringido al equipo médico</p>
+    <div class="auth-logo">
+      <div class="icon"><i class="bi bi-shield-lock-fill"></i></div>
+      <span class="brand">MediClover</span>
+      <span class="portal-tag">Admin</span>
     </div>
+    <h2>Panel de Administración</h2>
+    <p class="subtitle">Acceso restringido al personal autorizado</p>
 
-    <div class="auth-body">
-      {% if error %}
-        <div class="alert error">
-          <i class="bi bi-x-circle-fill"></i> {{ error }}
-        </div>
-      {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for c,m in messages %}
+        <div class="alert alert-{{ 'danger' if c=='error' else c }}"><i class="bi bi-exclamation-triangle"></i>{{ m }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
 
-      <form method="POST">
-        <div class="form-group">
-          <label>Usuario</label>
-          <input type="text" name="usuario" placeholder="admin" required autofocus>
+    <form method="POST" action="/login">
+      <div class="form-group">
+        <label class="form-label">Usuario</label>
+        <div class="input-wrap">
+          <i class="bi bi-person-lock"></i>
+          <input name="usuario" type="text" class="form-control" placeholder="Usuario administrador" required autocomplete="off"/>
         </div>
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input type="password" name="password" placeholder="••••••••" required>
-        </div>
-        <button type="submit" class="btn btn-block" style="margin-top:.5rem;">
-          <i class="bi bi-box-arrow-in-right"></i> Ingresar
-        </button>
-      </form>
-
-      <div class="auth-footer">
-        <a href="/">← Volver al inicio</a>
       </div>
-    </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <div class="input-wrap">
+          <i class="bi bi-shield-lock"></i>
+          <input name="password" type="password" class="form-control" placeholder="Contraseña de acceso" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit"><i class="bi bi-shield-check"></i> Acceder al sistema</button>
+    </form>
 
+    <div class="security-note">
+      <i class="bi bi-lock-fill"></i>
+      Área de acceso restringido. Solo personal autorizado de MediClover.
+    </div>
+    <div class="back-home"><a href="/"><i class="bi bi-arrow-left"></i> Volver al inicio</a></div>
   </div>
 </div>
-{% endblock %}
+</body>
+</html>

@@ -1,43 +1,141 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — MediClover{% endblock %}
+{% block titulo %}Dashboard Admin · MediClover{% endblock %}
+{% block portal_class %}portal-admin{% endblock %}
+{% block topbar_title %}Dashboard Administrativo{% endblock %}
+
+{% block sidebar %}
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i class="bi bi-shield-lock-fill"></i></div>
+    <div>
+      <span class="logo-text">MediClover</span>
+      <span class="logo-sub">Admin · {{ session.get('usuario') }}</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <span class="nav-label">Sistema</span>
+    <a href="/index" class="active"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a>
+    <a href="/pacientes"><i class="bi bi-people"></i><span>Pacientes</span></a>
+    <a href="/citas"><i class="bi bi-calendar2-check"></i><span>Citas</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="/logout"><i class="bi bi-box-arrow-left"></i><span>Cerrar sesión</span></a>
+  </div>
+</aside>
+{% endblock %}
+
+{% block topbar_right %}
+<span style="font-size:.75rem;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-mid);border-radius:100px;padding:3px 10px;font-weight:600;">
+  <i class="bi bi-shield-check"></i> Administrador
+</span>
+{% endblock %}
+
 {% block contenido %}
-<div class="layout">
-  <aside class="sidebar">
-    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
-    <a href="/admin" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a href="/pacientes"><i class="bi bi-people"></i> Pacientes</a>
-    <a href="/citas"><i class="bi bi-calendar3"></i> Citas</a>
-    <hr style="border-color:rgba(255,255,255,.1);margin:.75rem 1.25rem;">
-    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
-  </aside>
-  <div class="main">
-    <div class="page-header">
-      <div><h1>Dashboard</h1><p>Resumen general del sistema</p></div>
+<div class="page-header fade-up">
+  <h1>Dashboard</h1>
+  <p>Resumen general del sistema MediClover</p>
+</div>
+
+<!-- STATS ROW -->
+<div class="grid-4 fade-up delay-1" style="margin-bottom:28px;">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-people"></i></div>
+    <div>
+      <div class="stat-value">{{ total_pacientes or 0 }}</div>
+      <div class="stat-label">Pacientes registrados</div>
     </div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon teal"><i class="bi bi-people-fill"></i></div>
-        <div><div class="stat-value">{{ total_pacientes }}</div><div class="stat-label">Pacientes</div></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
-        <div><div class="stat-value">{{ citas_pendientes }}</div><div class="stat-label">Pendientes</div></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon green"><i class="bi bi-calendar-day"></i></div>
-        <div><div class="stat-value">{{ citas_hoy }}</div><div class="stat-label">Citas hoy</div></div>
-      </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-calendar2-check"></i></div>
+    <div>
+      <div class="stat-value">{{ total_citas or 0 }}</div>
+      <div class="stat-label">Citas totales</div>
     </div>
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title"><i class="bi bi-lightning-charge-fill text-teal"></i> Acciones rápidas</span>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-calendar-day"></i></div>
+    <div>
+      <div class="stat-value">{{ citas_hoy or 0 }}</div>
+      <div class="stat-label">Citas hoy</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+    <div>
+      <div class="stat-value">{{ slots_libres or 0 }}</div>
+      <div class="stat-label">Slots disponibles</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2 fade-up delay-2">
+  <!-- CITAS RECIENTES -->
+  <div class="card">
+    <div class="card-header-custom" style="padding-bottom:16px;">
+      <span class="card-title">Citas recientes</span>
+      <a href="/citas" class="btn-outline btn-sm">Ver todas</a>
+    </div>
+    <div class="card-body" style="padding-top:0;">
+      {% if citas_recientes %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Paciente</th><th>Fecha</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            {% for c in citas_recientes %}
+            <tr>
+              <td style="font-weight:600;">{{ c.paciente_nombre }}</td>
+              <td style="color:var(--text-muted);font-size:.8rem;">{{ c.fecha }} {{ c.hora }}</td>
+              <td>
+                {% if c.estado == 'confirmada' %}
+                  <span class="badge badge-success">Confirmada</span>
+                {% elif c.estado == 'pendiente' %}
+                  <span class="badge badge-warn">Pendiente</span>
+                {% else %}
+                  <span class="badge badge-danger">Cancelada</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      <div class="card-body">
-        <div class="actions">
-          <a href="/pacientes" class="btn btn-outline"><i class="bi bi-people"></i> Ver pacientes</a>
-          <a href="/citas"     class="btn btn-outline"><i class="bi bi-calendar3"></i> Ver citas</a>
+      {% else %}
+      <div class="empty-state" style="padding:30px 0;">
+        <i class="bi bi-calendar-x"></i>
+        <h3>Sin citas registradas</h3>
+        <p>Aún no hay actividad en el sistema</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- PACIENTES RECIENTES -->
+  <div class="card">
+    <div class="card-header-custom" style="padding-bottom:16px;">
+      <span class="card-title">Últimos pacientes</span>
+      <a href="/pacientes" class="btn-outline btn-sm">Ver todos</a>
+    </div>
+    <div class="card-body" style="padding-top:0;">
+      {% if pacientes_recientes %}
+        {% for p in pacientes_recientes %}
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.04);">
+          <div style="width:36px;height:36px;background:var(--accent-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);font-size:.85rem;flex-shrink:0;">
+            {{ p.nombre[0] | upper }}
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:.875rem;">{{ p.nombre }} {{ p.apellido }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);">CI: {{ p.cedula }}</div>
+          </div>
         </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty-state" style="padding:30px 0;">
+        <i class="bi bi-people"></i>
+        <h3>Sin pacientes aún</h3>
       </div>
+      {% endif %}
     </div>
   </div>
 </div>
