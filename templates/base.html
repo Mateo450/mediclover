@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}MediClover{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/>
@@ -10,78 +10,53 @@
 </head>
 <body>
 
-{% if not hide_navbar %}
 <nav class="navbar">
-  <!-- Logo -->
+  <!-- Logo SOLO imagen, sin texto -->
   <a href="/" class="nav-brand">
     <img src="{{ url_for('static', filename='img/logomediclover.png') }}"
-         alt="MediClover"
-         style="height:36px; width:auto; border-radius:8px;"
-         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <div class="nav-brand-icon" style="display:none;"><i class="bi bi-heart-pulse-fill"></i></div>
-    Medi<span class="accent">Clover</span>
+         alt="MediClover" class="nav-logo">
   </a>
 
   <!-- Links según rol -->
   <div class="nav-links">
     {% if session.get("usuario") %}
-      <a href="/admin"     {% if request.path == '/admin'     %}class="active"{% endif %}>
-        <i class="bi bi-speedometer2"></i> Dashboard
-      </a>
-      <a href="/pacientes" {% if request.path == '/pacientes' %}class="active"{% endif %}>
-        <i class="bi bi-people"></i> Pacientes
-      </a>
-      <a href="/citas"     {% if request.path == '/citas'     %}class="active"{% endif %}>
-        <i class="bi bi-calendar3"></i> Citas
-      </a>
+      <a href="/admin"           {% if request.path=='/admin'           %}class="active"{% endif %}><i class="bi bi-speedometer2"></i> Dashboard</a>
+      <a href="/pacientes"       {% if request.path=='/pacientes'       %}class="active"{% endif %}><i class="bi bi-people"></i> Pacientes</a>
+      <a href="/citas"           {% if request.path=='/citas'           %}class="active"{% endif %}><i class="bi bi-calendar3"></i> Citas</a>
+      <a href="/admin/doctores"  {% if request.path=='/admin/doctores'  %}class="active"{% endif %}><i class="bi bi-person-badge"></i> Doctores</a>
+    {% elif session.get("doctor_id") %}
+      <a href="/doctor/panel"    {% if request.path=='/doctor/panel'    %}class="active"{% endif %}><i class="bi bi-house"></i> Mi Panel</a>
+      <a href="/doctor/historial"{% if request.path=='/doctor/historial'%}class="active"{% endif %}><i class="bi bi-folder2-open"></i> Historial</a>
     {% elif session.get("paciente_id") %}
-      <a href="/panel_paciente" {% if request.path == '/panel_paciente' %}class="active"{% endif %}>
-        <i class="bi bi-house"></i> Mi Panel
-      </a>
-      <a href="/reservar" {% if request.path == '/reservar' %}class="active"{% endif %}>
-        <i class="bi bi-plus-circle"></i> Nueva Cita
-      </a>
-    {% else %}
-      <a href="/">Inicio</a>
+      <a href="/panel_paciente"  {% if request.path=='/panel_paciente'  %}class="active"{% endif %}><i class="bi bi-house"></i> Mi Panel</a>
+      <a href="/reservar"        {% if request.path=='/reservar'        %}class="active"{% endif %}><i class="bi bi-plus-circle"></i> Reservar</a>
     {% endif %}
   </div>
 
   <!-- Lado derecho -->
   <div class="nav-end">
     {% if session.get("usuario") %}
-      <span class="nav-user">
-        <i class="bi bi-shield-check text-teal"></i> Administrador
-      </span>
-      <a href="/logout" class="btn btn-ghost btn-sm">
-        <i class="bi bi-box-arrow-right"></i> Salir
-      </a>
+      <span class="nav-user"><i class="bi bi-shield-check text-teal"></i> Administrador</span>
+      <a href="/logout" class="btn btn-ghost btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
+    {% elif session.get("doctor_id") %}
+      <span class="nav-user"><i class="bi bi-person-badge text-teal"></i> Dr. {{ session.get("doctor_nombre","") }}</span>
+      <a href="/logout" class="btn btn-ghost btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
     {% elif session.get("paciente_id") %}
-      <span class="nav-user">
-        <i class="bi bi-person-circle text-teal"></i>
-        {{ session.get("paciente_nombre", "Paciente") }}
-      </span>
-      <a href="/logout" class="btn btn-ghost btn-sm">
-        <i class="bi bi-box-arrow-right"></i> Salir
-      </a>
+      <span class="nav-user"><i class="bi bi-person-circle text-teal"></i> {{ session.get("paciente_nombre","") }}</span>
+      <a href="/logout" class="btn btn-ghost btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
     {% else %}
-      <a href="/login_paciente" class="btn btn-outline btn-sm">
-        <i class="bi bi-person"></i> Ingresar
-      </a>
-      <a href="/registro_paciente" class="btn btn-sm">
-        Registrarse
-      </a>
+      <a href="/login_paciente" class="btn btn-outline btn-sm"><i class="bi bi-person"></i> Ingresar</a>
+      <a href="/registro_paciente" class="btn btn-sm">Registrarse</a>
     {% endif %}
   </div>
 </nav>
-{% endif %}
 
-<main style="flex:1; display:flex; flex-direction:column;">
+<main style="flex:1;display:flex;flex-direction:column;">
   {% block contenido %}{% endblock %}
 </main>
 
 <footer>
   <strong>MediClover</strong> &mdash; Sistema de Gestión de Citas Médicas &copy; 2025
 </footer>
-
 </body>
 </html>

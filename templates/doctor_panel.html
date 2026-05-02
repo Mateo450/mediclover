@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Panel Doctor — MediClover{% endblock %}
+{% block contenido %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
+    <a href="/doctor/panel"     class="active"><i class="bi bi-house"></i> Mi Panel</a>
+    <a href="/doctor/historial"><i class="bi bi-folder2-open"></i> Historial</a>
+    <hr style="border-color:rgba(255,255,255,.1);margin:.75rem 1.25rem;">
+    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+  </aside>
+
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <h1>Dr. {{ session["doctor_nombre"] }}</h1>
+        <p>Panel de gestión médica</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;">
+
+      <!-- PUBLICAR SLOT -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="bi bi-calendar-plus text-teal"></i> Publicar horario disponible</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.83rem;color:var(--gray-500);margin-bottom:1rem;">
+            Cada cita dura <strong>35 minutos</strong>. No puedes publicar slots que se solapen.
+          </p>
+          <form method="POST" action="/doctor/slots/crear">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">
+              <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" name="fecha" required min="{{ hoy }}">
+              </div>
+              <div class="form-group">
+                <label>Hora</label>
+                <input type="time" name="hora" required min="07:00" max="18:00">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-block">
+              <i class="bi bi-plus-circle-fill"></i> Publicar slot
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- SLOTS PUBLICADOS -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="bi bi-clock text-teal"></i> Mis horarios</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          {% if slots %}
+            <table>
+              <thead>
+                <tr><th>Fecha</th><th>Hora</th><th>Estado</th><th></th></tr>
+              </thead>
+              <tbody>
+                {% for s in slots %}
+                <tr>
+                  <td>{{ s[1] }}</td>
+                  <td>{{ s[2] }}</td>
+                  <td>
+                    {% if s[3] %}
+                      <span class="badge" style="background:var(--green-pale);color:var(--green);">
+                        <i class="bi bi-circle-fill" style="font-size:.5rem;"></i> Libre
+                      </span>
+                    {% else %}
+                      <span class="badge" style="background:var(--amber-pale);color:var(--amber);">
+                        <i class="bi bi-circle-fill" style="font-size:.5rem;"></i> Reservado
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if s[3] %}
+                      <a href="/doctor/slots/eliminar/{{ s[0] }}"
+                         class="btn btn-danger btn-sm"
+                         onclick="return confirm('¿Eliminar este slot?')">
+                        <i class="bi bi-trash"></i>
+                      </a>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div style="text-align:center;padding:2rem;color:var(--gray-500);">
+              <div style="font-size:2rem;opacity:.3;margin-bottom:.5rem;">📅</div>
+              No tienes horarios publicados aún
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CITAS PENDIENTES -->
+    <div class="card mt-3">
+      <div class="card-header">
+        <span class="card-title"><i class="bi bi-calendar-check text-teal"></i> Citas pendientes</span>
+        <span style="font-size:.8rem;color:var(--gray-500);">{{ citas|length }} cita(s)</span>
+      </div>
+      <div class="card-body" style="padding:0;">
+        {% if citas %}
+          <table>
+            <thead>
+              <tr><th>Paciente</th><th>Cédula</th><th>Fecha</th><th>Hora</th><th>Motivo</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+              {% for c in citas %}
+              <tr>
+                <td><strong>{{ c[1] }} {{ c[2] }}</strong></td>
+                <td class="text-muted">{{ c[3] }}</td>
+                <td>{{ c[4] }}</td>
+                <td>{{ c[5] }}</td>
+                <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c[7] }}</td>
+                <td>
+                  <div style="display:flex;gap:.4rem;">
+                    <a href="/doctor/completar/{{ c[0] }}" class="btn btn-sm"
+                       onclick="return confirm('¿Marcar como completada?')">
+                      <i class="bi bi-check-lg"></i> Completar
+                    </a>
+                    <a href="/doctor/cancelar/{{ c[0] }}" class="btn btn-danger btn-sm"
+                       onclick="return confirm('¿Cancelar esta cita?')">
+                      <i class="bi bi-x-lg"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div style="text-align:center;padding:2.5rem;color:var(--gray-500);">
+            <div style="font-size:2rem;opacity:.3;margin-bottom:.5rem;">✅</div>
+            No tienes citas pendientes
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

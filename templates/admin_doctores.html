@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Doctores — MediClover{% endblock %}
+{% block contenido %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
+    <a href="/admin"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="/pacientes"><i class="bi bi-people"></i> Pacientes</a>
+    <a href="/citas"><i class="bi bi-calendar3"></i> Citas</a>
+    <a href="/admin/doctores" class="active"><i class="bi bi-person-badge"></i> Doctores</a>
+    <hr style="border-color:rgba(255,255,255,.1);margin:.75rem 1.25rem;">
+    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+  </aside>
+  <div class="main">
+    <div class="page-header">
+      <div><h1>Doctores</h1><p>Gestión del equipo médico</p></div>
+      <a href="/admin/crear_doctor" class="btn"><i class="bi bi-person-plus-fill"></i> Nuevo doctor</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Nombre</th><th>Apellido</th><th>Correo</th><th>Especialidad</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+          {% for d in doctores %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td>{{ d[1] }}</td>
+            <td>{{ d[2] }}</td>
+            <td>{{ d[3] }}</td>
+            <td>{{ d[4] }}</td>
+            <td>
+              <a href="/admin/eliminar_doctor/{{ d[0] }}"
+                 class="btn btn-danger btn-sm"
+                 onclick="return confirm('¿Eliminar al Dr. {{ d[1] }} {{ d[2] }}?')">
+                <i class="bi bi-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not doctores %}
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-500);">No hay doctores registrados</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

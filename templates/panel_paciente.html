@@ -1,41 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Mi Panel — MediClover{% endblock %}
-
 {% block contenido %}
 <div class="page-content">
   <div class="container">
-
     <div class="page-header">
       <div>
         <h1>Mi Panel</h1>
         <p>Bienvenido, <strong>{{ session["paciente_nombre"] }}</strong></p>
       </div>
-      <a href="/reservar" class="btn">
-        <i class="bi bi-plus-circle-fill"></i> Nueva cita
-      </a>
+      <a href="/reservar" class="btn"><i class="bi bi-plus-circle-fill"></i> Nueva cita</a>
     </div>
 
     {% if citas %}
       <div class="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th>Acción</th>
-            </tr>
+            <tr><th>Fecha</th><th>Hora</th><th>Doctor</th><th>Motivo</th><th>Estado</th><th>Acción</th></tr>
           </thead>
           <tbody>
             {% for c in citas %}
             <tr>
               <td><i class="bi bi-calendar3 text-teal"></i> {{ c[1] }}</td>
               <td><i class="bi bi-clock text-teal"></i> {{ c[2] }}</td>
-              <td>{{ c[4] }}</td>
               <td>
-                <span class="badge estado {{ c[3] }}">{{ c[3] }}</span>
+                {% if c[5] %}
+                  <strong>Dr. {{ c[5] }} {{ c[6] }}</strong>
+                  <div style="font-size:.78rem;color:var(--gray-500);">{{ c[7] }}</div>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
               </td>
+              <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c[4] }}</td>
+              <td><span class="badge estado {{ c[3] }}">{{ c[3] }}</span></td>
               <td>
                 {% if c[3] == "pendiente" %}
                   <a href="/cancelar_cita_paciente/{{ c[0] }}"
@@ -52,24 +48,16 @@
           </tbody>
         </table>
       </div>
-
     {% else %}
       <div class="card">
-        <div class="card-body" style="text-align:center; padding:3.5rem 2rem;">
-          <div style="font-size:2.5rem; margin-bottom:1rem; opacity:.3;">📅</div>
-          <h3 style="font-family:var(--font-display); color:var(--navy); margin-bottom:.5rem;">
-            Sin citas registradas
-          </h3>
-          <p class="text-muted" style="margin-bottom:1.5rem;">
-            Aún no tienes ninguna cita. ¡Reserva tu primera ahora!
-          </p>
-          <a href="/reservar" class="btn">
-            <i class="bi bi-plus-circle-fill"></i> Reservar cita
-          </a>
+        <div class="card-body" style="text-align:center;padding:3.5rem 2rem;">
+          <div style="font-size:2.5rem;margin-bottom:1rem;opacity:.3;">📅</div>
+          <h3 style="font-family:var(--font-display);color:var(--navy);margin-bottom:.5rem;">Sin citas registradas</h3>
+          <p class="text-muted" style="margin-bottom:1.5rem;">Aún no tienes ninguna cita. ¡Reserva tu primera ahora!</p>
+          <a href="/reservar" class="btn"><i class="bi bi-plus-circle-fill"></i> Reservar cita</a>
         </div>
       </div>
     {% endif %}
-
   </div>
 </div>
 {% endblock %}
