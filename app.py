@@ -148,11 +148,18 @@ def admin():
 @app.route("/pacientes")
 @login_required(role="admin")
 def pacientes():
+    cedula_busqueda = request.args.get("cedula", "").strip()
     cursor = conn.cursor()
-    cursor.execute("SELECT id_paciente,nombre,apellido,correo,telefono,cedula FROM paciente")
+    if cedula_busqueda:
+        cursor.execute(
+            "SELECT id_paciente,nombre,apellido,correo,telefono,cedula FROM paciente WHERE cedula=%s",
+            (cedula_busqueda,)
+        )
+    else:
+        cursor.execute("SELECT id_paciente,nombre,apellido,correo,telefono,cedula FROM paciente")
     lista = cursor.fetchall()
     cursor.close()
-    return render_template("pacientes.html", pacientes=lista)
+    return render_template("pacientes.html", pacientes=lista, cedula_busqueda=cedula_busqueda)
 
 
 @app.route("/editar_paciente/<int:id>", methods=["GET", "POST"])

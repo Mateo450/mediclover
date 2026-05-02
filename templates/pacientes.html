@@ -19,11 +19,30 @@
         <h1>Pacientes</h1>
         <p>Listado completo de pacientes registrados</p>
       </div>
-      <a href="/registro_paciente" class="btn">
-        <i class="bi bi-person-plus-fill"></i> Nuevo paciente
-      </a>
+      <!-- BUSCADOR POR CÉDULA -->
+      <form method="GET" action="/pacientes" style="display:flex;gap:.5rem;align-items:center;">
+        <input type="text" name="cedula" placeholder="Buscar por cédula..."
+               value="{{ cedula_busqueda or '' }}"
+               style="padding:.45rem .85rem;border:1px solid var(--gray-200);border-radius:8px;font-size:.9rem;outline:none;">
+        <button type="submit" class="btn">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+        {% if cedula_busqueda %}
+          <a href="/pacientes" class="btn btn-ghost">
+            <i class="bi bi-x-lg"></i> Limpiar
+          </a>
+        {% endif %}
+      </form>
     </div>
 
+    {% if cedula_busqueda and not pacientes %}
+      <div class="card">
+        <div class="card-body" style="text-align:center;padding:2.5rem;">
+          <div style="font-size:2rem;opacity:.3;margin-bottom:.5rem;">🔍</div>
+          <p class="text-muted">No se encontró ningún paciente con la cédula <strong>{{ cedula_busqueda }}</strong></p>
+        </div>
+      </div>
+    {% else %}
     <div class="table-wrap">
       <table>
         <thead>
@@ -61,6 +80,7 @@
         </tbody>
       </table>
     </div>
+    {% endif %}
 
   </div>
 </div>
