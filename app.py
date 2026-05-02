@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, flash
 from functools import wraps
 import psycopg2
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
@@ -52,7 +52,6 @@ def init_db():
     """)
     cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_doctor INTEGER REFERENCES doctor(id_doctor)")
     cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
-    # Hacer fecha/hora opcionales ya que ahora vienen del slot
     cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
     cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
     conn.commit()
@@ -95,6 +94,14 @@ def slot_solapado(id_doctor, fecha, hora_str, excluir_id=None):
     for (h,) in rows:
         existente = datetime.strptime(str(h)[:5], "%H:%M")
         if abs((nueva - existente).total_seconds()) / 60 < DURACION_CITA:
+            return True
+    return False
+
+
+def slot_solapado_en_lista(hora_nueva_dt, horas_pendientes):
+    """Verifica solapamiento contra una lista de horas ya planeadas (datetime)."""
+    for h in horas_pendientes:
+        if abs((hora_nueva_dt - h).total_seconds()) / 60 < DURACION_CITA:
             return True
     return False
 
@@ -178,7 +185,7 @@ def editar_paciente(id):
 @login_required(role="admin")
 def eliminar_paciente(id):
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM cita    WHERE id_paciente=%s", (id,))
+    cursor.execute("DELETE FROM cita     WHERE id_paciente=%s", (id,))
     cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
     conn.commit()
     cursor.close()
@@ -372,19 +379,69 @@ def doctor_historial():
                            paciente=paciente, historial=historial, error=error)
 
 
+# ================================================================
+# SLOTS — Creación masiva automática cada 35 minutos
+# ================================================================
 @app.route("/doctor/slots/crear", methods=["POST"])
 @login_required(role="doctor")
 def crear_slot():
-    fecha = request.form["fecha"]
-    hora  = request.form["hora"]
+    fecha      = request.form.get("fecha", "").strip()
+    hora       = request.form.get("hora",  "").strip()
+    cantidad   = request.form.get("cantidad", "1").strip()
+
+    # --- Validaciones básicas ---
+    if not fecha or not hora:
+        return redirect("/doctor/panel")
+
     if fecha < str(date.today()):
         return redirect("/doctor/panel")
-    if not slot_solapado(session["doctor_id"], fecha, hora):
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO slot(id_doctor,fecha,hora) VALUES(%s,%s,%s)",
-                       (session["doctor_id"], fecha, hora))
-        conn.commit()
-        cursor.close()
+
+    try:
+        cantidad = int(cantidad)
+        if cantidad < 1:
+            cantidad = 1
+    except ValueError:
+        cantidad = 1
+
+    # --- Generar slots cada 35 min, saltando los que se solapan ---
+    hora_actual_dt = datetime.strptime(hora, "%H:%M")
+    creados        = 0
+    omitidos       = 0
+    # Guardamos las horas que vamos a insertar en esta misma tanda
+    # para validar solapamiento entre ellas también
+    horas_pendientes = []
+
+    cursor = conn.cursor()
+
+    for i in range(cantidad):
+        hora_str = hora_actual_dt.strftime("%H:%M")
+
+        # Verificar contra BD y contra los de esta misma tanda
+        solapaBD     = slot_solapado(session["doctor_id"], fecha, hora_str)
+        solapaTanda  = slot_solapado_en_lista(hora_actual_dt, horas_pendientes)
+
+        if not solapaBD and not solapaTanda:
+            cursor.execute(
+                "INSERT INTO slot(id_doctor, fecha, hora) VALUES(%s, %s, %s)",
+                (session["doctor_id"], fecha, hora_str)
+            )
+            horas_pendientes.append(hora_actual_dt)
+            creados += 1
+        else:
+            omitidos += 1
+
+        # Avanzar 35 minutos para el siguiente slot
+        hora_actual_dt += timedelta(minutes=DURACION_CITA)
+
+    conn.commit()
+    cursor.close()
+
+    # Guardar resumen en sesión para mostrarlo en el panel
+    session["slots_resultado"] = {
+        "creados":  creados,
+        "omitidos": omitidos
+    }
+
     return redirect("/doctor/panel")
 
 
@@ -434,9 +491,9 @@ def registro_paciente():
         telefono = request.form["telefono"]
         cedula   = request.form["cedula"]
 
-        if len(nombre) < 3 or not nombre.replace(" ","").isalpha():
+        if len(nombre) < 3 or not nombre.replace(" ", "").isalpha():
             return render_template("registro_paciente.html", mensaje="Nombre inválido", tipo="error")
-        if len(apellido) < 3 or not apellido.replace(" ","").isalpha():
+        if len(apellido) < 3 or not apellido.replace(" ", "").isalpha():
             return render_template("registro_paciente.html", mensaje="Apellido inválido", tipo="error")
         if "@" not in correo:
             return render_template("registro_paciente.html", mensaje="Correo inválido", tipo="error")
@@ -502,10 +559,12 @@ def reservar():
         def reload(msg, tipo):
             cursor2 = conn.cursor()
             cursor2.execute("""
-                SELECT s.id_slot,s.fecha,s.hora,d.nombre,d.apellido,d.especialidad
-                FROM slot s JOIN doctor d ON s.id_doctor=d.id_doctor
-                WHERE s.disponible=TRUE AND s.fecha>=CURRENT_DATE
-                ORDER BY s.fecha,s.hora
+                SELECT s.id_slot, s.fecha, s.hora,
+                       d.nombre, d.apellido, d.especialidad
+                FROM slot s
+                JOIN doctor d ON s.id_doctor = d.id_doctor
+                WHERE s.disponible=TRUE AND s.fecha >= CURRENT_DATE
+                ORDER BY s.fecha, s.hora
             """)
             slots = cursor2.fetchall()
             cursor2.close()
@@ -516,7 +575,7 @@ def reservar():
         if len(descripcion) < 5:
             return reload("Describe el motivo (mínimo 5 caracteres)", "error")
 
-        cursor.execute("SELECT id_slot,id_doctor FROM slot WHERE id_slot=%s AND disponible=TRUE", (id_slot,))
+        cursor.execute("SELECT id_slot, id_doctor FROM slot WHERE id_slot=%s AND disponible=TRUE", (id_slot,))
         slot = cursor.fetchone()
         if not slot:
             cursor.close()
@@ -524,18 +583,20 @@ def reservar():
 
         cursor.execute("UPDATE slot SET disponible=FALSE WHERE id_slot=%s", (slot[0],))
         cursor.execute("""
-            INSERT INTO cita(id_paciente,id_doctor,id_slot,estado,descripcion)
-            VALUES(%s,%s,%s,'pendiente',%s)
+            INSERT INTO cita(id_paciente, id_doctor, id_slot, estado, descripcion)
+            VALUES(%s, %s, %s, 'pendiente', %s)
         """, (session["paciente_id"], slot[1], slot[0], descripcion))
         conn.commit()
         cursor.close()
         return render_template("reservar.html", slots=[], mensaje="¡Cita reservada con éxito!", tipo="success")
 
     cursor.execute("""
-        SELECT s.id_slot,s.fecha,s.hora,d.nombre,d.apellido,d.especialidad
-        FROM slot s JOIN doctor d ON s.id_doctor=d.id_doctor
-        WHERE s.disponible=TRUE AND s.fecha>=CURRENT_DATE
-        ORDER BY s.fecha,s.hora
+        SELECT s.id_slot, s.fecha, s.hora,
+               d.nombre, d.apellido, d.especialidad
+        FROM slot s
+        JOIN doctor d ON s.id_doctor = d.id_doctor
+        WHERE s.disponible=TRUE AND s.fecha >= CURRENT_DATE
+        ORDER BY s.fecha, s.hora
     """)
     slots = cursor.fetchall()
     cursor.close()
