@@ -14,7 +14,8 @@
   <!-- Logo SOLO imagen, sin texto -->
   <a href="/" class="nav-brand">
     <img src="{{ url_for('static', filename='img/logomediclover.png') }}"
-         alt="MediClover" class="nav-logo">
+         alt="MediClover" class="nav-logo"
+         style="height:52px;width:auto;max-width:180px;object-fit:contain;">
   </a>
 
   <!-- Links según rol -->
@@ -23,7 +24,6 @@
       <a href="/admin"           {% if request.path=='/admin'           %}class="active"{% endif %}><i class="bi bi-speedometer2"></i> Dashboard</a>
       <a href="/pacientes"       {% if request.path=='/pacientes'       %}class="active"{% endif %}><i class="bi bi-people"></i> Pacientes</a>
       <a href="/citas"           {% if request.path=='/citas'           %}class="active"{% endif %}><i class="bi bi-calendar3"></i> Citas</a>
-      <a href="/admin/doctores"  {% if request.path=='/admin/doctores'  %}class="active"{% endif %}><i class="bi bi-person-badge"></i> Doctores</a>
     {% elif session.get("doctor_id") %}
       <a href="/doctor/panel"    {% if request.path=='/doctor/panel'    %}class="active"{% endif %}><i class="bi bi-house"></i> Mi Panel</a>
       <a href="/doctor/historial"{% if request.path=='/doctor/historial'%}class="active"{% endif %}><i class="bi bi-folder2-open"></i> Historial</a>

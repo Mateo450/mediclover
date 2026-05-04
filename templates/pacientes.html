@@ -19,9 +19,19 @@
         <h1>Pacientes</h1>
         <p>Listado completo de pacientes registrados</p>
       </div>
-      <a href="/registro_paciente" class="btn">
-        <i class="bi bi-person-plus-fill"></i> Nuevo paciente
-      </a>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div class="card mb-3" style="max-width:520px;margin-bottom:1.5rem;">
+      <div class="card-body" style="padding:1rem 1.25rem;">
+        <div style="display:flex;gap:.6rem;align-items:center;">
+          <i class="bi bi-search" style="color:var(--teal);font-size:1.1rem;flex-shrink:0;"></i>
+          <input type="text" id="buscadorPaciente"
+                 placeholder="Buscar por nombre, apellido o cédula…"
+                 oninput="filtrarPacientes()"
+                 style="border:none;outline:none;width:100%;font-size:.93rem;background:transparent;">
+        </div>
+      </div>
     </div>
 
     <div class="table-wrap">
@@ -37,9 +47,9 @@
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="tablaPacientes">
           {% for p in pacientes %}
-          <tr>
+          <tr class="fila-paciente" data-busqueda="{{ (p[1]~' '~p[2]~' '~p[5])|lower }}">
             <td class="text-muted">{{ loop.index }}</td>
             <td>{{ p[1] }}</td>
             <td>{{ p[2] }}</td>
@@ -58,10 +68,30 @@
             </td>
           </tr>
           {% endfor %}
+          <tr id="sinResultados" style="display:none;">
+            <td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-500);">
+              <i class="bi bi-search" style="opacity:.3;font-size:1.4rem;display:block;margin-bottom:.5rem;"></i>
+              Sin resultados para esa búsqueda
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
 
   </div>
 </div>
-{% endblock %}
+
+<script>
+function filtrarPacientes() {
+  const q = document.getElementById('buscadorPaciente').value.toLowerCase().trim();
+  const filas = document.querySelectorAll('#tablaPacientes tr.fila-paciente');
+  let visibles = 0;
+  filas.forEach(f => {
+    const texto = f.dataset.busqueda || '';
+    const mostrar = !q || texto.includes(q);
+    f.style.display = mostrar ? '' : 'none';
+    if (mostrar) visibles++;
+  });
+  document.getElementById('sinResultados').style.display = (visibles === 0 && q) ? '' : 'none';
+}
+</script>
