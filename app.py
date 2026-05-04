@@ -51,10 +51,8 @@ def init_db():
             disponible BOOLEAN DEFAULT TRUE
         )
     """)
-    cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_doctor INTEGER REFERENCES doctor(id_doctor)")
-    cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
-    cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
-    cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
+    # NOTA: Las columnas id_doctor, id_slot ya fueron agregadas en Supabase SQL Editor.
+    # Los ALTER TABLE se eliminaron de aquí para evitar timeout en Supabase al arrancar.
     conn.commit()
     cursor.close()
     print("✅ BD inicializada")
