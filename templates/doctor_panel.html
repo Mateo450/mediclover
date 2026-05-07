@@ -561,19 +561,39 @@
     </div>
 
     <!-- Alerta de slots creados -->
-    {% if session.get("slots_resultado") %}
-      <div class="dp-alert success" id="slotsAlert">
-        <i class="bi bi-check-circle-fill" style="font-size:1.1rem; flex-shrink:0; margin-top:.05rem;"></i>
-        <div>
-          {% set res = session.get("slots_resultado") %}
-          <strong>{{ res.creados }} slot(s) creados</strong> exitosamente.
-          {% if res.omitidos > 0 %}
-            — <span style="color:#a16207;">{{ res.omitidos }} omitido(s)</span> por solapamiento con horarios existentes.
-          {% endif %}
+    {% if slots_resultado %}
+      {% set res = slots_resultado %}
+      <div class="dp-alert success" id="slotsAlert"
+           style="flex-direction:column; align-items:flex-start; gap:.5rem;">
+        <div style="display:flex; align-items:center; gap:.65rem; width:100%;">
+          <i class="bi bi-calendar-check-fill"
+             style="font-size:1.2rem; flex-shrink:0; color:var(--green);"></i>
+          <div style="flex:1;">
+            {% if res.creados > 0 %}
+              <strong style="font-size:.95rem;">
+                ✅ {{ res.creados }} cita(s) publicadas correctamente
+              </strong>
+              <div style="font-size:.8rem; margin-top:.15rem; color:#166534;">
+                Los pacientes ya pueden ver y reservar estos horarios desde su panel.
+                {% if res.omitidos > 0 %}
+                  <span style="color:#a16207; margin-left:.4rem;">
+                    · {{ res.omitidos }} omitido(s) por solapamiento con horarios ya existentes.
+                  </span>
+                {% endif %}
+              </div>
+            {% else %}
+              <strong style="color:#a16207;">
+                ⚠️ No se crearon nuevos slots
+              </strong>
+              <div style="font-size:.8rem; margin-top:.15rem; color:#a16207;">
+                Los {{ res.omitidos }} horario(s) ya existen o se solapan con citas publicadas.
+              </div>
+            {% endif %}
+          </div>
+          <button class="dp-alert-close" onclick="this.closest('.dp-alert').remove()">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
-        <button class="dp-alert-close" onclick="this.closest('.dp-alert').remove()">
-          <i class="bi bi-x-lg"></i>
-        </button>
       </div>
     {% endif %}
 
@@ -631,7 +651,14 @@
             </div>
             <div class="dp-form-group">
               <label><i class="bi bi-clock" style="margin-right:.25rem;"></i>Hora de inicio</label>
-              <input type="time" name="hora" step="60" required id="inputHora">
+              <div style="position:relative;">
+                <input type="time" name="hora" step="60" required id="inputHora"
+                       style="padding-right:3.5rem;">
+                <span id="ampmLabel"
+                      style="position:absolute;right:.65rem;top:50%;transform:translateY(-50%);
+                             font-size:.72rem;font-weight:800;letter-spacing:.06em;
+                             color:var(--teal);pointer-events:none;"></span>
+              </div>
             </div>
             <div class="dp-form-group">
               <label><i class="bi bi-hash" style="margin-right:.25rem;"></i>Cantidad de citas</label>
@@ -822,6 +849,25 @@
   const preview       = document.getElementById('dpPreview');
   const lista         = document.getElementById('dpPreviewList');
 
+  function actualizarAmPm(hora) {
+    const label = document.getElementById('ampmLabel');
+    if (!label || !hora) { if(label) label.textContent=''; return; }
+    const [h] = hora.split(':').map(Number);
+    if (h < 12)       { label.textContent = 'AM'; label.style.color = 'var(--teal)'; }
+    else if (h === 12){ label.textContent = 'PM'; label.style.color = 'var(--amber)'; }
+    else              { label.textContent = 'PM'; label.style.color = 'var(--amber)'; }
+    // Segmento del día
+    let segmento = '';
+    if (h >= 6 && h < 12)       segmento = '🌅 Mañana';
+    else if (h >= 12 && h < 18) segmento = '☀️ Tarde';
+    else                         segmento = '🌙 Noche';
+    // Mostrar en la vista previa label
+    const previewLabel = document.getElementById('dpPreview');
+    if (previewLabel) {
+      previewLabel.dataset.segmento = segmento;
+    }
+  }
+
   function actualizar() {
     const hora     = inputHora.value;
     const cantidad = parseInt(inputCantidad.value) || 0;
@@ -834,9 +880,10 @@
     for (let i = 0; i < Math.min(cantidad, 20); i++) {
       const hh = String(h).padStart(2,'0');
       const mm = String(m).padStart(2,'0');
+      const ampm = h < 12 ? 'AM' : 'PM';
       const badge = document.createElement('span');
       badge.className = 'dp-preview-badge';
-      badge.innerHTML = `<i class="bi bi-clock"></i>${hh}:${mm}`;
+      badge.innerHTML = `<i class="bi bi-clock"></i>${hh}:${mm} <span style="font-size:.65rem;opacity:.7;">${ampm}</span>`;
       lista.appendChild(badge);
 
       m += 35;
@@ -857,7 +904,11 @@
     preview.style.display = lista.children.length ? 'block' : 'none';
   }
 
-  if(inputHora)     inputHora.addEventListener('change', actualizar);
+  if(inputHora) {
+    inputHora.addEventListener('change', actualizar);
+    inputHora.addEventListener('change', () => actualizarAmPm(inputHora.value));
+    inputHora.addEventListener('input',  () => actualizarAmPm(inputHora.value));
+  }
   if(inputCantidad) inputCantidad.addEventListener('input', actualizar);
 })();
 </script>

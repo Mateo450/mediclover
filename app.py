@@ -13,21 +13,33 @@ MAIL_USER = os.getenv("MAIL_USER", "")
 MAIL_PASS = os.getenv("MAIL_PASS", "")
 
 def enviar_correo(destinatario, asunto, cuerpo_html):
+    """Envía correo con timeout de 10s. Llama siempre en un hilo separado."""
     if not MAIL_USER or not MAIL_PASS:
-        print("MAIL_USER o MAIL_PASS no configurados")
+        print("⚠️  MAIL_USER o MAIL_PASS no configurados — correo omitido")
         return False
     try:
         msg = MIMEText(cuerpo_html, "html", "utf-8")
         msg["Subject"] = asunto
         msg["From"]    = f"MediClover <{MAIL_USER}>"
         msg["To"]      = destinatario
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        # timeout=10 evita que un SMTP lento bloquee el worker de Gunicorn
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
             smtp.login(MAIL_USER, MAIL_PASS)
             smtp.sendmail(MAIL_USER, destinatario, msg.as_string())
+        print(f"✅ Correo enviado a {destinatario}")
         return True
     except Exception as e:
-        print("Error al enviar correo:", e)
+        print(f"⚠️  Error al enviar correo: {e}")
         return False
+
+
+def enviar_correo_async(destinatario, asunto, cuerpo_html):
+    """Envía el correo en un hilo de fondo — nunca bloquea la respuesta HTTP."""
+    threading.Thread(
+        target=enviar_correo,
+        args=(destinatario, asunto, cuerpo_html),
+        daemon=True
+    ).start()
 
 
 def enviar_confirmacion_cita(correo_paciente, nombre_paciente, fecha, hora, descripcion):
@@ -203,7 +215,8 @@ def enviar_confirmacion_cita(correo_paciente, nombre_paciente, fecha, hora, desc
     """
 
     asunto = f"✅ Cita confirmada — {hora_str} del {fecha_str} · MediClover"
-    return enviar_correo(correo_paciente, asunto, cuerpo)
+    # Usar async para no bloquear el worker de Gunicorn
+    enviar_correo_async(correo_paciente, asunto, cuerpo)
 
 
 app = Flask(__name__)
@@ -228,38 +241,51 @@ conn = None
 
 def get_conn():
     """
-    Devuelve la conexión global, reconectando automáticamente si está caída.
-    Esto soluciona los Internal Server Error en Render (free tier duerme la BD).
+    Retorna la conexión global, reconectando si está cerrada o rota.
+    Usa autocommit=False (psycopg2 default). El ping usa connection.closed
+    en lugar de abrir un cursor extra que puede dejar la BD en estado sucio.
     """
     global conn
     try:
-        if conn:
-            conn.cursor().execute("SELECT 1")
+        # connection.closed == 0 significa que está abierta
+        if conn and conn.closed == 0:
             return conn
     except Exception:
-        conn = None
-
+        pass
+    # Reconectar
     try:
-        if DATABASE_URL:
-            conn = psycopg2.connect(DATABASE_URL, sslmode="require")
-            print("✅ (Re)conectado a PostgreSQL")
-            return conn
-        else:
-            print("❌ No hay DATABASE_URL")
-            return None
+        conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+        print("✅ (Re)conectado a PostgreSQL")
+        return conn
     except Exception as e:
-        print("❌ Error de conexión:", e)
+        print(f"❌ Error de conexión: {e}")
         return None
+
+
+def get_cursor():
+    """
+    Retorna (conexion, cursor) de la misma instancia.
+    Siempre usar: _db, cursor = get_cursor()
+    Siempre cerrar con: cursor.close()
+    Siempre confirmar con: _db.commit()
+    """
+    c = get_conn()
+    return c, c.cursor()
 
 
 # ===============================
 # CREAR TABLAS SI NO EXISTEN
 # ===============================
 def init_db():
-    c = get_conn()
-    if not c:
+    """
+    Crea las tablas necesarias en Supabase.
+    Usa una conexión PROPIA (no la global) para no interferir
+    con el hilo principal mientras Gunicorn arranca.
+    """
+    if not DATABASE_URL:
         return
     try:
+        c = psycopg2.connect(DATABASE_URL, sslmode="require")
         cursor = c.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS doctor (
@@ -284,7 +310,6 @@ def init_db():
         cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
         cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
         cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS historial_clinico (
                 id_historial   SERIAL PRIMARY KEY,
@@ -311,6 +336,7 @@ def init_db():
         """)
         c.commit()
         cursor.close()
+        c.close()
         print("✅ BD inicializada")
     except Exception as e:
         print(f"⚠️  init_db error: {e}")
@@ -877,6 +903,26 @@ def reservar():
             return render_template("reservar.html",
                 slots=get_slots(), mensaje="Ese horario ya no está disponible", tipo="error")
 
+        # Verificar que el paciente no tenga ya una cita pendiente
+        cursor.execute("""
+            SELECT c.id_cita, s.fecha, s.hora
+            FROM cita c
+            JOIN slot s ON c.id_slot = s.id_slot
+            WHERE c.id_paciente = %s AND c.estado = 'pendiente'
+            ORDER BY s.fecha, s.hora
+            LIMIT 1
+        """, (session["paciente_id"],))
+        cita_existente = cursor.fetchone()
+        if cita_existente:
+            cursor.close()
+            from datetime import date as _date
+            fecha_ex = cita_existente[1]
+            hora_ex  = cita_existente[2].strftime('%H:%M') if hasattr(cita_existente[2], 'strftime') else str(cita_existente[2])[:5]
+            return render_template("reservar.html",
+                slots=get_slots(),
+                mensaje=f"Ya tienes una cita pendiente para el {fecha_ex} a las {hora_ex}. Cancélala primero si deseas reagendar.",
+                tipo="error")
+
         # Marcar slot como no disponible y crear cita
         cursor.execute("UPDATE slot SET disponible=FALSE WHERE id_slot=%s", (slot[0],))
         cursor.execute("""
@@ -961,7 +1007,9 @@ def doctor_recuperar():
         </div>
         """
 
-        enviado = enviar_correo(correo, "MediClover — Código para restablecer contraseña", cuerpo)
+        enviado = True
+        enviar_correo_async(correo, "MediClover — Código para restablecer contraseña", cuerpo)
+        # Redirigir inmediatamente, el correo se envía en background
         if enviado:
             return render_template("doctor_verificar_codigo.html", correo=correo)
         else:
