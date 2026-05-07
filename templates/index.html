@@ -12,31 +12,63 @@
   </aside>
   <div class="main">
     <div class="page-header">
-      <div><h1>Dashboard</h1><p>Resumen general del sistema</p></div>
+      <div>
+        <h1>Dashboard</h1>
+        <p>Consultorio Dr. Luis Suárez</p>
+      </div>
     </div>
+
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon teal"><i class="bi bi-people-fill"></i></div>
-        <div><div class="stat-value">{{ total_pacientes }}</div><div class="stat-label">Pacientes</div></div>
+        <div>
+          <div class="stat-value">{{ total_pacientes }}</div>
+          <div class="stat-label">Pacientes registrados</div>
+        </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
-        <div><div class="stat-value">{{ citas_pendientes }}</div><div class="stat-label">Pendientes</div></div>
+        <div>
+          <div class="stat-value">{{ citas_pendientes }}</div>
+          <div class="stat-label">Citas pendientes</div>
+        </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon green"><i class="bi bi-calendar-day"></i></div>
-        <div><div class="stat-value">{{ citas_hoy }}</div><div class="stat-label">Citas hoy</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header"><span class="card-title"><i class="bi bi-lightning-charge-fill text-teal"></i> Acciones rápidas</span></div>
-      <div class="card-body">
-        <div class="actions">
-          <a href="/pacientes"         class="btn btn-outline"><i class="bi bi-people"></i> Ver pacientes</a>
-          <a href="/citas"             class="btn btn-outline"><i class="bi bi-calendar3"></i> Ver citas</a>
+        <div>
+          <div class="stat-value">{{ citas_hoy }}</div>
+          <div class="stat-label">Citas hoy</div>
         </div>
       </div>
     </div>
+
+    <!-- Info del doctor -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-body" style="display:flex;align-items:center;gap:1.25rem;padding:1.25rem">
+        <img src="/static/img/doctor.png" alt="Dr. Luis Suárez"
+             style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--teal)">
+        <div>
+          <div style="font-weight:600;font-size:1rem;">Dr. Luis Suárez</div>
+          <div style="font-size:.85rem;color:var(--gray-500);">Médico General · Consultorio particular</div>
+        </div>
+        <a href="/login_doctor" class="btn btn-outline" style="margin-left:auto">
+          <i class="bi bi-person-badge"></i> Panel del doctor
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="bi bi-lightning-charge-fill text-teal"></i> Acciones rápidas</span>
+      </div>
+      <div class="card-body">
+        <div class="actions">
+          <a href="/pacientes" class="btn btn-outline"><i class="bi bi-people"></i> Ver pacientes</a>
+          <a href="/citas"     class="btn btn-outline"><i class="bi bi-calendar3"></i> Ver citas</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}

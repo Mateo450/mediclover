@@ -167,14 +167,11 @@ def admin():
         WHERE s.fecha=CURRENT_DATE
     """)
     citas_hoy = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM doctor")
-    total_doctores = cursor.fetchone()[0]
     cursor.close()
     return render_template("index.html",
         total_pacientes=total_pacientes,
         citas_pendientes=citas_pendientes,
-        citas_hoy=citas_hoy,
-        total_doctores=total_doctores
+        citas_hoy=citas_hoy
     )
 
 
@@ -586,12 +583,10 @@ def reservar():
         def reload(msg, tipo):
             cursor2 = conn.cursor()
             cursor2.execute("""
-                SELECT s.id_slot, s.fecha, s.hora,
-                       d.nombre, d.apellido, d.especialidad
-                FROM slot s
-                JOIN doctor d ON s.id_doctor = d.id_doctor
-                WHERE s.disponible=TRUE AND s.fecha >= CURRENT_DATE
-                ORDER BY s.fecha, s.hora
+                SELECT id_slot, fecha, hora
+                FROM slot
+                WHERE disponible=TRUE AND fecha >= CURRENT_DATE
+                ORDER BY fecha, hora
             """)
             slots = cursor2.fetchall()
             cursor2.close()
@@ -618,12 +613,10 @@ def reservar():
         return render_template("reservar.html", slots=[], mensaje="¡Cita reservada con éxito!", tipo="success")
 
     cursor.execute("""
-        SELECT s.id_slot, s.fecha, s.hora,
-               d.nombre, d.apellido, d.especialidad
-        FROM slot s
-        JOIN doctor d ON s.id_doctor = d.id_doctor
-        WHERE s.disponible=TRUE AND s.fecha >= CURRENT_DATE
-        ORDER BY s.fecha, s.hora
+        SELECT id_slot, fecha, hora
+        FROM slot
+        WHERE disponible=TRUE AND fecha >= CURRENT_DATE
+        ORDER BY fecha, hora
     """)
     slots = cursor.fetchall()
     cursor.close()

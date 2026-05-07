@@ -13,7 +13,7 @@
     <div class="auth-top">
       <div class="auth-emblem"><i class="bi bi-calendar-plus-fill"></i></div>
       <h2>Reservar Cita</h2>
-      <p>Elige un horario disponible</p>
+      <p>Consultorio Dr. Luis Suárez</p>
     </div>
     <div class="auth-body">
 
@@ -35,7 +35,7 @@
         {% if slots %}
           <form method="POST" id="reservaForm">
             <p style="font-size:.85rem;color:var(--gray-500);margin-bottom:1rem;">
-              Selecciona un horario y describe el motivo de tu consulta:
+              Selecciona un horario disponible y describe el motivo de tu consulta:
             </p>
 
             <div class="slots-grid">
@@ -44,11 +44,9 @@
                 <input type="radio" name="id_slot" value="{{ s[0] }}" required>
                 <div class="slot-date">{{ s[1].strftime('%A %d %b') if s[1] else s[1] }}</div>
                 <div class="slot-time"><i class="bi bi-clock"></i> {{ s[2] }}</div>
-                <div class="slot-doctor">
-                  <i class="bi bi-person-badge text-teal"></i>
-                  Dr. {{ s[3] }} {{ s[4] }}
+                <div style="font-size:.8rem;color:var(--gray-500);margin-top:.25rem;">
+                  <i class="bi bi-person-badge text-teal"></i> Dr. Luis Suárez
                 </div>
-                <div style="font-size:.75rem;color:var(--gray-400);margin-top:.2rem;">{{ s[5] }}</div>
               </label>
               {% endfor %}
             </div>
@@ -70,7 +68,7 @@
               Sin horarios disponibles
             </h3>
             <p style="color:var(--gray-500);font-size:.875rem;">
-              Actualmente no hay citas disponibles. Por favor intenta más tarde.
+              Actualmente no hay citas disponibles. Por favor intenta más tarde o contáctanos.
             </p>
           </div>
         {% endif %}

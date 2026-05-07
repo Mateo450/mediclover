@@ -15,7 +15,14 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Hora</th><th>Doctor</th><th>Motivo</th><th>Estado</th><th>Acción</th></tr>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Doctor</th>
+              <th>Motivo</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
           </thead>
           <tbody>
             {% for c in citas %}
@@ -23,12 +30,8 @@
               <td><i class="bi bi-calendar3 text-teal"></i> {{ c[1] }}</td>
               <td><i class="bi bi-clock text-teal"></i> {{ c[2] }}</td>
               <td>
-                {% if c[5] %}
-                  <strong>Dr. {{ c[5] }} {{ c[6] }}</strong>
-                  <div style="font-size:.78rem;color:var(--gray-500);">{{ c[7] }}</div>
-                {% else %}
-                  <span class="text-muted">—</span>
-                {% endif %}
+                <strong>Dr. Luis Suárez</strong>
+                <div style="font-size:.78rem;color:var(--gray-500);">Médico General</div>
               </td>
               <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c[4] }}</td>
               <td><span class="badge estado {{ c[3] }}">{{ c[3] }}</span></td>
