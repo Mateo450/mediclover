@@ -59,7 +59,7 @@
   <!-- Lado derecho -->
   <div class="nav-end">
     {% if session.get("usuario") %}
-      <span class="nav-user"><i class="bi bi-shield-check text-teal"></i> Administrador</span>
+      <span class="nav-user"><i class="bi bi-shield-check text-teal"></i> {{ session.get("admin_nombre", session.get("usuario","Admin")) }}</span>
       <a href="/logout" class="btn btn-ghost btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
     {% elif session.get("doctor_id") %}
       <span class="nav-user"><i class="bi bi-person-badge text-teal"></i> Dr. {{ session.get("doctor_nombre","") }}</span>

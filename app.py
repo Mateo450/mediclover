@@ -208,9 +208,19 @@ def enviar_confirmacion_cita(correo_paciente, nombre_paciente, fecha, hora, desc
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
 
-ADMIN_USER = "admin"
-ADMIN_PASS = "1234"
 DURACION_CITA = 35  # minutos
+
+# ── Admins por variable de entorno (formato: "usuario:pass,usuario2:pass2")
+# Configura en Render → Environment → ADMIN_CREDENTIALS
+# Ejemplo: "admin:1234,mathias:pass123,jair:pass456,jose:pass789"
+_raw = os.getenv("ADMIN_CREDENTIALS", "admin:1234")
+ADMINS = {}
+for par in _raw.split(","):
+    par = par.strip()
+    if ":" in par:
+        u, p = par.split(":", 1)
+        ADMINS[u.strip()] = p.strip()
+# ADMINS queda como dict: {"admin":"1234","mathias":"pass123", ...}
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 conn = None
@@ -318,7 +328,7 @@ def login_required(role=None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if role == "admin"    and session.get("usuario") != ADMIN_USER:
+            if role == "admin"    and session.get("usuario") not in ADMINS:
                 return redirect("/login")
             if role == "paciente" and "paciente_id" not in session:
                 return redirect("/login_paciente")
@@ -371,9 +381,13 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        if request.form["usuario"] == ADMIN_USER and request.form["password"] == ADMIN_PASS:
+        usuario  = request.form.get("usuario", "").strip()
+        password = request.form.get("password", "").strip()
+        # Verificar contra el diccionario de admins (cargado desde variable de entorno)
+        if usuario in ADMINS and ADMINS[usuario] == password:
             session.clear()
-            session["usuario"] = ADMIN_USER
+            session["usuario"]       = usuario
+            session["admin_nombre"]  = usuario.capitalize()
             return redirect("/admin")
         return render_template("login.html", error="Credenciales incorrectas")
     return render_template("login.html")
@@ -562,7 +576,14 @@ def doctor_panel():
 
     cursor.execute("""
         SELECT id_slot, fecha, hora, disponible FROM slot
-        WHERE id_doctor=%s AND fecha >= CURRENT_DATE
+        WHERE id_doctor=%s
+          AND (
+            fecha > (NOW() AT TIME ZONE 'America/Guayaquil')::DATE
+            OR (
+              fecha = (NOW() AT TIME ZONE 'America/Guayaquil')::DATE
+              AND hora >= (NOW() AT TIME ZONE 'America/Guayaquil')::TIME
+            )
+          )
         ORDER BY fecha, hora
     """, (session["doctor_id"],))
     slots = cursor.fetchall()
@@ -805,8 +826,10 @@ def reservar():
     def get_slots():
         """
         Devuelve slots disponibles futuros.
-        Si la fecha es HOY, filtra también los que ya pasaron en horario
-        (un slot de 07:00 no debe aparecer si ya son las 08:00).
+        IMPORTANTE: Supabase usa UTC. Ecuador = UTC-5.
+        Comparamos contra NOW() AT TIME ZONE 'America/Guayaquil'
+        para que los slots de hoy se filtren con la hora real de Quito,
+        no con la hora UTC de la BD.
         """
         cursor2 = get_conn().cursor()
         cursor2.execute("""
@@ -814,8 +837,11 @@ def reservar():
             FROM slot
             WHERE disponible = TRUE
               AND (
-                fecha > CURRENT_DATE
-                OR (fecha = CURRENT_DATE AND hora > CURRENT_TIME)
+                fecha > (NOW() AT TIME ZONE 'America/Guayaquil')::DATE
+                OR (
+                  fecha = (NOW() AT TIME ZONE 'America/Guayaquil')::DATE
+                  AND hora > (NOW() AT TIME ZONE 'America/Guayaquil')::TIME
+                )
               )
             ORDER BY fecha, hora
         """)
