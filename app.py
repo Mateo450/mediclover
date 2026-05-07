@@ -2,7 +2,32 @@ from flask import Flask, render_template, request, redirect, session, flash
 from functools import wraps
 import psycopg2
 import os
+import random
+import smtplib
+from email.mime.text import MIMEText
 from datetime import date, datetime, timedelta
+
+# ── Configuración Gmail SMTP ──────────────────────────────────────────────────
+# Variables de entorno en Render: MAIL_USER y MAIL_PASS
+MAIL_USER = os.getenv("MAIL_USER", "")
+MAIL_PASS = os.getenv("MAIL_PASS", "")
+
+def enviar_correo(destinatario, asunto, cuerpo_html):
+    if not MAIL_USER or not MAIL_PASS:
+        print("MAIL_USER o MAIL_PASS no configurados")
+        return False
+    try:
+        msg = MIMEText(cuerpo_html, "html", "utf-8")
+        msg["Subject"] = asunto
+        msg["From"]    = f"MediClover <{MAIL_USER}>"
+        msg["To"]      = destinatario
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(MAIL_USER, MAIL_PASS)
+            smtp.sendmail(MAIL_USER, destinatario, msg.as_string())
+        return True
+    except Exception as e:
+        print("Error al enviar correo:", e)
+        return False
 
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
@@ -51,8 +76,10 @@ def init_db():
             disponible BOOLEAN DEFAULT TRUE
         )
     """)
-    # NOTA: Las columnas id_doctor, id_slot ya fueron agregadas en Supabase SQL Editor.
-    # Los ALTER TABLE se eliminaron de aquí para evitar timeout en Supabase al arrancar.
+    cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_doctor INTEGER REFERENCES doctor(id_doctor)")
+    cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
+    cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
+    cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
     conn.commit()
     cursor.close()
     print("✅ BD inicializada")
@@ -250,11 +277,12 @@ def crear_doctor():
         if cursor.fetchone():
             cursor.close()
             return render_template("crear_doctor.html", error="Ese usuario ya existe")
+        correo_doc = request.form.get("correo", "").strip().lower()
         cursor.execute("""
-            INSERT INTO doctor(nombre, apellido, usuario, password, especialidad)
-            VALUES(%s, %s, %s, %s, %s)
+            INSERT INTO doctor(nombre, apellido, usuario, password, especialidad, correo)
+            VALUES(%s, %s, %s, %s, %s, %s)
         """, (request.form["nombre"], request.form["apellido"], request.form["usuario"],
-              request.form["password"], request.form["especialidad"]))
+              request.form["password"], request.form["especialidad"], correo_doc or None))
         conn.commit()
         cursor.close()
         return redirect("/admin/doctores")
@@ -613,3 +641,101 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+# ================================================================
+# RECUPERAR CONTRASEÑA — DOCTOR
+# ================================================================
+@app.route("/doctor/recuperar", methods=["GET", "POST"])
+def doctor_recuperar():
+    if request.method == "POST":
+        correo = request.form.get("correo", "").strip().lower()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_doctor FROM doctor WHERE correo=%s", (correo,))
+        doc = cursor.fetchone()
+        cursor.close()
+
+        if not doc:
+            return render_template("doctor_recuperar.html",
+                error="No hay ningún doctor registrado con ese correo.")
+
+        # Generar código de 6 dígitos y guardarlo en sesión con expiración
+        codigo = str(random.randint(100000, 999999))
+        session["reset_codigo"]  = codigo
+        session["reset_correo"]  = correo
+        session["reset_expira"]  = (datetime.now() + timedelta(minutes=15)).isoformat()
+
+        cuerpo = f"""
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:2rem;
+                    border:1px solid #e8f5ee;border-radius:16px">
+          <h2 style="color:#1a6b4a">🔑 Código de verificación</h2>
+          <p>Hola, recibiste este correo porque solicitaste restablecer la contraseña
+             de tu cuenta en <strong>MediClover</strong>.</p>
+          <div style="font-size:2.5rem;font-weight:bold;letter-spacing:.8rem;
+                      text-align:center;background:#f0faf5;padding:1rem;
+                      border-radius:12px;color:#1a6b4a;margin:1.5rem 0">
+            {codigo}
+          </div>
+          <p style="color:#666;font-size:.875rem">
+            Este código expira en <strong>15 minutos</strong>.<br>
+            Si no solicitaste este cambio, ignora este correo.
+          </p>
+          <hr style="border-color:#e8f5ee">
+          <p style="color:#aaa;font-size:.75rem">MediClover — Sistema de Gestión Médica</p>
+        </div>
+        """
+
+        enviado = enviar_correo(correo, "MediClover — Código para restablecer contraseña", cuerpo)
+        if enviado:
+            return render_template("doctor_verificar_codigo.html", correo=correo)
+        else:
+            return render_template("doctor_recuperar.html",
+                error="Error al enviar el correo. Verifica la configuración SMTP.")
+
+    return render_template("doctor_recuperar.html")
+
+
+@app.route("/doctor/verificar_codigo", methods=["POST"])
+def doctor_verificar_codigo():
+    correo            = request.form.get("correo", "").strip().lower()
+    codigo_ingresado  = request.form.get("codigo", "").strip()
+    nueva_password    = request.form.get("nueva_password", "")
+    confirmar         = request.form.get("confirmar_password", "")
+
+    def volver(err):
+        return render_template("doctor_verificar_codigo.html", correo=correo, error=err)
+
+    # Validaciones
+    if session.get("reset_correo") != correo:
+        return volver("Sesión inválida. Solicita un nuevo código.")
+
+    expira = session.get("reset_expira")
+    if not expira or datetime.now() > datetime.fromisoformat(expira):
+        session.pop("reset_codigo", None)
+        session.pop("reset_correo", None)
+        session.pop("reset_expira", None)
+        return volver("El código expiró. Solicita uno nuevo.")
+
+    if session.get("reset_codigo") != codigo_ingresado:
+        return volver("Código incorrecto. Inténtalo de nuevo.")
+
+    if len(nueva_password) < 6:
+        return volver("La contraseña debe tener al menos 6 caracteres.")
+
+    if nueva_password != confirmar:
+        return volver("Las contraseñas no coinciden.")
+
+    # Actualizar contraseña
+    cursor = conn.cursor()
+    cursor.execute("UPDATE doctor SET password=%s WHERE correo=%s", (nueva_password, correo))
+    conn.commit()
+    cursor.close()
+
+    # Limpiar sesión de reset
+    session.pop("reset_codigo", None)
+    session.pop("reset_correo", None)
+    session.pop("reset_expira", None)
+
+    return render_template("login_doctor.html",
+        mensaje="¡Contraseña restablecida con éxito! Ya puedes iniciar sesión.",
+        tipo="success")

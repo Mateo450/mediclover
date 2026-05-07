@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block contenido %}
+
+<div class="d-flex justify-content-center align-items-center" style="min-height:80vh;background:linear-gradient(135deg,#f0faf5,#e8f5ee)">
+  <div class="card shadow" style="width:100%;max-width:440px;border:none;border-radius:20px;overflow:hidden">
+
+    <div style="background:linear-gradient(135deg,#1a6b4a,#2d9c6e);padding:1.8rem;text-align:center">
+      <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+        <i class="bi bi-key text-white" style="font-size:1.8rem"></i>
+      </div>
+      <h4 class="text-white fw-bold mb-1">Recuperar contraseña</h4>
+      <p class="mb-0" style="color:rgba(255,255,255,0.75);font-size:.875rem">Te enviaremos un código a tu correo</p>
+    </div>
+
+    <div class="card-body p-4">
+
+      {% if error %}
+        <div class="alert alert-danger small py-2 mb-3">
+          <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+        </div>
+      {% endif %}
+      {% if mensaje %}
+        <div class="alert alert-success small py-2 mb-3">
+          <i class="bi bi-check-circle me-1"></i>{{ mensaje }}
+        </div>
+      {% endif %}
+
+      <p class="text-muted small mb-4">
+        Ingresa el correo electrónico registrado en tu cuenta de doctor.
+        Recibirás un código de 6 dígitos para restablecer tu contraseña.
+      </p>
+
+      <form method="POST">
+        <div class="mb-4">
+          <label class="form-label fw-semibold small" style="color:#1a6b4a">Correo electrónico</label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:#f0faf5;border-color:#c8e6d4">
+              <i class="bi bi-envelope" style="color:#1a6b4a"></i>
+            </span>
+            <input type="email" name="correo" class="form-control"
+                   style="border-color:#c8e6d4"
+                   placeholder="tu@correo.com" required autofocus>
+          </div>
+        </div>
+
+        <button type="submit" class="btn w-100 fw-semibold py-2"
+                style="background:linear-gradient(135deg,#1a6b4a,#2d9c6e);color:#fff;border:none;border-radius:10px">
+          <i class="bi bi-send me-2"></i>Enviar código
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="/login_doctor" style="color:#6c757d;font-size:.85rem;text-decoration:none">
+          <i class="bi bi-arrow-left me-1"></i>Volver al login
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

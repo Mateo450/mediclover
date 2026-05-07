@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block contenido %}
+
+<div class="d-flex justify-content-center align-items-center" style="min-height:80vh;background:linear-gradient(135deg,#f0faf5,#e8f5ee)">
+  <div class="card shadow" style="width:100%;max-width:440px;border:none;border-radius:20px;overflow:hidden">
+
+    <div style="background:linear-gradient(135deg,#1a6b4a,#2d9c6e);padding:1.8rem;text-align:center">
+      <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+        <i class="bi bi-shield-lock text-white" style="font-size:1.8rem"></i>
+      </div>
+      <h4 class="text-white fw-bold mb-1">Nueva contraseña</h4>
+      <p class="mb-0" style="color:rgba(255,255,255,0.75);font-size:.875rem">Código enviado a {{ correo }}</p>
+    </div>
+
+    <div class="card-body p-4">
+
+      {% if error %}
+        <div class="alert alert-danger small py-2 mb-3">
+          <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+        </div>
+      {% endif %}
+
+      <p class="text-muted small mb-4">
+        Revisa tu bandeja de entrada (y spam). Ingresa el código de 6 dígitos
+        y tu nueva contraseña.
+      </p>
+
+      <form method="POST">
+        <input type="hidden" name="correo" value="{{ correo }}">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small" style="color:#1a6b4a">Código de verificación</label>
+          <input type="text" name="codigo" class="form-control text-center fw-bold"
+                 style="border-color:#c8e6d4;font-size:1.5rem;letter-spacing:.5rem"
+                 placeholder="000000" maxlength="6" required autofocus>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small" style="color:#1a6b4a">Nueva contraseña</label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:#f0faf5;border-color:#c8e6d4">
+              <i class="bi bi-lock" style="color:#1a6b4a"></i>
+            </span>
+            <input type="password" name="nueva_password" id="pass1"
+                   class="form-control" style="border-color:#c8e6d4"
+                   placeholder="Mínimo 6 caracteres" required minlength="6">
+            <button type="button" class="btn btn-outline-secondary"
+                    style="border-color:#c8e6d4" onclick="togglePass('pass1','eye1')">
+              <i class="bi bi-eye" id="eye1"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-semibold small" style="color:#1a6b4a">Confirmar contraseña</label>
+          <div class="input-group">
+            <span class="input-group-text" style="background:#f0faf5;border-color:#c8e6d4">
+              <i class="bi bi-lock-fill" style="color:#1a6b4a"></i>
+            </span>
+            <input type="password" name="confirmar_password" id="pass2"
+                   class="form-control" style="border-color:#c8e6d4"
+                   placeholder="Repite la contraseña" required minlength="6">
+            <button type="button" class="btn btn-outline-secondary"
+                    style="border-color:#c8e6d4" onclick="togglePass('pass2','eye2')">
+              <i class="bi bi-eye" id="eye2"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn w-100 fw-semibold py-2"
+                style="background:linear-gradient(135deg,#1a6b4a,#2d9c6e);color:#fff;border:none;border-radius:10px">
+          <i class="bi bi-check-circle me-2"></i>Restablecer contraseña
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="/doctor/recuperar" style="color:#6c757d;font-size:.85rem;text-decoration:none">
+          <i class="bi bi-arrow-left me-1"></i>Solicitar nuevo código
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePass(id, iconId) {
+  const inp = document.getElementById(id);
+  const ico = document.getElementById(iconId);
+  if (inp.type === 'password') {
+    inp.type = 'text'; ico.className = 'bi bi-eye-slash';
+  } else {
+    inp.type = 'password'; ico.className = 'bi bi-eye';
+  }
+}
+</script>
+
+{% endblock %}
