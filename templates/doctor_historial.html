@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}Historial de Pacientes — MediClover{% endblock %}
+
+{% block extra_head %}
+<style>
+.dp-wrap { display:flex; flex:1; min-height:calc(100vh - 64px); }
+
+.dp-sidebar {
+  width:230px; background:var(--navy); padding:0;
+  flex-shrink:0; display:flex; flex-direction:column;
+  position:relative; overflow:hidden;
+}
+.dp-sidebar::before {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:200px;
+  background:radial-gradient(ellipse at bottom,rgba(10,124,92,.15),transparent 70%);
+  pointer-events:none;
+}
+.dp-profile {
+  padding:2rem 1.5rem 1.5rem; text-align:center;
+  border-bottom:1px solid rgba(255,255,255,.08); position:relative; z-index:1;
+}
+.dp-avatar {
+  width:80px; height:80px; border-radius:50%; object-fit:cover; object-position:top;
+  border:3px solid rgba(10,124,92,.6); margin:0 auto 1rem; display:block;
+  box-shadow:0 0 0 5px rgba(10,124,92,.12);
+}
+.dp-name { font-family:var(--font-display); font-size:.98rem; font-weight:600; color:var(--white); margin-bottom:.18rem; }
+.dp-role { font-size:.73rem; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.08em; }
+.dp-nav { flex:1; padding:1rem 0; position:relative; z-index:1; }
+.dp-nav a {
+  display:flex; align-items:center; gap:.7rem; padding:.7rem 1.5rem;
+  font-size:.855rem; font-weight:500; color:rgba(255,255,255,.52);
+  transition:color .18s,background .18s; border-left:3px solid transparent; text-decoration:none;
+}
+.dp-nav a:hover { color:var(--white); background:rgba(255,255,255,.05); }
+.dp-nav a.active { color:var(--white); background:rgba(10,124,92,.22); border-left-color:var(--teal-hover); }
+.dp-nav a i { font-size:1rem; }
+.dp-nav-sep { height:1px; background:rgba(255,255,255,.07); margin:.5rem 1.5rem; }
+.dp-nav-logout { padding:0 0 1.5rem; position:relative; z-index:1; }
+.dp-nav-logout a {
+  display:flex; align-items:center; gap:.7rem; padding:.65rem 1.5rem;
+  font-size:.85rem; font-weight:500; color:rgba(255,255,255,.35); transition:color .18s; text-decoration:none;
+}
+.dp-nav-logout a:hover { color:#fca5a5; }
+
+.dp-main { flex:1; background:var(--snow); padding:2rem 2.5rem; overflow-x:hidden; }
+
+.dp-topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:2rem; flex-wrap:wrap; gap:1rem;
+}
+.dp-topbar-left h1 { font-family:var(--font-display); font-size:1.65rem; color:var(--navy); line-height:1.1; }
+.dp-topbar-left p  { font-size:.83rem; color:var(--gray-500); margin-top:.18rem; }
+
+/* Búsqueda */
+.hist-search-card {
+  background:var(--white); border:1px solid var(--gray-200);
+  border-radius:var(--r-md); box-shadow:var(--shadow-sm);
+  padding:1.75rem; margin-bottom:1.75rem;
+}
+.hist-search-title {
+  font-family:var(--font-display); font-size:1rem; color:var(--navy);
+  margin-bottom:.35rem; display:flex; align-items:center; gap:.5rem;
+}
+.hist-search-title i { color:var(--teal); }
+.hist-search-sub { font-size:.82rem; color:var(--gray-500); margin-bottom:1.25rem; }
+
+.hist-search-row { display:flex; gap:.75rem; align-items:flex-end; }
+.hist-search-input-wrap { flex:1; }
+.hist-search-input-wrap label {
+  display:block; font-size:.72rem; font-weight:700;
+  color:var(--gray-500); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.4rem;
+}
+.hist-search-input-wrap input {
+  width:100%; padding:.65rem 1rem;
+  border:1.5px solid var(--gray-200); border-radius:var(--r-sm);
+  font-family:var(--font-body); font-size:.9rem; color:var(--gray-900);
+  outline:none; transition:border-color .18s, box-shadow .18s;
+}
+.hist-search-input-wrap input:focus {
+  border-color:var(--teal); box-shadow:0 0 0 3px rgba(10,124,92,.1);
+}
+
+/* Error/alerta */
+.hist-alert {
+  display:flex; align-items:center; gap:.65rem;
+  padding:.8rem 1.1rem; border-radius:var(--r-sm);
+  font-size:.875rem; margin-bottom:1.5rem; animation:alertIn .25s ease both;
+}
+@keyframes alertIn { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
+.hist-alert.error { background:var(--red-pale); border-left:3px solid var(--red); color:#b91c1c; }
+.hist-alert.info  { background:var(--teal-pale); border-left:3px solid var(--teal); color:var(--teal); }
+
+/* Paciente encontrado */
+.paciente-card {
+  background:var(--white); border:1px solid var(--gray-200);
+  border-radius:var(--r-md); box-shadow:var(--shadow-sm);
+  overflow:hidden; margin-bottom:1.75rem;
+}
+.paciente-card-hd {
+  background:linear-gradient(135deg,var(--navy),var(--navy-soft));
+  padding:1.5rem; display:flex; align-items:center; gap:1.1rem;
+}
+.pac-avatar {
+  width:56px; height:56px; border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),var(--teal-hover));
+  color:var(--white); display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-size:1.3rem; font-weight:700;
+  border:3px solid rgba(255,255,255,.2); flex-shrink:0;
+}
+.pac-nombre { font-family:var(--font-display); font-size:1.1rem; color:var(--white); font-weight:600; }
+.pac-cedula { font-size:.8rem; color:rgba(255,255,255,.55); margin-top:.15rem; }
+.paciente-card-body { padding:1.25rem 1.5rem; display:flex; flex-wrap:wrap; gap:1rem; }
+.pac-dato {
+  display:flex; align-items:center; gap:.45rem;
+  font-size:.83rem; color:var(--gray-500);
+}
+.pac-dato i { color:var(--teal); font-size:.85rem; }
+.pac-dato strong { color:var(--navy); }
+
+/* Historial table */
+.hist-section { background:var(--white); border:1px solid var(--gray-200); border-radius:var(--r-md); box-shadow:var(--shadow-sm); overflow:hidden; }
+.hist-section-hd {
+  padding:1rem 1.5rem; border-bottom:1px solid var(--gray-100);
+  display:flex; align-items:center; gap:.6rem;
+}
+.hist-section-hd-ico {
+  width:32px; height:32px; background:var(--teal-pale); color:var(--teal);
+  border-radius:var(--r-xs); display:flex; align-items:center; justify-content:center; font-size:.9rem;
+}
+.hist-section-hd-title { font-family:var(--font-display); font-size:.98rem; font-weight:600; color:var(--navy); }
+.hist-section-hd-sub   { font-size:.75rem; color:var(--gray-500); margin-top:.05rem; }
+
+.dp-table { width:100%; border-collapse:collapse; font-size:.855rem; }
+.dp-table thead th {
+  background:var(--navy); color:rgba(255,255,255,.75); padding:.75rem 1rem;
+  text-align:left; font-size:.72rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.08em; white-space:nowrap;
+}
+.dp-table tbody tr { border-bottom:1px solid var(--gray-100); transition:background .15s; }
+.dp-table tbody tr:last-child { border-bottom:none; }
+.dp-table tbody tr:hover { background:var(--teal-pale); }
+.dp-table tbody td { padding:.8rem 1rem; vertical-align:middle; }
+
+/* Empty */
+.dp-empty { text-align:center; padding:3rem 2rem; }
+.dp-empty-ico { font-size:2.5rem; opacity:.3; display:block; margin-bottom:.75rem; }
+.dp-empty p { font-size:.875rem; color:var(--gray-500); margin-top:.35rem; }
+
+@media(max-width:900px){ .dp-sidebar{display:none;} .dp-main{padding:1.5rem;} }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="dp-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="dp-sidebar">
+    <div class="dp-profile">
+      <img src="{{ url_for('static', filename='img/doctor.png') }}"
+           alt="Dr. {{ session.get('doctor_nombre','') }}" class="dp-avatar">
+      <div class="dp-name">Dr. {{ session.get("doctor_nombre","") }}</div>
+      <div class="dp-role">Panel médico</div>
+    </div>
+    <nav class="dp-nav">
+      <a href="/doctor/panel"><i class="bi bi-grid-1x2-fill"></i> Mi Panel</a>
+      <a href="/doctor/historial" class="active"><i class="bi bi-folder2-open"></i> Historial</a>
+    </nav>
+    <div class="dp-nav-sep"></div>
+    <div class="dp-nav-logout">
+      <a href="/logout"><i class="bi bi-box-arrow-left"></i> Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dp-main">
+
+    <div class="dp-topbar">
+      <div class="dp-topbar-left">
+        <h1>Historial de Pacientes</h1>
+        <p>Busca el historial clínico de cualquier paciente por cédula</p>
+      </div>
+    </div>
+
+    <!-- BUSCAR -->
+    <div class="hist-search-card">
+      <div class="hist-search-title">
+        <i class="bi bi-search"></i> Buscar paciente
+      </div>
+      <div class="hist-search-sub">
+        Ingresa la cédula de identidad (10 dígitos) para consultar el historial de citas.
+      </div>
+      <form method="POST">
+        <div class="hist-search-row">
+          <div class="hist-search-input-wrap">
+            <label for="cedula">
+              <i class="bi bi-person-badge" style="color:var(--teal);margin-right:.25rem;"></i>
+              Cédula de identidad
+            </label>
+            <input type="text" name="cedula" id="cedula"
+                   placeholder="Ej: 1712345678"
+                   maxlength="10" pattern="[0-9]{10}"
+                   value="{{ request.form.get('cedula','') }}"
+                   required autofocus>
+          </div>
+          <button type="submit" class="btn" style="white-space:nowrap; height:42px;">
+            <i class="bi bi-search"></i> Buscar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ERROR -->
+    {% if error %}
+      <div class="hist-alert error">
+        <i class="bi bi-exclamation-circle-fill" style="flex-shrink:0;"></i>
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <!-- RESULTADO: PACIENTE ENCONTRADO -->
+    {% if paciente %}
+
+      <div class="paciente-card">
+        <div class="paciente-card-hd">
+          <div class="pac-avatar">{{ paciente[1][0] }}{{ paciente[2][0] }}</div>
+          <div>
+            <div class="pac-nombre">{{ paciente[1] }} {{ paciente[2] }}</div>
+            <div class="pac-cedula"><i class="bi bi-person-badge" style="margin-right:.3rem;"></i>{{ paciente[5] }}</div>
+          </div>
+        </div>
+        <div class="paciente-card-body">
+          <div class="pac-dato">
+            <i class="bi bi-envelope-fill"></i>
+            <span><strong>Correo:</strong> {{ paciente[3] }}</span>
+          </div>
+          <div class="pac-dato">
+            <i class="bi bi-telephone-fill"></i>
+            <span><strong>Teléfono:</strong> {{ paciente[4] or '—' }}</span>
+          </div>
+          <div class="pac-dato">
+            <i class="bi bi-calendar3"></i>
+            <span><strong>Total de citas:</strong> {{ historial|length }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL DE CITAS -->
+      <div class="hist-section">
+        <div class="hist-section-hd">
+          <div class="hist-section-hd-ico"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="hist-section-hd-title">Historial de citas</div>
+            <div class="hist-section-hd-sub">{{ historial|length }} cita(s) registrada(s)</div>
+          </div>
+        </div>
+
+        {% if historial %}
+          <div style="overflow-x:auto;">
+            <table class="dp-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                  <th>Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for h in historial %}
+                <tr>
+                  <td><strong>{{ h[0] }}</strong></td>
+                  <td>
+                    <i class="bi bi-clock" style="color:var(--teal);margin-right:.3rem;"></i>
+                    {{ h[1].strftime('%H:%M') if h[1] else '—' }}
+                  </td>
+                  <td>
+                    <span class="badge estado {{ h[2] }}">{{ h[2] }}</span>
+                  </td>
+                  <td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ h[3] or '—' }}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="dp-empty">
+            <i class="bi bi-calendar-x dp-empty-ico"></i>
+            <strong style="color:var(--navy);">Sin citas registradas</strong>
+            <p>Este paciente aún no tiene citas en el sistema.</p>
+          </div>
+        {% endif %}
+      </div>
+
+    {% elif request.method == 'POST' and not error %}
+      <div class="hist-alert info">
+        <i class="bi bi-info-circle-fill" style="flex-shrink:0;"></i>
+        Realiza una búsqueda para ver el historial de un paciente.
+      </div>
+    {% endif %}
+
+  </main>
+</div>
+{% endblock %}
