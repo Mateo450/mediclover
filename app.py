@@ -8,7 +8,6 @@ from email.mime.text import MIMEText
 from datetime import date, datetime, timedelta
 
 # ── Configuración Gmail SMTP ──────────────────────────────────────────────────
-# Variables de entorno en Render: MAIL_USER y MAIL_PASS
 MAIL_USER = os.getenv("MAIL_USER", "")
 MAIL_PASS = os.getenv("MAIL_PASS", "")
 
@@ -28,6 +27,183 @@ def enviar_correo(destinatario, asunto, cuerpo_html):
     except Exception as e:
         print("Error al enviar correo:", e)
         return False
+
+
+def enviar_confirmacion_cita(correo_paciente, nombre_paciente, fecha, hora, descripcion):
+    """
+    Envía un correo HTML de confirmación al paciente tras reservar una cita.
+    Llamar después de hacer el INSERT en la BD.
+    """
+    # Formatear hora para mostrar
+    if hasattr(hora, 'strftime'):
+        hora_str = hora.strftime('%H:%M')
+    else:
+        hora_str = str(hora)[:5]
+
+    # Formatear fecha
+    if hasattr(fecha, 'strftime'):
+        fecha_str = fecha.strftime('%A %d de %B de %Y')
+        # Capitalizar primera letra
+        fecha_str = fecha_str.capitalize()
+    else:
+        fecha_str = str(fecha)
+
+    # Hora de fin (35 minutos después)
+    try:
+        hora_dt  = datetime.strptime(hora_str, '%H:%M')
+        hora_fin = (hora_dt + timedelta(minutes=35)).strftime('%H:%M')
+    except Exception:
+        hora_fin = '—'
+
+    cuerpo = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Confirmación de cita — MediClover</title>
+    </head>
+    <body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f4f7f5;">
+
+      <div style="max-width:580px;margin:32px auto;background:#ffffff;border-radius:16px;
+                  overflow:hidden;box-shadow:0 4px 24px rgba(11,31,58,.1);">
+
+        <!-- Header verde -->
+        <div style="background:linear-gradient(135deg,#0b1f3a 0%,#162f55 100%);
+                    padding:36px 40px;text-align:center;position:relative;">
+          <div style="display:inline-flex;align-items:center;justify-content:center;
+                      width:64px;height:64px;background:rgba(10,124,92,.25);
+                      border:1px solid rgba(10,124,92,.4);border-radius:16px;
+                      margin-bottom:16px;">
+            <span style="font-size:28px;">📅</span>
+          </div>
+          <h1 style="margin:0 0 6px;color:#ffffff;font-size:22px;font-weight:700;
+                     font-family:Georgia,serif;">¡Cita confirmada!</h1>
+          <p style="margin:0;color:rgba(255,255,255,0.6);font-size:14px;">
+            Tu reserva ha sido registrada exitosamente
+          </p>
+        </div>
+
+        <!-- Saludo -->
+        <div style="padding:32px 40px 0;">
+          <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.7;">
+            Hola <strong style="color:#0b1f3a;">{nombre_paciente}</strong>, 👋<br>
+            Tu cita médica ha sido <strong style="color:#16a34a;">confirmada con éxito</strong>.
+            Aquí tienes todos los detalles:
+          </p>
+        </div>
+
+        <!-- Tarjeta de detalles -->
+        <div style="margin:0 40px;background:#f0fdf4;border:1px solid #bbf7d0;
+                    border-radius:12px;overflow:hidden;">
+
+          <!-- Fila: Doctor -->
+          <div style="display:flex;align-items:center;gap:12px;
+                      padding:14px 20px;border-bottom:1px solid #dcfce7;">
+            <div style="width:36px;height:36px;background:#dcfce7;border-radius:8px;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:16px;flex-shrink:0;">👨‍⚕️</div>
+            <div>
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;
+                          letter-spacing:.06em;font-weight:700;">Doctor</div>
+              <div style="font-size:14px;color:#0b1f3a;font-weight:600;margin-top:1px;">
+                Dr. Luis Suárez · Médico General
+              </div>
+            </div>
+          </div>
+
+          <!-- Fila: Fecha -->
+          <div style="display:flex;align-items:center;gap:12px;
+                      padding:14px 20px;border-bottom:1px solid #dcfce7;">
+            <div style="width:36px;height:36px;background:#dcfce7;border-radius:8px;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:16px;flex-shrink:0;">📆</div>
+            <div>
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;
+                          letter-spacing:.06em;font-weight:700;">Fecha</div>
+              <div style="font-size:14px;color:#0b1f3a;font-weight:600;margin-top:1px;">
+                {fecha_str}
+              </div>
+            </div>
+          </div>
+
+          <!-- Fila: Hora -->
+          <div style="display:flex;align-items:center;gap:12px;
+                      padding:14px 20px;border-bottom:1px solid #dcfce7;">
+            <div style="width:36px;height:36px;background:#dcfce7;border-radius:8px;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:16px;flex-shrink:0;">🕐</div>
+            <div>
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;
+                          letter-spacing:.06em;font-weight:700;">Hora</div>
+              <div style="font-size:14px;color:#0b1f3a;font-weight:600;margin-top:1px;">
+                {hora_str} – {hora_fin}
+                <span style="font-size:12px;color:#6b7280;font-weight:400;">(35 minutos)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fila: Motivo -->
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 20px;">
+            <div style="width:36px;height:36px;background:#dcfce7;border-radius:8px;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:16px;flex-shrink:0;margin-top:2px;">💬</div>
+            <div>
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;
+                          letter-spacing:.06em;font-weight:700;">Motivo de consulta</div>
+              <div style="font-size:14px;color:#0b1f3a;margin-top:1px;line-height:1.6;">
+                {descripcion}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Recordatorio -->
+        <div style="margin:20px 40px;background:#fefce8;border:1px solid #fde68a;
+                    border-radius:10px;padding:14px 18px;display:flex;
+                    align-items:flex-start;gap:10px;">
+          <span style="font-size:18px;flex-shrink:0;margin-top:1px;">⚠️</span>
+          <div style="font-size:13px;color:#92400e;line-height:1.65;">
+            <strong>Recuerda:</strong> Si necesitas cancelar tu cita, puedes hacerlo
+            desde tu panel en MediClover con al menos unas horas de anticipación.
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="padding:20px 40px 36px;text-align:center;">
+          <a href="https://mediclover.onrender.com/panel_paciente"
+             style="display:inline-block;background:#0a7c5c;color:#ffffff;
+                    text-decoration:none;padding:13px 32px;border-radius:8px;
+                    font-weight:700;font-size:15px;
+                    box-shadow:0 4px 14px rgba(10,124,92,.35);">
+            Ver mis citas →
+          </a>
+          <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;">
+            ¿Problemas con el botón? Visita
+            <a href="https://mediclover.onrender.com" style="color:#0a7c5c;">
+              mediclover.onrender.com
+            </a>
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background:#f4f7f5;border-top:1px solid #e2e8f0;
+                    padding:18px 40px;text-align:center;">
+          <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
+            <strong style="color:#64748b;">MediClover</strong> — Sistema de Gestión de Citas Médicas<br>
+            Este correo fue enviado automáticamente. Por favor no respondas a este mensaje.
+          </p>
+        </div>
+
+      </div>
+    </body>
+    </html>
+    """
+
+    asunto = f"✅ Cita confirmada — {hora_str} del {fecha_str} · MediClover"
+    return enviar_correo(correo_paciente, asunto, cuerpo)
+
 
 app = Flask(__name__)
 app.secret_key = "Mediclover_19"
@@ -66,7 +242,6 @@ def init_db():
             especialidad VARCHAR(150) DEFAULT 'Médico General'
         )
     """)
-    # NOTA: la columna 'usuario' fue agregada manualmente en Supabase SQL Editor
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS slot (
             id_slot    SERIAL PRIMARY KEY,
@@ -342,7 +517,16 @@ def doctor_panel():
     """, (session["doctor_id"],))
     slots = cursor.fetchall()
     cursor.close()
-    return render_template("doctor_panel.html", citas=citas, slots=slots, hoy=date.today())
+
+    # Limpiar mensaje de slots creados ANTES de renderizar
+    # (esto evita el bug de session.pop() en template)
+    slots_resultado = session.pop("slots_resultado", None)
+
+    return render_template("doctor_panel.html",
+                           citas=citas,
+                           slots=slots,
+                           hoy=date.today(),
+                           slots_resultado=slots_resultado)
 
 
 @app.route("/doctor/completar/<int:id>")
@@ -409,14 +593,12 @@ def doctor_historial():
 @app.route("/doctor/slots/crear", methods=["POST"])
 @login_required(role="doctor")
 def crear_slot():
-    fecha      = request.form.get("fecha", "").strip()
-    hora       = request.form.get("hora",  "").strip()
-    cantidad   = request.form.get("cantidad", "1").strip()
+    fecha    = request.form.get("fecha", "").strip()
+    hora     = request.form.get("hora",  "").strip()
+    cantidad = request.form.get("cantidad", "1").strip()
 
-    # --- Validaciones básicas ---
     if not fecha or not hora:
         return redirect("/doctor/panel")
-
     if fecha < str(date.today()):
         return redirect("/doctor/panel")
 
@@ -427,22 +609,17 @@ def crear_slot():
     except ValueError:
         cantidad = 1
 
-    # --- Generar slots cada 35 min, saltando los que se solapan ---
-    hora_actual_dt = datetime.strptime(hora, "%H:%M")
-    creados        = 0
-    omitidos       = 0
-    # Guardamos las horas que vamos a insertar en esta misma tanda
-    # para validar solapamiento entre ellas también
+    hora_actual_dt   = datetime.strptime(hora, "%H:%M")
+    creados          = 0
+    omitidos         = 0
     horas_pendientes = []
 
     cursor = conn.cursor()
 
     for i in range(cantidad):
-        hora_str = hora_actual_dt.strftime("%H:%M")
-
-        # Verificar contra BD y contra los de esta misma tanda
-        solapaBD     = slot_solapado(session["doctor_id"], fecha, hora_str)
-        solapaTanda  = slot_solapado_en_lista(hora_actual_dt, horas_pendientes)
+        hora_str    = hora_actual_dt.strftime("%H:%M")
+        solapaBD    = slot_solapado(session["doctor_id"], fecha, hora_str)
+        solapaTanda = slot_solapado_en_lista(hora_actual_dt, horas_pendientes)
 
         if not solapaBD and not solapaTanda:
             cursor.execute(
@@ -454,13 +631,12 @@ def crear_slot():
         else:
             omitidos += 1
 
-        # Avanzar 35 minutos para el siguiente slot
         hora_actual_dt += timedelta(minutes=DURACION_CITA)
 
     conn.commit()
     cursor.close()
 
-    # Guardar resumen en sesión para mostrarlo en el panel
+    # Guardar en sesión — se limpia en doctor_panel() antes de renderizar
     session["slots_resultado"] = {
         "creados":  creados,
         "omitidos": omitidos
@@ -576,49 +752,79 @@ def cancelar_cita_paciente(id):
 @login_required(role="paciente")
 def reservar():
     cursor = conn.cursor()
+
+    def get_slots():
+        cursor2 = conn.cursor()
+        cursor2.execute("""
+            SELECT id_slot, fecha, hora
+            FROM slot
+            WHERE disponible=TRUE AND fecha >= CURRENT_DATE
+            ORDER BY fecha, hora
+        """)
+        result = cursor2.fetchall()
+        cursor2.close()
+        return result
+
     if request.method == "POST":
         id_slot     = request.form.get("id_slot")
         descripcion = request.form.get("descripcion", "").strip()
 
-        def reload(msg, tipo):
-            cursor2 = conn.cursor()
-            cursor2.execute("""
-                SELECT id_slot, fecha, hora
-                FROM slot
-                WHERE disponible=TRUE AND fecha >= CURRENT_DATE
-                ORDER BY fecha, hora
-            """)
-            slots = cursor2.fetchall()
-            cursor2.close()
-            return render_template("reservar.html", slots=slots, mensaje=msg, tipo=tipo)
-
         if not id_slot:
-            return reload("Selecciona un horario disponible", "error")
+            return render_template("reservar.html",
+                slots=get_slots(), mensaje="Selecciona un horario disponible", tipo="error")
+
         if len(descripcion) < 5:
-            return reload("Describe el motivo (mínimo 5 caracteres)", "error")
+            return render_template("reservar.html",
+                slots=get_slots(), mensaje="Describe el motivo (mínimo 5 caracteres)", tipo="error")
 
         cursor.execute("SELECT id_slot, id_doctor FROM slot WHERE id_slot=%s AND disponible=TRUE", (id_slot,))
         slot = cursor.fetchone()
+
         if not slot:
             cursor.close()
-            return reload("Ese horario ya no está disponible", "error")
+            return render_template("reservar.html",
+                slots=get_slots(), mensaje="Ese horario ya no está disponible", tipo="error")
 
+        # Marcar slot como no disponible y crear cita
         cursor.execute("UPDATE slot SET disponible=FALSE WHERE id_slot=%s", (slot[0],))
         cursor.execute("""
             INSERT INTO cita(id_paciente, id_doctor, id_slot, estado, descripcion)
             VALUES(%s, %s, %s, 'pendiente', %s)
         """, (session["paciente_id"], slot[1], slot[0], descripcion))
         conn.commit()
-        cursor.close()
-        return render_template("reservar.html", slots=[], mensaje="¡Cita reservada con éxito!", tipo="success")
 
-    cursor.execute("""
-        SELECT id_slot, fecha, hora
-        FROM slot
-        WHERE disponible=TRUE AND fecha >= CURRENT_DATE
-        ORDER BY fecha, hora
-    """)
-    slots = cursor.fetchall()
+        # ── Obtener datos para el correo de confirmación ──────────────────
+        try:
+            cursor.execute("""
+                SELECT p.correo, p.nombre, p.apellido, s.fecha, s.hora
+                FROM paciente p, slot s
+                WHERE p.id_paciente = %s
+                  AND s.id_slot     = %s
+            """, (session["paciente_id"], slot[0]))
+            datos_correo = cursor.fetchone()
+
+            if datos_correo:
+                correo_pac, nombre_pac, apellido_pac, fecha_cita, hora_cita = datos_correo
+                nombre_completo = f"{nombre_pac} {apellido_pac}"
+                # Enviar en background para no bloquear la respuesta al usuario
+                # (Si quisieras async real, usar threading o celery)
+                enviar_confirmacion_cita(
+                    correo_paciente=correo_pac,
+                    nombre_paciente=nombre_completo,
+                    fecha=fecha_cita,
+                    hora=hora_cita,
+                    descripcion=descripcion
+                )
+        except Exception as e:
+            # El correo falla silenciosamente — la cita YA fue registrada
+            print(f"⚠️  Error enviando confirmación: {e}")
+
+        cursor.close()
+        return render_template("reservar.html",
+            slots=[], mensaje="¡Cita reservada con éxito!", tipo="success")
+
+    # GET
+    slots = get_slots()
     cursor.close()
     return render_template("reservar.html", slots=slots)
 
@@ -630,10 +836,6 @@ def reservar():
 def logout():
     session.clear()
     return redirect("/")
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
 
 
 # ================================================================
@@ -652,11 +854,10 @@ def doctor_recuperar():
             return render_template("doctor_recuperar.html",
                 error="No hay ningún doctor registrado con ese correo.")
 
-        # Generar código de 6 dígitos y guardarlo en sesión con expiración
         codigo = str(random.randint(100000, 999999))
-        session["reset_codigo"]  = codigo
-        session["reset_correo"]  = correo
-        session["reset_expira"]  = (datetime.now() + timedelta(minutes=15)).isoformat()
+        session["reset_codigo"] = codigo
+        session["reset_correo"] = correo
+        session["reset_expira"] = (datetime.now() + timedelta(minutes=15)).isoformat()
 
         cuerpo = f"""
         <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:2rem;
@@ -690,15 +891,14 @@ def doctor_recuperar():
 
 @app.route("/doctor/verificar_codigo", methods=["POST"])
 def doctor_verificar_codigo():
-    correo            = request.form.get("correo", "").strip().lower()
-    codigo_ingresado  = request.form.get("codigo", "").strip()
-    nueva_password    = request.form.get("nueva_password", "")
-    confirmar         = request.form.get("confirmar_password", "")
+    correo           = request.form.get("correo", "").strip().lower()
+    codigo_ingresado = request.form.get("codigo", "").strip()
+    nueva_password   = request.form.get("nueva_password", "")
+    confirmar        = request.form.get("confirmar_password", "")
 
     def volver(err):
         return render_template("doctor_verificar_codigo.html", correo=correo, error=err)
 
-    # Validaciones
     if session.get("reset_correo") != correo:
         return volver("Sesión inválida. Solicita un nuevo código.")
 
@@ -718,13 +918,11 @@ def doctor_verificar_codigo():
     if nueva_password != confirmar:
         return volver("Las contraseñas no coinciden.")
 
-    # Actualizar contraseña
     cursor = conn.cursor()
     cursor.execute("UPDATE doctor SET password=%s WHERE correo=%s", (nueva_password, correo))
     conn.commit()
     cursor.close()
 
-    # Limpiar sesión de reset
     session.pop("reset_codigo", None)
     session.pop("reset_correo", None)
     session.pop("reset_expira", None)
@@ -732,3 +930,7 @@ def doctor_verificar_codigo():
     return render_template("login_doctor.html",
         mensaje="¡Contraseña restablecida con éxito! Ya puedes iniciar sesión.",
         tipo="success")
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

@@ -1,79 +1,563 @@
 {% extends "base.html" %}
 {% block title %}Reservar Cita — MediClover{% endblock %}
+
 {% block extra_head %}
 <style>
-.slot-card{border:2px solid var(--gray-200);border-radius:var(--r-md);padding:1.1rem 1.25rem;cursor:pointer;transition:all var(--transition);background:var(--white);user-select:none;}
-.slot-card:hover{border-color:var(--teal);background:var(--teal-pale);}
-.slot-card.selected{border-color:var(--teal);background:var(--teal-pale);box-shadow:0 0 0 3px rgba(10,124,92,.15);}
+/* ══════════════════════════════════════════
+   RESERVAR — Estilos exclusivos
+══════════════════════════════════════════ */
+.reservar-wrap {
+  flex: 1;
+  background: linear-gradient(160deg, #eaf4f0 0%, var(--white) 45%, #e8f0f8 100%);
+  padding: 3rem 1.5rem 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.reservar-card {
+  width: 100%;
+  max-width: 720px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: reservaFade .4s ease both;
+}
+@keyframes reservaFade {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header de la card ── */
+.reservar-hd {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
+  padding: 2rem 2rem 1.75rem;
+  text-align: center;
+  color: var(--white);
+  position: relative;
+  overflow: hidden;
+}
+.reservar-hd::before {
+  content: '';
+  position: absolute;
+  width: 220px; height: 220px;
+  background: rgba(10,124,92,.15);
+  border-radius: 50%;
+  right: -70px; top: -90px;
+}
+.reservar-hd::after {
+  content: '';
+  position: absolute;
+  width: 150px; height: 150px;
+  background: rgba(10,124,92,.08);
+  border-radius: 50%;
+  left: -40px; bottom: -60px;
+}
+
+.reservar-emblem {
+  width: 60px; height: 60px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  margin: 0 auto 1rem;
+  position: relative; z-index: 1;
+}
+.reservar-hd h2 {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  margin-bottom: .25rem;
+  position: relative; z-index: 1;
+}
+.reservar-hd p {
+  font-size: .85rem;
+  opacity: .6;
+  position: relative; z-index: 1;
+}
+
+/* Doctor mini card */
+.doc-mini {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: var(--r-sm);
+  padding: .65rem 1rem;
+  margin-top: 1.2rem;
+  position: relative; z-index: 1;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+.doc-mini img {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 2px solid rgba(255,255,255,.25);
+  flex-shrink: 0;
+}
+.doc-mini-info { text-align: left; }
+.doc-mini-name { font-size: .85rem; font-weight: 600; color: var(--white); }
+.doc-mini-role { font-size: .73rem; color: rgba(255,255,255,.5); }
+
+/* ── Cuerpo ── */
+.reservar-body { padding: 2rem; }
+
+/* Alertas */
+.res-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: .7rem;
+  padding: .9rem 1.1rem;
+  border-radius: var(--r-sm);
+  font-size: .875rem;
+  margin-bottom: 1.5rem;
+  animation: alertIn .25s ease both;
+}
+@keyframes alertIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.res-alert.success {
+  background: var(--green-pale);
+  border-left: 3px solid var(--green);
+  color: #15803d;
+}
+.res-alert.error {
+  background: var(--red-pale);
+  border-left: 3px solid var(--red);
+  color: #b91c1c;
+}
+
+/* ── Filtro de fechas ── */
+.fecha-filter {
+  margin-bottom: 1.5rem;
+}
+.fecha-filter-label {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: .65rem;
+  display: block;
+}
+.fecha-tabs {
+  display: flex;
+  gap: .45rem;
+  flex-wrap: wrap;
+}
+.fecha-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: .55rem .9rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all .18s;
+  background: var(--white);
+  min-width: 64px;
+}
+.fecha-tab:hover {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+}
+.fecha-tab.active {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+  box-shadow: 0 0 0 2px rgba(10,124,92,.12);
+}
+.fecha-tab-dia {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--gray-500);
+  font-weight: 600;
+}
+.fecha-tab.active .fecha-tab-dia { color: var(--teal); }
+.fecha-tab-num {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--navy);
+  line-height: 1.1;
+  font-weight: 700;
+}
+.fecha-tab.active .fecha-tab-num { color: var(--teal); }
+.fecha-tab-mes {
+  font-size: .66rem;
+  color: var(--gray-400);
+}
+.fecha-tab.active .fecha-tab-mes { color: var(--teal); }
+.fecha-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  background: var(--teal);
+  color: var(--white);
+  border-radius: 50%;
+  font-size: .62rem;
+  font-weight: 700;
+  margin-top: .25rem;
+}
+.fecha-tab:not(.active) .fecha-tab-count {
+  background: var(--gray-400);
+}
+
+/* ── Slots grid ── */
+.slots-section-label {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.slots-section-label i { color: var(--teal); }
+
+.slots-grid-res {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: .75rem;
+  margin-bottom: 1.75rem;
+}
+
+.slot-item {
+  border: 2px solid var(--gray-200);
+  border-radius: var(--r-md);
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+  transition: all .18s;
+  background: var(--white);
+  position: relative;
+  overflow: hidden;
+}
+.slot-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--teal);
+  opacity: 0;
+  transition: opacity .18s;
+  pointer-events: none;
+}
+.slot-item:hover {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(10,124,92,.15);
+}
+.slot-item.selected {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+  box-shadow: 0 0 0 3px rgba(10,124,92,.18), 0 4px 16px rgba(10,124,92,.15);
+}
+.slot-item input[type="radio"] { display: none; }
+
+.slot-item-check {
+  position: absolute;
+  top: .5rem; right: .5rem;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-300);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem;
+  color: transparent;
+  background: var(--white);
+  transition: all .18s;
+}
+.slot-item.selected .slot-item-check {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--white);
+}
+
+.slot-item-date {
+  font-size: .73rem;
+  color: var(--gray-500);
+  margin-bottom: .2rem;
+  font-weight: 500;
+}
+.slot-item.selected .slot-item-date { color: var(--teal); }
+
+.slot-item-time {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--navy);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: .25rem;
+}
+.slot-item.selected .slot-item-time { color: var(--teal); }
+
+.slot-item-dur {
+  font-size: .72rem;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+.slot-item.selected .slot-item-dur { color: var(--teal); opacity: .8; }
+
+/* ── Motivo ── */
+.motivo-wrap {
+  margin-bottom: 1.5rem;
+}
+.motivo-label {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: .45rem;
+  display: block;
+}
+.motivo-wrap textarea {
+  width: 100%;
+  padding: .75rem .9rem;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: .875rem;
+  color: var(--gray-900);
+  background: var(--white);
+  resize: vertical;
+  min-height: 100px;
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+}
+.motivo-wrap textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(10,124,92,.1);
+}
+
+/* Botón confirmar con estado de carga */
+.btn-confirmar {
+  width: 100%;
+  padding: .9rem;
+  background: var(--teal);
+  color: var(--white);
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  transition: all .18s;
+  position: relative;
+}
+.btn-confirmar:hover:not(:disabled) {
+  background: var(--teal-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(10,124,92,.35);
+}
+.btn-confirmar:disabled {
+  opacity: .7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinner */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2.5px solid rgba(255,255,255,.3);
+  border-top-color: var(--white);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer de la card */
+.reservar-footer {
+  text-align: center;
+  padding-top: 1.25rem;
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--gray-200);
+  font-size: .83rem;
+  color: var(--gray-500);
+}
+.reservar-footer a { color: var(--teal); font-weight: 600; }
+
+/* Sin slots */
+.no-slots {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+.no-slots-ico { font-size: 3rem; opacity: .25; display: block; margin-bottom: 1rem; }
+.no-slots h3 {
+  font-family: var(--font-display);
+  color: var(--navy);
+  font-size: 1.2rem;
+  margin-bottom: .5rem;
+}
+.no-slots p { font-size: .875rem; color: var(--gray-500); }
+
+/* Estado de éxito */
+.success-state {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+.success-ico {
+  width: 80px; height: 80px;
+  background: var(--green-pale);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  color: var(--green);
+  margin: 0 auto 1.5rem;
+  animation: scaleIn .4s ease both;
+}
+@keyframes scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.success-state h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--navy);
+  margin-bottom: .5rem;
+}
+.success-state p {
+  font-size: .9rem;
+  color: var(--gray-500);
+  line-height: 1.75;
+  margin-bottom: 1.75rem;
+}
 </style>
 {% endblock %}
-{% block contenido %}
-<div class="auth-wrap" style="align-items:flex-start;padding-top:2.5rem;">
-  <div class="auth-card" style="max-width:600px;">
-    <div class="auth-top">
-      <div class="auth-emblem"><i class="bi bi-calendar-plus-fill"></i></div>
-      <h2>Reservar Cita</h2>
-      <p>Consultorio Dr. Luis Suárez</p>
-    </div>
-    <div class="auth-body">
 
-      {% if mensaje %}
-        <div class="alert {{ tipo }}">
-          {% if tipo=='success' %}<i class="bi bi-check-circle-fill"></i>
-          {% else %}<i class="bi bi-x-circle-fill"></i>{% endif %}
+{% block contenido %}
+<div class="reservar-wrap">
+  <div class="reservar-card">
+
+    <!-- Header -->
+    <div class="reservar-hd">
+      <div class="reservar-emblem">
+        <i class="bi bi-calendar-plus-fill"></i>
+      </div>
+      <h2>Reservar Cita</h2>
+      <p>Elige el horario que mejor se adapte a tu agenda</p>
+
+      <div class="doc-mini">
+        <img src="{{ url_for('static', filename='img/doctor.png') }}" alt="Dr. Luis Suárez">
+        <div class="doc-mini-info">
+          <div class="doc-mini-name">Dr. Luis Suárez</div>
+          <div class="doc-mini-role">Médico General · 35 min por cita</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cuerpo -->
+    <div class="reservar-body">
+
+      <!-- ESTADO: Error -->
+      {% if mensaje and tipo == 'error' %}
+        <div class="res-alert error">
+          <i class="bi bi-x-circle-fill" style="flex-shrink:0; font-size:1.05rem; margin-top:.05rem;"></i>
           {{ mensaje }}
         </div>
-        {% if tipo=='success' %}
-          <a href="/panel_paciente" class="btn btn-block">
-            <i class="bi bi-house"></i> Ver mis citas
-          </a>
-          <div class="auth-footer"><a href="/reservar">Reservar otra cita</a></div>
-        {% endif %}
       {% endif %}
 
-      {% if not (mensaje and tipo=='success') %}
-        {% if slots %}
-          <form method="POST" id="reservaForm">
-            <p style="font-size:.85rem;color:var(--gray-500);margin-bottom:1rem;">
-              Selecciona un horario disponible y describe el motivo de tu consulta:
-            </p>
-
-            <div class="slots-grid">
-              {% for s in slots %}
-              <label class="slot-card" id="card-{{ s[0] }}" onclick="selectSlot({{ s[0] }})">
-                <input type="radio" name="id_slot" value="{{ s[0] }}" required>
-                <div class="slot-date">{{ s[1].strftime('%A %d %b') if s[1] else s[1] }}</div>
-                <div class="slot-time"><i class="bi bi-clock"></i> {{ s[2] }}</div>
-                <div style="font-size:.8rem;color:var(--gray-500);margin-top:.25rem;">
-                  <i class="bi bi-person-badge text-teal"></i> Dr. Luis Suárez
-                </div>
-              </label>
-              {% endfor %}
-            </div>
-
-            <div class="form-group" style="margin-top:.5rem;">
-              <label>Motivo de consulta</label>
-              <textarea name="descripcion" placeholder="Describe brevemente el motivo de tu cita..." required minlength="5"></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-block">
-              <i class="bi bi-calendar-check-fill"></i> Confirmar reserva
-            </button>
-          </form>
-
-        {% else %}
-          <div style="text-align:center;padding:2rem 1rem;">
-            <div style="font-size:2.5rem;opacity:.3;margin-bottom:1rem;">📅</div>
-            <h3 style="font-family:var(--font-display);color:var(--navy);margin-bottom:.5rem;">
-              Sin horarios disponibles
-            </h3>
-            <p style="color:var(--gray-500);font-size:.875rem;">
-              Actualmente no hay citas disponibles. Por favor intenta más tarde o contáctanos.
-            </p>
+      <!-- ESTADO: Éxito -->
+      {% if mensaje and tipo == 'success' %}
+        <div class="success-state">
+          <div class="success-ico">
+            <i class="bi bi-check-lg"></i>
           </div>
-        {% endif %}
+          <h3>¡Cita reservada!</h3>
+          <p>
+            Tu cita ha sido confirmada exitosamente.<br>
+            Revisa tu correo electrónico — te enviamos todos los detalles.
+          </p>
+          <a href="/panel_paciente" class="btn btn-block" style="max-width:280px; margin:0 auto 1rem;">
+            <i class="bi bi-house-fill"></i> Ver mis citas
+          </a>
+          <div class="reservar-footer">
+            <a href="/reservar">Reservar otra cita</a>
+          </div>
+        </div>
 
-        <div class="auth-footer">
+      <!-- ESTADO: Formulario normal -->
+      {% elif slots %}
+        <form method="POST" id="reservaForm">
+
+          <!-- Filtro de fechas -->
+          <div class="fecha-filter" id="fechaFilter"></div>
+
+          <!-- Slots -->
+          <div class="slots-section-label">
+            <i class="bi bi-clock"></i>
+            Horarios disponibles
+            <span id="filtroActivoLabel" style="color:var(--gray-400); font-weight:400; text-transform:none; letter-spacing:0;"></span>
+          </div>
+
+          <div class="slots-grid-res" id="slotsGrid">
+            {% for s in slots %}
+            <label class="slot-item" id="slot-{{ s[0] }}" onclick="seleccionarSlot({{ s[0] }})"
+                   data-fecha="{{ s[1] }}">
+              <input type="radio" name="id_slot" value="{{ s[0] }}" required>
+              <div class="slot-item-check"><i class="bi bi-check"></i></div>
+              <div class="slot-item-date">
+                {{ s[1].strftime('%a %d %b') if s[1] else s[1] }}
+              </div>
+              <div class="slot-item-time">
+                {{ s[2].strftime('%H:%M') if s[2] else s[2] }}
+              </div>
+              <div class="slot-item-dur">
+                <i class="bi bi-clock"></i> 35 min
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+
+          <!-- Motivo -->
+          <div class="motivo-wrap">
+            <label class="motivo-label" for="descripcion">
+              <i class="bi bi-chat-text" style="margin-right:.3rem; color:var(--teal);"></i>
+              Motivo de consulta
+            </label>
+            <textarea name="descripcion" id="descripcion" required minlength="5"
+                      placeholder="Describe brevemente el motivo de tu consulta…"></textarea>
+          </div>
+
+          <!-- Botón con loading -->
+          <button type="submit" class="btn-confirmar" id="btnConfirmar">
+            <span class="spinner" id="spinner"></span>
+            <i class="bi bi-calendar-check-fill" id="btnIco"></i>
+            <span id="btnTxt">Confirmar reserva</span>
+          </button>
+
+        </form>
+
+        <div class="reservar-footer">
+          <a href="/panel_paciente">← Volver a mi panel</a>
+        </div>
+
+      <!-- ESTADO: Sin slots -->
+      {% else %}
+        <div class="no-slots">
+          <span class="no-slots-ico">📅</span>
+          <h3>Sin horarios disponibles</h3>
+          <p>
+            Actualmente el Dr. Suárez no tiene horarios publicados.<br>
+            Por favor intenta más tarde.
+          </p>
+        </div>
+        <div class="reservar-footer">
           <a href="/panel_paciente">← Volver a mi panel</a>
         </div>
       {% endif %}
@@ -83,9 +567,115 @@
 </div>
 
 <script>
-function selectSlot(id) {
-  document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('card-' + id).classList.add('selected');
-}
+(function () {
+  /* ── Datos de slots desde el DOM ── */
+  const slotItems = document.querySelectorAll('.slot-item');
+  if (!slotItems.length) return;
+
+  /* ── Construir mapa de fechas únicas ── */
+  const fechaMap = {}; // { 'YYYY-MM-DD': [ elemento, ... ] }
+  slotItems.forEach(el => {
+    const f = el.dataset.fecha;
+    if (!fechaMap[f]) fechaMap[f] = [];
+    fechaMap[f].push(el);
+  });
+
+  const fechas = Object.keys(fechaMap).sort();
+
+  /* ── Renderizar filtro de fechas ── */
+  const filterEl = document.getElementById('fechaFilter');
+  if (!filterEl || fechas.length <= 1) {
+    if(filterEl) filterEl.style.display = 'none';
+  } else {
+    const label = document.createElement('span');
+    label.className = 'fecha-filter-label';
+    label.textContent = 'Filtrar por fecha';
+    filterEl.appendChild(label);
+
+    const tabs = document.createElement('div');
+    tabs.className = 'fecha-tabs';
+
+    // Tab "Todos"
+    const tabTodos = document.createElement('div');
+    tabTodos.className = 'fecha-tab active';
+    tabTodos.dataset.fecha = 'todos';
+    const totalSlots = slotItems.length;
+    tabTodos.innerHTML = `
+      <span class="fecha-tab-dia">Todos</span>
+      <span class="fecha-tab-num">${totalSlots}</span>
+      <span class="fecha-tab-mes">slots</span>
+    `;
+    tabs.appendChild(tabTodos);
+
+    fechas.forEach(f => {
+      const d  = new Date(f + 'T00:00:00');
+      const dia = d.toLocaleDateString('es-ES', { weekday: 'short' });
+      const num = d.getDate();
+      const mes = d.toLocaleDateString('es-ES', { month: 'short' });
+      const cnt = fechaMap[f].length;
+
+      const tab = document.createElement('div');
+      tab.className = 'fecha-tab';
+      tab.dataset.fecha = f;
+      tab.innerHTML = `
+        <span class="fecha-tab-dia">${dia}</span>
+        <span class="fecha-tab-num">${num}</span>
+        <span class="fecha-tab-mes">${mes}</span>
+        <span class="fecha-tab-count">${cnt}</span>
+      `;
+      tabs.appendChild(tab);
+    });
+
+    filterEl.appendChild(tabs);
+
+    // Evento de click en tab
+    tabs.addEventListener('click', e => {
+      const tab = e.target.closest('.fecha-tab');
+      if (!tab) return;
+      document.querySelectorAll('.fecha-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const fecha = tab.dataset.fecha;
+      const labelEl = document.getElementById('filtroActivoLabel');
+
+      slotItems.forEach(el => {
+        const show = (fecha === 'todos') || (el.dataset.fecha === fecha);
+        el.style.display = show ? '' : 'none';
+      });
+
+      if (labelEl) {
+        if (fecha === 'todos') {
+          labelEl.textContent = '';
+        } else {
+          const d = new Date(fecha + 'T00:00:00');
+          labelEl.textContent = '— ' + d.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+        }
+      }
+    });
+  }
+
+  /* ── Selección de slot ── */
+  window.seleccionarSlot = function(id) {
+    document.querySelectorAll('.slot-item').forEach(el => el.classList.remove('selected'));
+    const el = document.getElementById('slot-' + id);
+    if (el) el.classList.add('selected');
+  };
+
+  /* ── Prevenir doble submit ── */
+  const form = document.getElementById('reservaForm');
+  if (form) {
+    form.addEventListener('submit', () => {
+      const btn     = document.getElementById('btnConfirmar');
+      const spinner = document.getElementById('spinner');
+      const ico     = document.getElementById('btnIco');
+      const txt     = document.getElementById('btnTxt');
+
+      if (btn) btn.disabled = true;
+      if (spinner) spinner.style.display = 'block';
+      if (ico)     ico.style.display     = 'none';
+      if (txt)     txt.textContent       = 'Procesando…';
+    });
+  }
+})();
 </script>
 {% endblock %}

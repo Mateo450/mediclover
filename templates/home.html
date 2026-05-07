@@ -1,431 +1,934 @@
 {% extends "base.html" %}
-{% block title %}Inicio — MediClover{% endblock %}
+{% block title %}MediClover — Tu salud, nuestra prioridad{% endblock %}
 
 {% block extra_head %}
 <style>
+/* ══════════════════════════════════════════
+   HOME — Estilos exclusivos
+══════════════════════════════════════════ */
+
+/* Hero */
 .hero {
-  background: linear-gradient(140deg, var(--navy) 0%, #163860 55%, #1a4e78 100%);
-  color: var(--white);
-  padding: 5.5rem 0 4.5rem;
   position: relative;
+  min-height: 92vh;
+  background: var(--navy);
+  display: flex;
+  align-items: center;
   overflow: hidden;
 }
-.hero::before {
-  content: '';
+
+/* Fondo animado con mesh gradient */
+.hero-bg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 55% 55% at 90% 35%, rgba(10,124,92,.22) 0%, transparent 70%),
-    radial-gradient(ellipse 35% 35% at 5%  85%, rgba(10,124,92,.12) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(10,124,92,.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 10% 80%, rgba(10,124,92,.10) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 90% 90%, rgba(22,47,85,.6) 0%, transparent 50%);
   pointer-events: none;
 }
+
+/* Grid de puntos de fondo */
+.hero-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+/* Círculos decorativos flotantes */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  animation: orbFloat 8s ease-in-out infinite;
+}
+.hero-orb-1 {
+  width: 420px; height: 420px;
+  background: rgba(10,124,92,.12);
+  right: -80px; top: -120px;
+  animation-delay: 0s;
+}
+.hero-orb-2 {
+  width: 280px; height: 280px;
+  background: rgba(10,124,92,.08);
+  left: 5%; bottom: 10%;
+  animation-delay: -3s;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-24px) scale(1.04); }
+}
+
 .hero-inner {
-  max-width: 1100px;
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 6rem 2rem 5rem;
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 4rem;
+  grid-template-columns: 1fr 460px;
+  gap: 5rem;
   align-items: center;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
-.hero-pill {
+
+/* Texto del hero */
+.hero-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: .45rem;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.18);
-  color: #82e0c4;
-  font-size: .75rem;
+  gap: .5rem;
+  background: rgba(10,124,92,.2);
+  border: 1px solid rgba(10,124,92,.4);
+  color: #6ee7c4;
+  font-size: .72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .1em;
-  padding: .3rem .85rem;
+  letter-spacing: .14em;
+  padding: .32rem .9rem;
   border-radius: 99px;
-  margin-bottom: 1.3rem;
+  margin-bottom: 1.5rem;
+  animation: fadeUp .6s ease both;
 }
-.hero h1 {
+.hero-eyebrow .dot-live {
+  width: 6px; height: 6px;
+  background: #6ee7c4;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: .4; transform: scale(.7); }
+}
+
+.hero-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 3.8vw, 3.1rem);
-  line-height: 1.08;
-  margin-bottom: 1.1rem;
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+  line-height: 1.04;
   color: var(--white);
+  margin-bottom: 1.4rem;
+  animation: fadeUp .6s .1s ease both;
 }
-.hero h1 em { font-style: italic; color: #82e0c4; }
+.hero-title .accent {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(110,231,196,.6);
+  font-style: italic;
+  position: relative;
+}
+.hero-title .accent::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0; top: 0;
+  color: #6ee7c4;
+  -webkit-text-stroke: 0;
+  clip-path: polygon(0 0, 0% 0, 0% 100%, 0 100%);
+  animation: textReveal 1.2s .5s ease forwards;
+}
+@keyframes textReveal {
+  to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+}
+
 .hero-sub {
-  font-size: 1rem;
-  color: rgba(255,255,255,.7);
-  line-height: 1.75;
+  font-size: 1.05rem;
+  color: rgba(255,255,255,.58);
+  line-height: 1.8;
   max-width: 500px;
-  margin-bottom: 2rem;
+  margin-bottom: 2.4rem;
+  animation: fadeUp .6s .2s ease both;
 }
-.hero-btns { display: flex; gap: .75rem; flex-wrap: wrap; }
-.btn-hero {
+
+.hero-btns {
+  display: flex;
+  gap: .9rem;
+  flex-wrap: wrap;
+  animation: fadeUp .6s .3s ease both;
+}
+
+.btn-hero-primary {
   display: inline-flex;
   align-items: center;
-  gap: .45rem;
-  padding: .75rem 1.75rem;
+  gap: .5rem;
+  padding: .85rem 2rem;
+  background: var(--teal);
+  color: var(--white);
   border-radius: var(--r-sm);
   font-family: var(--font-body);
   font-size: .95rem;
   font-weight: 700;
-  transition: all var(--transition);
-  cursor: pointer;
   border: none;
+  cursor: pointer;
+  transition: all .2s ease;
+  position: relative;
+  overflow: hidden;
 }
-.btn-hero-green {
-  background: var(--teal);
-  color: var(--white);
+.btn-hero-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.12), transparent);
+  opacity: 0;
+  transition: opacity .2s;
 }
-.btn-hero-green:hover {
+.btn-hero-primary:hover {
   background: var(--teal-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(10,124,92,.4);
+  box-shadow: 0 8px 28px rgba(10,124,92,.45);
 }
-.btn-hero-outline {
-  background: rgba(255,255,255,.08);
-  border: 1.5px solid rgba(255,255,255,.22);
-  color: var(--white);
+.btn-hero-primary:hover::before { opacity: 1; }
+
+.btn-hero-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .85rem 1.75rem;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.8);
+  border: 1.5px solid rgba(255,255,255,.16);
+  border-radius: var(--r-sm);
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
 }
-.btn-hero-outline:hover {
-  background: rgba(255,255,255,.15);
+.btn-hero-ghost:hover {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.28);
   transform: translateY(-2px);
 }
 
-/* Hero floating card */
-.hero-panel {
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.14);
-  backdrop-filter: blur(14px);
+/* Tarjeta flotante del hero */
+.hero-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(20px);
   border-radius: var(--r-lg);
-  padding: 1.75rem;
+  padding: 2rem;
+  animation: fadeUp .6s .35s ease both;
+  position: relative;
+  overflow: hidden;
 }
-.hero-panel-title {
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(110,231,196,.4), transparent);
+}
+
+.hero-card-title {
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--white);
-  margin-bottom: 1.3rem;
+  margin-bottom: 1.4rem;
   display: flex;
   align-items: center;
-  gap: .5rem;
+  gap: .6rem;
 }
+.hero-card-title i { color: #6ee7c4; }
+
 .hero-feat {
   display: flex;
   align-items: flex-start;
-  gap: .75rem;
-  padding: .8rem 0;
-  border-bottom: 1px solid rgba(255,255,255,.07);
+  gap: .9rem;
+  padding: .9rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
 }
-.hero-feat:last-child { border-bottom: none; padding-bottom: 0; }
+.hero-feat:last-child { border: none; padding-bottom: 0; }
+
 .hero-feat-ico {
-  width: 36px; height: 36px;
-  background: rgba(10,124,92,.28);
-  color: #82e0c4;
-  border-radius: var(--r-xs);
+  width: 40px; height: 40px;
+  background: rgba(10,124,92,.25);
+  border: 1px solid rgba(10,124,92,.4);
+  border-radius: var(--r-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: .95rem;
+  font-size: 1rem;
+  color: #6ee7c4;
   flex-shrink: 0;
+  transition: all .2s;
 }
-.hero-feat-name { font-size: .875rem; font-weight: 600; color: var(--white); }
-.hero-feat-desc { font-size: .78rem; color: rgba(255,255,255,.5); margin-top: .1rem; }
+.hero-feat:hover .hero-feat-ico {
+  background: rgba(10,124,92,.4);
+  transform: scale(1.08);
+}
+.hero-feat-name {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: .18rem;
+}
+.hero-feat-desc { font-size: .78rem; color: rgba(255,255,255,.42); line-height: 1.5; }
 
-/* Stats strip */
-.strip {
+/* Mini badge de seguridad */
+.hero-trust {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255,255,255,.07);
+  font-size: .75rem;
+  color: rgba(255,255,255,.35);
+}
+.hero-trust i { color: #6ee7c4; font-size: .85rem; }
+
+/* ── Stats strip ── */
+.stats-strip {
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
-  padding: 1.6rem 0;
+  padding: 2rem 0;
+  position: relative;
+  overflow: hidden;
 }
-.strip-inner {
-  max-width: 1100px;
+.stats-strip::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--teal), #6ee7c4, var(--teal));
+}
+.stats-strip-inner {
+  max-width: 1140px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-around;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.5rem;
 }
-.strip-stat { text-align: center; }
-.strip-num {
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding: .6rem 1.2rem;
+}
+.stat-pill-ico {
+  width: 46px; height: 46px;
+  background: var(--teal-pale);
+  color: var(--teal);
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.stat-pill-val {
   font-family: var(--font-display);
-  font-size: 1.85rem;
+  font-size: 1.9rem;
   color: var(--navy);
   line-height: 1;
+  font-weight: 700;
 }
-.strip-lbl {
-  font-size: .75rem;
+.stat-pill-lbl {
+  font-size: .72rem;
   color: var(--gray-500);
   text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-top: .2rem;
+  letter-spacing: .07em;
+  margin-top: .15rem;
 }
-.strip-sep { width: 1px; height: 36px; background: var(--gray-200); }
+.stats-sep { width: 1px; height: 50px; background: var(--gray-200); }
 
-/* Sections */
-.sec { padding: 4.5rem 0; }
-.sec-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
-.sec-label {
+/* ── Doctor section ── */
+.doc-section {
+  padding: 5.5rem 0;
+  background: var(--snow);
+  position: relative;
+  overflow: hidden;
+}
+.doc-section::after {
+  content: '';
+  position: absolute;
+  right: -120px; bottom: -120px;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(10,124,92,.06), transparent 70%);
+  pointer-events: none;
+}
+.doc-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 5rem;
+  align-items: center;
+}
+.doc-photo-wrap {
+  position: relative;
+}
+.doc-photo-frame {
+  width: 100%;
+  aspect-ratio: 4/5;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.doc-photo-frame img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+.doc-photo-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(11,31,58,.6) 0%, transparent 50%);
+}
+.doc-photo-badge {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-lg);
+  padding: .75rem 1.4rem;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  white-space: nowrap;
+  z-index: 2;
+}
+.doc-photo-badge-ico {
+  width: 36px; height: 36px;
+  background: var(--teal-pale);
+  color: var(--teal);
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; flex-shrink: 0;
+}
+.doc-photo-badge-txt { font-size: .78rem; color: var(--gray-500); }
+.doc-photo-badge-txt strong { display: block; font-size: .88rem; color: var(--navy); }
+
+.doc-content { padding-top: 1rem; }
+.sec-chip {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
   background: var(--teal-pale);
   color: var(--teal);
-  font-size: .72rem;
+  font-size: .71rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .1em;
-  padding: .28rem .75rem;
+  letter-spacing: .12em;
+  padding: .28rem .8rem;
   border-radius: 99px;
-  margin-bottom: .9rem;
+  margin-bottom: 1rem;
+}
+.doc-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: var(--navy);
+  line-height: 1.1;
+  margin-bottom: .5rem;
+}
+.doc-specialty {
+  font-size: 1rem;
+  color: var(--teal);
+  font-weight: 600;
+  margin-bottom: 1.3rem;
+}
+.doc-bio {
+  font-size: .93rem;
+  color: var(--gray-500);
+  line-height: 1.8;
+  max-width: 520px;
+  margin-bottom: 2rem;
+}
+.doc-creds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-bottom: 2.2rem;
+}
+.doc-cred {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-sm);
+  padding: .5rem .9rem;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--navy);
+  box-shadow: var(--shadow-xs);
+}
+.doc-cred i { color: var(--teal); font-size: .9rem; }
+
+/* ── Cómo funciona ── */
+.how-section {
+  padding: 5.5rem 0;
+  background: var(--white);
+}
+.how-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+.how-head {
+  text-align: center;
+  margin-bottom: 3.5rem;
 }
 .sec-title {
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  font-size: clamp(1.5rem, 2.8vw, 2.2rem);
   color: var(--navy);
   line-height: 1.15;
-  margin-bottom: .65rem;
+  margin-bottom: .6rem;
 }
 .sec-desc {
-  color: var(--gray-500);
   font-size: .93rem;
-  max-width: 540px;
+  color: var(--gray-500);
+  max-width: 500px;
+  margin: 0 auto;
   line-height: 1.75;
 }
-.sec-head { margin-bottom: 2.75rem; }
-
-/* Steps */
-.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
-.step { text-align: center; padding: 0 .75rem; }
-.step-n {
-  width: 50px; height: 50px;
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  position: relative;
+}
+.steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: calc(16.67% + 28px);
+  right: calc(16.67% + 28px);
+  height: 1.5px;
+  background: linear-gradient(90deg, var(--teal-light), var(--teal-light));
+  z-index: 0;
+}
+.step-card {
+  background: var(--snow);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-lg);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  transition: all var(--transition);
+}
+.step-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--teal-light);
+}
+.step-num {
+  width: 56px; height: 56px;
   background: var(--navy);
   color: var(--white);
   border-radius: 50%;
   font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-size: 1.4rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1rem;
-  box-shadow: 0 4px 16px rgba(11,31,58,.25);
-}
-.step h3 { font-family: var(--font-display); color: var(--navy); font-size: .98rem; margin-bottom: .4rem; }
-.step p  { font-size: .83rem; color: var(--gray-500); line-height: 1.65; }
-
-/* Services grid */
-.services { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
-.svc-card {
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--r-md);
-  padding: 1.6rem;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 4px 20px rgba(11,31,58,.25);
+  position: relative;
+  z-index: 2;
   transition: all var(--transition);
-  position: relative;
-  overflow: hidden;
 }
-.svc-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
+.step-card:hover .step-num {
   background: var(--teal);
-  transform: scaleX(0);
-  transition: transform var(--transition);
+  box-shadow: 0 6px 22px rgba(10,124,92,.4);
+  transform: scale(1.06);
 }
-.svc-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-.svc-card:hover::after { transform: scaleX(1); }
-.svc-ico {
-  width: 46px; height: 46px;
-  background: var(--teal-pale);
-  color: var(--teal);
-  border-radius: var(--r-sm);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
+.step-card h3 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--navy);
+  margin-bottom: .5rem;
 }
-.svc-card h3 { font-family: var(--font-display); font-size: 1rem; color: var(--navy); margin-bottom: .4rem; }
-.svc-card p  { font-size: .83rem; color: var(--gray-500); line-height: 1.6; }
+.step-card p { font-size: .83rem; color: var(--gray-500); line-height: 1.7; }
 
-/* CTA */
-.cta {
-  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
-  padding: 4.5rem 0;
-  text-align: center;
-  color: var(--white);
+/* ── CTA final ── */
+.cta-section {
+  background: var(--navy);
+  padding: 5.5rem 0;
   position: relative;
   overflow: hidden;
 }
-.cta::before {
+.cta-section::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 70% 80% at 50% 120%, rgba(10,124,92,.22) 0%, transparent 65%);
+  background:
+    radial-gradient(ellipse 60% 80% at 50% 110%, rgba(10,124,92,.22) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 30% at 5%  20%, rgba(10,124,92,.10) 0%, transparent 50%);
   pointer-events: none;
 }
-.cta-inner { max-width: 680px; margin: 0 auto; padding: 0 1.5rem; position: relative; }
-.cta h2 { font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2rem); margin-bottom: .65rem; }
-.cta p  { color: rgba(255,255,255,.6); font-size: .93rem; margin-bottom: 2rem; }
-.cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.cta-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+.cta-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.cta-inner h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+  color: var(--white);
+  margin-bottom: .75rem;
+  line-height: 1.15;
+}
+.cta-inner p {
+  color: rgba(255,255,255,.5);
+  font-size: .95rem;
+  margin-bottom: 2.5rem;
+  line-height: 1.75;
+}
+.cta-btns {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cta-note {
+  margin-top: 1.5rem;
+  font-size: .78rem;
+  color: rgba(255,255,255,.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+}
 
-@media(max-width:900px) {
+/* Animaciones de entrada */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media(max-width: 980px) {
   .hero-inner { grid-template-columns: 1fr; }
-  .hero-panel { display: none; }
+  .hero-card  { display: none; }
+  .doc-inner  { grid-template-columns: 1fr; }
+  .doc-photo-wrap { max-width: 300px; margin: 0 auto; }
+  .steps-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+  .steps-grid::before { display: none; }
+}
+@media(max-width: 640px) {
+  .stats-sep { display: none; }
+  .hero-inner { padding: 4.5rem 1.5rem 3.5rem; }
 }
 </style>
 {% endblock %}
 
 {% block contenido %}
 
-<!-- HERO -->
+<!-- ═══════════════════════════════
+     HERO
+════════════════════════════════ -->
 <section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-dots"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+
   <div class="hero-inner">
+    <!-- Texto -->
     <div>
-      <div class="hero-pill"><i class="bi bi-heart-pulse"></i> Sistema Médico Digital</div>
-      <h1>Tu salud merece<br><em>atención inmediata</em></h1>
+      <div class="hero-eyebrow">
+        <span class="dot-live"></span>
+        Atención médica digital · Cuenca, Ecuador
+      </div>
+
+      <h1 class="hero-title">
+        Tu salud<br>
+        merece la mejor<br>
+        <span class="accent" data-text="atención">atención</span>
+      </h1>
+
       <p class="hero-sub">
-        Reserva y gestiona tus citas médicas de forma rápida, segura y desde cualquier lugar.
-        MediClover es la plataforma que conecta pacientes y clínica en un solo lugar.
+        Reserva tu cita con el Dr. Luis Suárez en segundos.
+        Sin filas, sin llamadas. Todo desde tu dispositivo,
+        disponible las 24 horas.
       </p>
+
       <div class="hero-btns">
-        <a href="/registro_paciente" class="btn-hero btn-hero-green">
-          <i class="bi bi-person-plus-fill"></i> Crear cuenta gratis
+        <a href="/registro_paciente" class="btn-hero-primary">
+          <i class="bi bi-person-plus-fill"></i>
+          Reservar ahora — es gratis
         </a>
-        <a href="/login_paciente" class="btn-hero btn-hero-outline">
-          <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+        <a href="/login_paciente" class="btn-hero-ghost">
+          <i class="bi bi-box-arrow-in-right"></i>
+          Ya tengo cuenta
         </a>
       </div>
     </div>
 
-    <div class="hero-panel">
-      <p class="hero-panel-title"><i class="bi bi-stars" style="color:#82e0c4"></i> ¿Por qué MediClover?</p>
+    <!-- Card flotante -->
+    <div class="hero-card">
+      <p class="hero-card-title">
+        <i class="bi bi-shield-check"></i>
+        ¿Por qué MediClover?
+      </p>
+
       <div class="hero-feat">
         <div class="hero-feat-ico"><i class="bi bi-calendar-check"></i></div>
         <div>
-          <div class="hero-feat-name">Reserva en segundos</div>
-          <div class="hero-feat-desc">Agenda tu cita sin llamadas ni esperas.</div>
+          <div class="hero-feat-name">Reserva en menos de 2 minutos</div>
+          <div class="hero-feat-desc">Elige fecha, hora y confirma al instante.</div>
         </div>
       </div>
+
       <div class="hero-feat">
-        <div class="hero-feat-ico"><i class="bi bi-shield-lock"></i></div>
+        <div class="hero-feat-ico"><i class="bi bi-envelope-check"></i></div>
         <div>
-          <div class="hero-feat-name">Datos seguros</div>
-          <div class="hero-feat-desc">Tu información protegida con los más altos estándares.</div>
+          <div class="hero-feat-name">Confirmación inmediata por correo</div>
+          <div class="hero-feat-desc">Recibes todos los detalles en tu bandeja.</div>
         </div>
       </div>
+
       <div class="hero-feat">
-        <div class="hero-feat-ico"><i class="bi bi-bell"></i></div>
+        <div class="hero-feat-ico"><i class="bi bi-phone"></i></div>
         <div>
-          <div class="hero-feat-name">Seguimiento en tiempo real</div>
-          <div class="hero-feat-desc">Consulta el estado de tus citas desde tu panel.</div>
+          <div class="hero-feat-name">Gestiona desde cualquier lugar</div>
+          <div class="hero-feat-desc">Cancela o consulta tus citas desde tu panel.</div>
         </div>
+      </div>
+
+      <div class="hero-feat">
+        <div class="hero-feat-ico"><i class="bi bi-clock-history"></i></div>
+        <div>
+          <div class="hero-feat-name">Historial completo</div>
+          <div class="hero-feat-desc">Todas tus consultas anteriores en un solo lugar.</div>
+        </div>
+      </div>
+
+      <div class="hero-trust">
+        <i class="bi bi-lock-fill"></i>
+        Datos cifrados y protegidos · Plataforma segura
       </div>
     </div>
   </div>
 </section>
 
-<!-- STRIP STATS -->
-<div class="strip">
-  <div class="strip-inner">
-    <div class="strip-stat">
-      <div class="strip-num">500+</div>
-      <div class="strip-lbl">Pacientes atendidos</div>
+<!-- ═══════════════════════════════
+     STATS STRIP
+════════════════════════════════ -->
+<div class="stats-strip">
+  <div class="stats-strip-inner">
+    <div class="stat-pill">
+      <div class="stat-pill-ico"><i class="bi bi-people-fill"></i></div>
+      <div>
+        <div class="stat-pill-val" data-count="500">0</div>
+        <div class="stat-pill-lbl">Pacientes atendidos</div>
+      </div>
     </div>
-    <div class="strip-sep"></div>
-    <div class="strip-stat">
-      <div class="strip-num">98%</div>
-      <div class="strip-lbl">Satisfacción</div>
+    <div class="stats-sep"></div>
+    <div class="stat-pill">
+      <div class="stat-pill-ico"><i class="bi bi-star-fill"></i></div>
+      <div>
+        <div class="stat-pill-val" data-count="98" data-suffix="%">0</div>
+        <div class="stat-pill-lbl">Satisfacción</div>
+      </div>
     </div>
-    <div class="strip-sep"></div>
-    <div class="strip-stat">
-      <div class="strip-num">24/7</div>
-      <div class="strip-lbl">Disponibilidad</div>
+    <div class="stats-sep"></div>
+    <div class="stat-pill">
+      <div class="stat-pill-ico"><i class="bi bi-calendar3"></i></div>
+      <div>
+        <div class="stat-pill-val">24/7</div>
+        <div class="stat-pill-lbl">Disponibilidad</div>
+      </div>
     </div>
-    <div class="strip-sep"></div>
-    <div class="strip-stat">
-      <div class="strip-num">&lt;2 min</div>
-      <div class="strip-lbl">Para reservar</div>
+    <div class="stats-sep"></div>
+    <div class="stat-pill">
+      <div class="stat-pill-ico"><i class="bi bi-lightning-charge-fill"></i></div>
+      <div>
+        <div class="stat-pill-val" data-count="2" data-prefix="&lt;" data-suffix=" min">0</div>
+        <div class="stat-pill-lbl">Para reservar</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- CÓMO FUNCIONA -->
-<section class="sec" style="background:var(--white)">
-  <div class="sec-inner">
-    <div class="sec-head text-center">
-      <div class="sec-label" style="margin:0 auto .9rem"><i class="bi bi-map"></i> Proceso simple</div>
+<!-- ═══════════════════════════════
+     SECCIÓN DOCTOR
+════════════════════════════════ -->
+<section class="doc-section">
+  <div class="doc-inner">
+    <!-- Foto -->
+    <div class="doc-photo-wrap reveal">
+      <div class="doc-photo-frame">
+        <img src="{{ url_for('static', filename='img/doctor.png') }}" alt="Dr. Luis Suárez">
+      </div>
+      <div class="doc-photo-badge">
+        <div class="doc-photo-badge-ico"><i class="bi bi-patch-check-fill"></i></div>
+        <div class="doc-photo-badge-txt">
+          <strong>Dr. Luis Suárez</strong>
+          Médico General certificado
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="doc-content reveal">
+      <div class="sec-chip">
+        <i class="bi bi-person-badge"></i> Tu médico
+      </div>
+      <h2 class="doc-name">Dr. Luis Suárez</h2>
+      <p class="doc-specialty">Médico General · Consultorio Particular</p>
+      <p class="doc-bio">
+        Con años de experiencia en medicina general, el Dr. Suárez ofrece
+        atención personalizada, diagnóstico integral y seguimiento continuo
+        a cada uno de sus pacientes. Su compromiso es brindarte la mejor
+        atención médica de forma accesible y cercana.
+      </p>
+
+      <div class="doc-creds">
+        <div class="doc-cred"><i class="bi bi-award-fill"></i> Médico General</div>
+        <div class="doc-cred"><i class="bi bi-geo-alt-fill"></i> Cuenca, Ecuador</div>
+        <div class="doc-cred"><i class="bi bi-clock-fill"></i> Citas de 35 min</div>
+        <div class="doc-cred"><i class="bi bi-calendar-check-fill"></i> Lunes a Viernes</div>
+      </div>
+
+      <a href="/registro_paciente" class="btn" style="font-size:.95rem; padding:.75rem 2rem;">
+        <i class="bi bi-calendar-plus-fill"></i>
+        Agendar con el Dr. Suárez
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════
+     CÓMO FUNCIONA
+════════════════════════════════ -->
+<section class="how-section">
+  <div class="how-inner">
+    <div class="how-head reveal">
+      <div class="sec-chip" style="margin: 0 auto .9rem;">
+        <i class="bi bi-map"></i> Proceso simple
+      </div>
       <h2 class="sec-title">Reservar nunca fue tan fácil</h2>
-      <p class="sec-desc" style="margin:0 auto">En solo tres pasos tienes tu cita confirmada.</p>
+      <p class="sec-desc">En solo tres pasos tienes tu cita médica confirmada y lista.</p>
     </div>
-    <div class="steps">
-      <div class="step">
-        <div class="step-n">1</div>
+
+    <div class="steps-grid">
+      <div class="step-card reveal" style="transition-delay:.05s">
+        <div class="step-num">1</div>
         <h3>Crea tu cuenta</h3>
-        <p>Regístrate en menos de un minuto con tus datos básicos.</p>
+        <p>Regístrate en menos de un minuto con tus datos básicos. Sin contraseñas complicadas.</p>
       </div>
-      <div class="step">
-        <div class="step-n">2</div>
-        <h3>Elige fecha y hora</h3>
-        <p>Selecciona el día y horario que mejor se adapte a tu agenda.</p>
+      <div class="step-card reveal" style="transition-delay:.15s">
+        <div class="step-num">2</div>
+        <h3>Elige tu horario</h3>
+        <p>Selecciona el día y hora disponible que mejor se adapte a tu agenda.</p>
       </div>
-      <div class="step">
-        <div class="step-n">3</div>
-        <h3>Confirma tu cita</h3>
-        <p>Recibe confirmación y gestiona todo desde tu panel personal.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SERVICIOS -->
-<section class="sec" style="background:var(--snow)">
-  <div class="sec-inner">
-    <div class="sec-head">
-      <div class="sec-label"><i class="bi bi-grid-3x3-gap"></i> Servicios</div>
-      <h2 class="sec-title">Todo lo que necesitas<br>en un solo lugar</h2>
-      <p class="sec-desc">MediClover centraliza la gestión de tu salud para que puedas enfocarte en lo que importa.</p>
-    </div>
-    <div class="services">
-      <div class="svc-card">
-        <div class="svc-ico"><i class="bi bi-calendar3"></i></div>
-        <h3>Gestión de Citas</h3>
-        <p>Reserva, consulta o cancela tus citas médicas desde cualquier dispositivo.</p>
-      </div>
-      <div class="svc-card">
-        <div class="svc-ico"><i class="bi bi-person-lines-fill"></i></div>
-        <h3>Historial Médico</h3>
-        <p>Accede a todas tus citas pasadas y futuras organizadas de forma clara.</p>
-      </div>
-      <div class="svc-card">
-        <div class="svc-ico"><i class="bi bi-shield-check"></i></div>
-        <h3>Datos Protegidos</h3>
-        <p>Tu información personal almacenada con los más altos estándares de seguridad.</p>
-      </div>
-      <div class="svc-card">
-        <div class="svc-ico"><i class="bi bi-headset"></i></div>
-        <h3>Atención Continua</h3>
-        <p>Plataforma disponible las 24 horas para que nunca pierdas una cita importante.</p>
+      <div class="step-card reveal" style="transition-delay:.25s">
+        <div class="step-num">3</div>
+        <h3>Recibe confirmación</h3>
+        <p>Te enviamos todos los detalles por correo al instante. Sin más trámites.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
-<section class="cta">
+<!-- ═══════════════════════════════
+     CTA FINAL
+════════════════════════════════ -->
+<section class="cta-section">
+  <div class="cta-dots"></div>
   <div class="cta-inner">
-    <h2>¿Listo para cuidar tu salud?</h2>
-    <p>Únete a MediClover y gestiona tus citas médicas de forma moderna e inteligente.</p>
-    <div class="cta-btns">
-      <a href="/registro_paciente" class="btn-hero btn-hero-green">
-        <i class="bi bi-person-plus-fill"></i> Registrarse — es gratis
+    <h2 class="reveal">¿Listo para cuidar<br>tu salud hoy?</h2>
+    <p class="reveal">Únete a cientos de pacientes que ya gestionan sus citas médicas
+    de forma moderna, rápida y sin complicaciones.</p>
+
+    <div class="cta-btns reveal">
+      <a href="/registro_paciente" class="btn-hero-primary" style="font-size:1rem; padding:.9rem 2.2rem;">
+        <i class="bi bi-person-plus-fill"></i>
+        Crear cuenta — es gratis
       </a>
-      <a href="/login" class="btn-hero btn-hero-outline">
-        <i class="bi bi-shield-lock"></i> Acceso Administrativo
+      <a href="/login_paciente" class="btn-hero-ghost" style="font-size:1rem; padding:.9rem 1.8rem;">
+        <i class="bi bi-box-arrow-in-right"></i>
+        Iniciar sesión
+      </a>
+    </div>
+
+    <div class="cta-note reveal">
+      <i class="bi bi-shield-lock"></i>
+      Acceso administrativo:
+      <a href="/login" style="color:rgba(255,255,255,.4); text-decoration:underline; text-underline-offset:3px;">
+        Panel Admin
       </a>
     </div>
   </div>
 </section>
+
+<!-- JS: contador animado + scroll reveal -->
+<script>
+(function () {
+  /* ── Contador de stats ── */
+  function animateCount(el) {
+    const target  = parseInt(el.dataset.count) || 0;
+    const suffix  = el.dataset.suffix  || '';
+    const prefix  = el.dataset.prefix  || '';
+    const dur     = 1800;
+    const step    = 16;
+    const steps   = dur / step;
+    let   current = 0;
+
+    const timer = setInterval(() => {
+      current += target / steps;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      el.innerHTML = prefix + Math.round(current) + suffix;
+    }, step);
+  }
+
+  const statsObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.target.dataset.count) {
+        animateCount(e.target);
+        statsObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: .5 });
+
+  document.querySelectorAll('[data-count]').forEach(el => statsObs.observe(el));
+
+  /* ── Scroll reveal ── */
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: .12 });
+
+  document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+})();
+</script>
 
 {% endblock %}
