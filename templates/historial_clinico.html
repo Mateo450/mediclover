@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Historial Clínico — MediClover{% endblock %}
+
+{% block extra_head %}
+<style>
+.dp-wrap{display:flex;flex:1;min-height:calc(100vh - 64px);}
+.dp-sidebar{width:230px;background:var(--navy);padding:0;flex-shrink:0;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.dp-sidebar::before{content:'';position:absolute;bottom:0;left:0;right:0;height:200px;background:radial-gradient(ellipse at bottom,rgba(10,124,92,.15),transparent 70%);pointer-events:none;}
+.dp-profile{padding:2rem 1.5rem 1.5rem;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);position:relative;z-index:1;}
+.dp-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid rgba(10,124,92,.6);margin:0 auto 1rem;display:block;box-shadow:0 0 0 5px rgba(10,124,92,.12);}
+.dp-name{font-family:var(--font-display);font-size:.98rem;font-weight:600;color:var(--white);margin-bottom:.18rem;}
+.dp-role{font-size:.73rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;}
+.dp-nav{flex:1;padding:1rem 0;position:relative;z-index:1;}
+.dp-nav a{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.5rem;font-size:.855rem;font-weight:500;color:rgba(255,255,255,.52);transition:color .18s,background .18s;border-left:3px solid transparent;text-decoration:none;}
+.dp-nav a:hover{color:var(--white);background:rgba(255,255,255,.05);}
+.dp-nav a.active{color:var(--white);background:rgba(10,124,92,.22);border-left-color:var(--teal-hover);}
+.dp-nav-sep{height:1px;background:rgba(255,255,255,.07);margin:.5rem 1.5rem;}
+.dp-nav-logout{padding:0 0 1.5rem;position:relative;z-index:1;}
+.dp-nav-logout a{display:flex;align-items:center;gap:.7rem;padding:.65rem 1.5rem;font-size:.85rem;font-weight:500;color:rgba(255,255,255,.35);transition:color .18s;text-decoration:none;}
+.dp-nav-logout a:hover{color:#fca5a5;}
+.dp-main{flex:1;background:var(--snow);padding:2rem 2.5rem;overflow-x:hidden;}
+
+/* Paciente header */
+.pac-hd{background:linear-gradient(135deg,var(--navy),var(--navy-soft));border-radius:var(--r-md);padding:1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1.75rem;box-shadow:var(--shadow-md);}
+.pac-hd-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--teal-hover));color:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;font-weight:700;flex-shrink:0;border:3px solid rgba(255,255,255,.2);}
+.pac-hd-name{font-family:var(--font-display);font-size:1.1rem;color:var(--white);font-weight:600;}
+.pac-hd-meta{font-size:.8rem;color:rgba(255,255,255,.5);margin-top:.15rem;display:flex;gap:.8rem;flex-wrap:wrap;}
+.pac-hd-meta i{color:rgba(10,124,92,.8);}
+
+/* Formulario nueva entrada */
+.hc-form-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-md);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.75rem;}
+.hc-form-hd{padding:1rem 1.5rem;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:.6rem;}
+.hc-form-hd-ico{width:32px;height:32px;background:var(--teal-pale);color:var(--teal);border-radius:var(--r-xs);display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.hc-form-hd-title{font-family:var(--font-display);font-size:.98rem;font-weight:600;color:var(--navy);}
+.hc-form-body{padding:1.5rem;}
+.hc-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:640px){.hc-form-grid{grid-template-columns:1fr;}}
+.hc-fg{display:flex;flex-direction:column;gap:.35rem;}
+.hc-fg label{font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.07em;}
+.hc-fg input,.hc-fg select,.hc-fg textarea{padding:.6rem .85rem;border:1.5px solid var(--gray-200);border-radius:var(--r-sm);font-family:var(--font-body);font-size:.875rem;color:var(--gray-900);outline:none;transition:border-color .18s,box-shadow .18s;width:100%;}
+.hc-fg input:focus,.hc-fg select:focus,.hc-fg textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,124,92,.1);}
+.hc-fg textarea{resize:vertical;min-height:80px;}
+
+/* Historial timeline */
+.timeline{position:relative;padding-left:2rem;}
+.timeline::before{content:'';position:absolute;left:.6rem;top:0;bottom:0;width:2px;background:var(--gray-200);}
+.tl-item{position:relative;margin-bottom:1.5rem;}
+.tl-dot{position:absolute;left:-1.7rem;top:.4rem;width:14px;height:14px;border-radius:50%;background:var(--teal);border:3px solid var(--white);box-shadow:0 0 0 2px var(--teal-light);}
+.tl-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:1.25rem 1.4rem;box-shadow:var(--shadow-sm);transition:box-shadow var(--transition);}
+.tl-card:hover{box-shadow:var(--shadow-md);}
+.tl-card-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.85rem;}
+.tl-date{font-size:.75rem;color:var(--gray-500);display:flex;align-items:center;gap:.3rem;}
+.tl-date i{color:var(--teal);}
+.tl-section{margin-bottom:.7rem;}
+.tl-section-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:.2rem;}
+.tl-section-val{font-size:.875rem;color:var(--gray-700);line-height:1.65;}
+.tl-badge-cita{display:inline-flex;align-items:center;gap:.3rem;background:var(--teal-pale);color:var(--teal);border-radius:99px;padding:.18rem .65rem;font-size:.72rem;font-weight:600;}
+
+.empty-state{text-align:center;padding:3.5rem 2rem;}
+.empty-state i{font-size:2.5rem;opacity:.25;display:block;margin-bottom:.75rem;}
+.empty-state h3{font-family:var(--font-display);color:var(--navy);font-size:1.1rem;margin-bottom:.4rem;}
+.empty-state p{font-size:.85rem;color:var(--gray-500);}
+
+@media(max-width:900px){.dp-sidebar{display:none;}.dp-main{padding:1.5rem;}}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="dp-wrap">
+  <aside class="dp-sidebar">
+    <div class="dp-profile">
+      <img src="{{ url_for('static', filename='img/doctor.png') }}" alt="Doctor" class="dp-avatar">
+      <div class="dp-name">Dr. {{ session.get("doctor_nombre","") }}</div>
+      <div class="dp-role">Panel médico</div>
+    </div>
+    <nav class="dp-nav">
+      <a href="/doctor/panel"><i class="bi bi-grid-1x2-fill"></i> Mi Panel</a>
+      <a href="/doctor/historial" class="active"><i class="bi bi-folder2-open"></i> Historial</a>
+    </nav>
+    <div class="dp-nav-sep"></div>
+    <div class="dp-nav-logout">
+      <a href="/logout"><i class="bi bi-box-arrow-left"></i> Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="dp-main">
+
+    <!-- Volver -->
+    <a href="/doctor/historial" class="btn btn-ghost btn-sm" style="margin-bottom:1.25rem;">
+      <i class="bi bi-arrow-left"></i> Volver al buscador
+    </a>
+
+    <!-- Header paciente -->
+    <div class="pac-hd">
+      <div class="pac-hd-avatar">{{ paciente[1][0] }}{{ paciente[2][0] }}</div>
+      <div style="flex:1;">
+        <div class="pac-hd-name">{{ paciente[1] }} {{ paciente[2] }}</div>
+        <div class="pac-hd-meta">
+          <span><i class="bi bi-person-badge"></i> {{ paciente[5] }}</span>
+          <span><i class="bi bi-envelope"></i> {{ paciente[3] }}</span>
+          <span><i class="bi bi-telephone"></i> {{ paciente[4] or '—' }}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-shrink:0;">
+        <a href="/doctor/receta/nueva/{{ paciente[0] }}" class="btn btn-sm btn-outline"
+           style="white-space:nowrap;">
+          <i class="bi bi-file-earmark-medical"></i> Nueva receta
+        </a>
+        <a href="/doctor/recetas/{{ paciente[0] }}" class="btn btn-sm btn-ghost"
+           style="white-space:nowrap;">
+          <i class="bi bi-list-ul"></i> Ver recetas
+        </a>
+      </div>
+    </div>
+
+    <!-- Formulario nueva entrada -->
+    <div class="hc-form-card">
+      <div class="hc-form-hd">
+        <div class="hc-form-hd-ico"><i class="bi bi-plus-circle-fill"></i></div>
+        <div class="hc-form-hd-title">Agregar entrada al historial</div>
+      </div>
+      <div class="hc-form-body">
+        <form method="POST">
+          <div class="hc-form-grid">
+            <div class="hc-fg">
+              <label><i class="bi bi-stethoscope" style="color:var(--teal);"></i> Diagnóstico *</label>
+              <input type="text" name="diagnostico" placeholder="Ej: Faringitis aguda" required>
+            </div>
+            <div class="hc-fg">
+              <label><i class="bi bi-calendar-check" style="color:var(--teal);"></i> Cita asociada (opcional)</label>
+              <select name="id_cita">
+                <option value="">— Sin cita asociada —</option>
+                {% for cc in citas_completadas %}
+                <option value="{{ cc[0] }}">
+                  {{ cc[1] }} {{ cc[2].strftime('%H:%M') if cc[2] else '' }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="hc-fg" style="margin-bottom:1rem;">
+            <label><i class="bi bi-capsule" style="color:var(--teal);"></i> Tratamiento</label>
+            <textarea name="tratamiento" placeholder="Descripción del tratamiento indicado..."></textarea>
+          </div>
+          <div class="hc-fg" style="margin-bottom:1.25rem;">
+            <label><i class="bi bi-chat-square-text" style="color:var(--teal);"></i> Observaciones</label>
+            <textarea name="observaciones" placeholder="Notas adicionales, seguimiento..."></textarea>
+          </div>
+          <button type="submit" class="btn">
+            <i class="bi bi-floppy-fill"></i> Guardar entrada
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Timeline historial -->
+    <div class="hc-form-card">
+      <div class="hc-form-hd">
+        <div class="hc-form-hd-ico" style="background:var(--amber-pale);color:var(--amber);">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div class="hc-form-hd-title">Historial clínico — {{ historial|length }} entrada(s)</div>
+      </div>
+      <div style="padding:1.5rem;">
+        {% if historial %}
+          <div class="timeline">
+            {% for h in historial %}
+            <div class="tl-item">
+              <div class="tl-dot"></div>
+              <div class="tl-card">
+                <div class="tl-card-hd">
+                  <div>
+                    <strong style="color:var(--navy);font-size:.9rem;">{{ h[2] }}</strong>
+                    {% if h[6] %}
+                      <span class="tl-badge-cita" style="margin-left:.5rem;">
+                        <i class="bi bi-calendar3"></i>
+                        Cita: {{ h[6] }} {{ h[7].strftime('%H:%M') if h[7] else '' }}
+                      </span>
+                    {% endif %}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:.5rem;">
+                    <div class="tl-date">
+                      <i class="bi bi-clock"></i>
+                      {{ h[1].strftime('%d/%m/%Y %H:%M') if h[1] else '—' }}
+                    </div>
+                    <a href="/doctor/historial_clinico/{{ h[0] }}/eliminar"
+                       class="btn btn-danger btn-sm"
+                       onclick="return confirm('¿Eliminar esta entrada del historial?')"
+                       title="Eliminar">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </div>
+                </div>
+                {% if h[3] %}
+                  <div class="tl-section">
+                    <div class="tl-section-lbl"><i class="bi bi-capsule"></i> Tratamiento</div>
+                    <div class="tl-section-val">{{ h[3] }}</div>
+                  </div>
+                {% endif %}
+                {% if h[4] %}
+                  <div class="tl-section" style="margin-bottom:0;">
+                    <div class="tl-section-lbl"><i class="bi bi-chat-square-text"></i> Observaciones</div>
+                    <div class="tl-section-val">{{ h[4] }}</div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-journal-medical"></i>
+            <h3>Sin entradas aún</h3>
+            <p>Usa el formulario de arriba para agregar la primera entrada al historial.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

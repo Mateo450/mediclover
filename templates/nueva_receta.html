@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Nueva Receta — MediClover{% endblock %}
+
+{% block extra_head %}
+<style>
+.dp-wrap{display:flex;flex:1;min-height:calc(100vh - 64px);}
+.dp-sidebar{width:230px;background:var(--navy);padding:0;flex-shrink:0;display:flex;flex-direction:column;}
+.dp-profile{padding:2rem 1.5rem 1.5rem;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);}
+.dp-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid rgba(10,124,92,.6);margin:0 auto 1rem;display:block;}
+.dp-name{font-family:var(--font-display);font-size:.98rem;font-weight:600;color:var(--white);margin-bottom:.18rem;}
+.dp-role{font-size:.73rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;}
+.dp-nav{flex:1;padding:1rem 0;}
+.dp-nav a{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.5rem;font-size:.855rem;font-weight:500;color:rgba(255,255,255,.52);transition:color .18s,background .18s;border-left:3px solid transparent;text-decoration:none;}
+.dp-nav a:hover{color:var(--white);background:rgba(255,255,255,.05);}
+.dp-nav a.active{color:var(--white);background:rgba(10,124,92,.22);border-left-color:var(--teal-hover);}
+.dp-nav-sep{height:1px;background:rgba(255,255,255,.07);margin:.5rem 1.5rem;}
+.dp-nav-logout{padding:0 0 1.5rem;}
+.dp-nav-logout a{display:flex;align-items:center;gap:.7rem;padding:.65rem 1.5rem;font-size:.85rem;font-weight:500;color:rgba(255,255,255,.35);transition:color .18s;text-decoration:none;}
+.dp-nav-logout a:hover{color:#fca5a5;}
+.dp-main{flex:1;background:var(--snow);padding:2rem 2.5rem;overflow-x:hidden;}
+
+/* Receta card visual */
+.receta-preview {
+  background: var(--white);
+  border: 2px dashed var(--teal-light);
+  border-radius: var(--r-lg);
+  max-width: 680px;
+  margin: 0 auto;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.receta-preview-hd {
+  background: linear-gradient(135deg, var(--navy), var(--navy-soft));
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.receta-preview-hd-left h3 {
+  font-family: var(--font-display);
+  color: var(--white);
+  font-size: 1.1rem;
+  margin-bottom: .2rem;
+}
+.receta-preview-hd-left p {
+  font-size: .78rem;
+  color: rgba(255,255,255,.5);
+}
+.receta-rn {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: rgba(255,255,255,.12);
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.receta-body { padding: 2rem; }
+.hc-fg{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1.1rem;}
+.hc-fg label{font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.07em;}
+.hc-fg input,.hc-fg select,.hc-fg textarea{padding:.6rem .85rem;border:1.5px solid var(--gray-200);border-radius:var(--r-sm);font-family:var(--font-body);font-size:.875rem;color:var(--gray-900);outline:none;transition:border-color .18s,box-shadow .18s;width:100%;}
+.hc-fg input:focus,.hc-fg select:focus,.hc-fg textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,124,92,.1);}
+.hc-fg textarea{resize:vertical;min-height:110px;}
+.hc-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:640px){.hc-form-grid{grid-template-columns:1fr;}}
+
+.receta-firma {
+  border-top: 1px dashed var(--gray-200);
+  margin: 1.5rem 0 0;
+  padding: 1.25rem 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+.receta-firma-doc {
+  font-size: .83rem;
+  color: var(--gray-500);
+}
+.receta-firma-doc strong { color: var(--navy); display: block; font-size: .9rem; }
+.receta-sello {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  background: var(--teal-pale);
+  border: 1px solid var(--teal-light);
+  color: var(--teal);
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .35rem .8rem;
+  border-radius: 99px;
+}
+
+@media(max-width:900px){.dp-sidebar{display:none;}.dp-main{padding:1.5rem;}}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="dp-wrap">
+  <aside class="dp-sidebar">
+    <div class="dp-profile">
+      <img src="{{ url_for('static', filename='img/doctor.png') }}" alt="Doctor" class="dp-avatar">
+      <div class="dp-name">Dr. {{ session.get("doctor_nombre","") }}</div>
+      <div class="dp-role">Panel médico</div>
+    </div>
+    <nav class="dp-nav">
+      <a href="/doctor/panel"><i class="bi bi-grid-1x2-fill"></i> Mi Panel</a>
+      <a href="/doctor/historial" class="active"><i class="bi bi-folder2-open"></i> Historial</a>
+    </nav>
+    <div class="dp-nav-sep"></div>
+    <div class="dp-nav-logout">
+      <a href="/logout"><i class="bi bi-box-arrow-left"></i> Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="dp-main">
+
+    <a href="/doctor/recetas/{{ paciente[0] }}" class="btn btn-ghost btn-sm" style="margin-bottom:1.25rem;">
+      <i class="bi bi-arrow-left"></i> Volver a recetas
+    </a>
+
+    <div style="max-width:680px; margin:0 auto;">
+      <div style="margin-bottom:1.5rem;">
+        <h1 style="font-family:var(--font-display);font-size:1.5rem;color:var(--navy);margin-bottom:.25rem;">
+          <i class="bi bi-file-earmark-medical" style="color:var(--teal);margin-right:.4rem;"></i>
+          Nueva Receta Digital
+        </h1>
+        <p style="color:var(--gray-500);font-size:.875rem;">
+          Para: <strong style="color:var(--navy);">{{ paciente[1] }} {{ paciente[2] }}</strong>
+          · Cédula: {{ paciente[4] }}
+        </p>
+      </div>
+
+      <div class="receta-preview">
+        <div class="receta-preview-hd">
+          <div class="receta-preview-hd-left">
+            <h3>Receta Médica Digital</h3>
+            <p>MediClover · Sistema de Gestión de Citas</p>
+          </div>
+          <div class="receta-rn">Rx</div>
+        </div>
+
+        <div class="receta-body">
+          <form method="POST">
+
+            <div class="hc-form-grid" style="margin-bottom:1.1rem;">
+              <div class="hc-fg" style="margin-bottom:0;">
+                <label><i class="bi bi-person-fill" style="color:var(--teal);"></i> Paciente</label>
+                <input type="text" value="{{ paciente[1] }} {{ paciente[2] }}" disabled
+                       style="background:var(--snow);color:var(--gray-500);">
+              </div>
+              <div class="hc-fg" style="margin-bottom:0;">
+                <label><i class="bi bi-calendar-check" style="color:var(--teal);"></i> Cita asociada (opcional)</label>
+                <select name="id_cita">
+                  <option value="">— Sin cita —</option>
+                  {% for cc in citas_completadas %}
+                  <option value="{{ cc[0] }}">
+                    {{ cc[1] }} {{ cc[2].strftime('%H:%M') if cc[2] else '' }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="hc-fg">
+              <label>
+                <i class="bi bi-capsule" style="color:var(--teal);"></i>
+                Medicamentos *
+              </label>
+              <textarea name="medicamentos" required
+                        placeholder="Ej:&#10;• Amoxicilina 500mg — 1 cápsula cada 8h&#10;• Paracetamol 500mg — 1 tableta cada 6h si hay fiebre"></textarea>
+            </div>
+
+            <div class="hc-fg">
+              <label>
+                <i class="bi bi-journal-text" style="color:var(--teal);"></i>
+                Indicaciones y advertencias
+              </label>
+              <textarea name="indicaciones"
+                        placeholder="Ej: Tomar con alimentos. Completar el tratamiento aunque mejore los síntomas. Evitar alcohol."></textarea>
+            </div>
+
+            <div class="hc-fg" style="max-width:200px;">
+              <label>
+                <i class="bi bi-clock" style="color:var(--teal);"></i>
+                Duración del tratamiento (días)
+              </label>
+              <input type="number" name="duracion_dias" value="7" min="1" max="365">
+            </div>
+
+            <div class="receta-firma">
+              <div class="receta-firma-doc">
+                <strong>Dr. {{ session.get("doctor_nombre","") }} — Médico General</strong>
+                MediClover · Quito, Ecuador
+              </div>
+              <div class="receta-sello">
+                <i class="bi bi-patch-check-fill"></i>
+                Receta Digital Verificada
+              </div>
+            </div>
+
+            <div style="margin-top:1.5rem;">
+              <button type="submit" class="btn btn-block">
+                <i class="bi bi-file-earmark-check-fill"></i>
+                Emitir receta digital
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

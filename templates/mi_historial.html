@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Mi Historial Clínico — MediClover{% endblock %}
+
+{% block contenido %}
+<div class="page-content">
+  <div class="container">
+
+    <div class="page-header">
+      <div>
+        <h1>Mi Historial Clínico</h1>
+        <p>Registro médico de <strong>{{ session.get("paciente_nombre","") }}</strong></p>
+      </div>
+      <a href="/panel_paciente" class="btn btn-ghost">
+        <i class="bi bi-arrow-left"></i> Mi Panel
+      </a>
+    </div>
+
+    {% if historial %}
+      <div style="position:relative;padding-left:2.25rem;">
+        <!-- Línea vertical -->
+        <div style="position:absolute;left:.75rem;top:0;bottom:0;width:2px;background:var(--gray-200);"></div>
+
+        {% for h in historial %}
+        <div style="position:relative;margin-bottom:1.5rem;">
+          <!-- Punto de timeline -->
+          <div style="position:absolute;left:-1.75rem;top:.45rem;width:14px;height:14px;border-radius:50%;background:var(--teal);border:3px solid var(--white);box-shadow:0 0 0 2px var(--teal-light);"></div>
+
+          <div class="card">
+            <div class="card-body">
+              <!-- Header -->
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:1px solid var(--gray-100);flex-wrap:wrap;">
+                <div>
+                  <div style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--navy);margin-bottom:.25rem;">
+                    {{ h[1] }}
+                  </div>
+                  <div style="display:flex;gap:.6rem;flex-wrap:wrap;font-size:.78rem;color:var(--gray-500);">
+                    <span><i class="bi bi-clock text-teal"></i> {{ h[0].strftime('%d/%m/%Y') if h[0] else '—' }}</span>
+                    <span><i class="bi bi-person-badge text-teal"></i> Dr. {{ h[6] }} {{ h[7] }}</span>
+                    {% if h[4] %}
+                      <span><i class="bi bi-calendar3 text-teal"></i> Cita: {{ h[4] }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <span class="badge" style="background:var(--teal-pale);color:var(--teal);font-size:.72rem;">
+                  <i class="bi bi-stethoscope"></i> Diagnóstico
+                </span>
+              </div>
+
+              <!-- Tratamiento -->
+              {% if h[2] %}
+              <div style="margin-bottom:.85rem;">
+                <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:.25rem;">
+                  <i class="bi bi-capsule" style="color:var(--teal);"></i> Tratamiento
+                </div>
+                <div style="font-size:.875rem;color:var(--gray-700);line-height:1.65;">{{ h[2] }}</div>
+              </div>
+              {% endif %}
+
+              <!-- Observaciones -->
+              {% if h[3] %}
+              <div>
+                <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:.25rem;">
+                  <i class="bi bi-chat-square-text" style="color:var(--teal);"></i> Observaciones
+                </div>
+                <div style="font-size:.875rem;color:var(--gray-700);line-height:1.65;">{{ h[3] }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div class="card">
+        <div class="card-body" style="text-align:center;padding:3.5rem 2rem;">
+          <div style="font-size:2.5rem;margin-bottom:1rem;opacity:.3;">🏥</div>
+          <h3 style="font-family:var(--font-display);color:var(--navy);margin-bottom:.5rem;">Sin historial clínico</h3>
+          <p class="text-muted" style="margin-bottom:1.5rem;">
+            Tu historial médico aparecerá aquí después de tus consultas.
+          </p>
+          <a href="/reservar" class="btn"><i class="bi bi-plus-circle-fill"></i> Reservar cita</a>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

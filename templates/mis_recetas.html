@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Mis Recetas — MediClover{% endblock %}
+
+{% block contenido %}
+<div class="page-content">
+  <div class="container">
+
+    <div class="page-header">
+      <div>
+        <h1>Mis Recetas Médicas</h1>
+        <p>Recetas digitales de <strong>{{ session.get("paciente_nombre","") }}</strong></p>
+      </div>
+      <a href="/panel_paciente" class="btn btn-ghost">
+        <i class="bi bi-arrow-left"></i> Mi Panel
+      </a>
+    </div>
+
+    {% if recetas %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.25rem;">
+        {% for r in recetas %}
+        <div class="card" style="transition:box-shadow var(--transition);" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow=''">
+
+          <!-- Header de receta estilo prescripción -->
+          <div style="background:linear-gradient(135deg,var(--navy),var(--navy-soft));padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-family:var(--font-display);color:var(--white);font-size:.9rem;font-weight:600;">Receta Digital</div>
+              <div style="font-size:.73rem;color:rgba(255,255,255,.45);margin-top:.1rem;">
+                Dr. {{ r[7] }} {{ r[8] }}
+              </div>
+            </div>
+            <div style="font-family:var(--font-display);font-size:2rem;color:rgba(255,255,255,.1);font-weight:700;letter-spacing:.05em;">Rx</div>
+          </div>
+
+          <div class="card-body">
+            <!-- Meta: fecha y duración -->
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+              <span style="display:inline-flex;align-items:center;gap:.3rem;background:var(--teal-pale);color:var(--teal);border-radius:99px;padding:.2rem .65rem;font-size:.72rem;font-weight:700;">
+                <i class="bi bi-patch-check-fill"></i> Verificada
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:.3rem;background:var(--amber-pale);color:var(--amber);border-radius:99px;padding:.2rem .65rem;font-size:.72rem;font-weight:700;">
+                <i class="bi bi-clock"></i> {{ r[4] }} días
+              </span>
+              <span style="font-size:.75rem;color:var(--gray-500);display:flex;align-items:center;gap:.25rem;">
+                <i class="bi bi-calendar3 text-teal"></i>
+                {{ r[1].strftime('%d/%m/%Y') if r[1] else '—' }}
+              </span>
+            </div>
+
+            <!-- Medicamentos -->
+            <div style="margin-bottom:.9rem;">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:.3rem;">
+                <i class="bi bi-capsule" style="color:var(--teal);"></i> Medicamentos
+              </div>
+              <div style="font-size:.85rem;color:var(--gray-700);line-height:1.7;white-space:pre-wrap;background:var(--snow);border-radius:var(--r-sm);padding:.65rem .85rem;border:1px solid var(--gray-200);">{{ r[2] }}</div>
+            </div>
+
+            <!-- Indicaciones -->
+            {% if r[3] %}
+            <div style="margin-bottom:.75rem;">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:.3rem;">
+                <i class="bi bi-journal-text" style="color:var(--teal);"></i> Indicaciones
+              </div>
+              <div style="font-size:.83rem;color:var(--gray-700);line-height:1.65;">{{ r[3] }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Cita asociada -->
+            {% if r[5] %}
+            <div style="padding-top:.75rem;border-top:1px solid var(--gray-100);font-size:.75rem;color:var(--gray-500);display:flex;align-items:center;gap:.3rem;">
+              <i class="bi bi-calendar-check text-teal"></i>
+              Emitida en cita del {{ r[5] }}
+              {{ r[6].strftime('%H:%M') if r[6] else '' }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div class="card">
+        <div class="card-body" style="text-align:center;padding:3.5rem 2rem;">
+          <div style="font-size:2.5rem;margin-bottom:1rem;opacity:.3;">💊</div>
+          <h3 style="font-family:var(--font-display);color:var(--navy);margin-bottom:.5rem;">Sin recetas aún</h3>
+          <p class="text-muted" style="margin-bottom:1.5rem;">
+            Tus recetas médicas aparecerán aquí luego de tus consultas.
+          </p>
+          <a href="/reservar" class="btn"><i class="bi bi-plus-circle-fill"></i> Reservar cita</a>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

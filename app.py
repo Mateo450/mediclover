@@ -276,6 +276,34 @@ def init_db():
     cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
     cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
     cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
+
+    # ── Historial clínico ────────────────────────────────────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS historial_clinico (
+            id_historial  SERIAL PRIMARY KEY,
+            id_paciente   INTEGER REFERENCES paciente(id_paciente) ON DELETE CASCADE,
+            id_doctor     INTEGER REFERENCES doctor(id_doctor),
+            id_cita       INTEGER REFERENCES cita(id_cita),
+            fecha_registro TIMESTAMPTZ DEFAULT NOW(),
+            diagnostico   TEXT NOT NULL,
+            tratamiento   TEXT,
+            observaciones TEXT
+        )
+    """)
+
+    # ── Recetas digitales ────────────────────────────────────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS receta (
+            id_receta     SERIAL PRIMARY KEY,
+            id_paciente   INTEGER REFERENCES paciente(id_paciente) ON DELETE CASCADE,
+            id_doctor     INTEGER REFERENCES doctor(id_doctor),
+            id_cita       INTEGER REFERENCES cita(id_cita),
+            fecha_emision TIMESTAMPTZ DEFAULT NOW(),
+            medicamentos  TEXT NOT NULL,
+            indicaciones  TEXT,
+            duracion_dias INTEGER DEFAULT 7
+        )
+    """)
     c.commit()
     cursor.close()
     print("✅ BD inicializada")
@@ -773,14 +801,22 @@ def cancelar_cita_paciente(id):
 @app.route("/reservar", methods=["GET", "POST"])
 @login_required(role="paciente")
 def reservar():
-    cursor = get_conn().cursor()
 
     def get_slots():
-        cursor2 = conn.cursor()
+        """
+        Devuelve slots disponibles futuros.
+        Si la fecha es HOY, filtra también los que ya pasaron en horario
+        (un slot de 07:00 no debe aparecer si ya son las 08:00).
+        """
+        cursor2 = get_conn().cursor()
         cursor2.execute("""
             SELECT id_slot, fecha, hora
             FROM slot
-            WHERE disponible=TRUE AND fecha >= CURRENT_DATE
+            WHERE disponible = TRUE
+              AND (
+                fecha > CURRENT_DATE
+                OR (fecha = CURRENT_DATE AND hora > CURRENT_TIME)
+              )
             ORDER BY fecha, hora
         """)
         result = cursor2.fetchall()
@@ -799,6 +835,7 @@ def reservar():
             return render_template("reservar.html",
                 slots=get_slots(), mensaje="Describe el motivo (mínimo 5 caracteres)", tipo="error")
 
+        cursor = get_conn().cursor()
         cursor.execute("SELECT id_slot, id_doctor FROM slot WHERE id_slot=%s AND disponible=TRUE", (id_slot,))
         slot = cursor.fetchone()
 
@@ -815,30 +852,22 @@ def reservar():
         """, (session["paciente_id"], slot[1], slot[0], descripcion))
         get_conn().commit()
 
-        # ── Obtener datos para el correo de confirmación ──────────────────
+        # Datos para el correo de confirmación
         try:
             cursor.execute("""
                 SELECT p.correo, p.nombre, p.apellido, s.fecha, s.hora
                 FROM paciente p, slot s
-                WHERE p.id_paciente = %s
-                  AND s.id_slot     = %s
+                WHERE p.id_paciente = %s AND s.id_slot = %s
             """, (session["paciente_id"], slot[0]))
             datos_correo = cursor.fetchone()
-
             if datos_correo:
                 correo_pac, nombre_pac, apellido_pac, fecha_cita, hora_cita = datos_correo
-                nombre_completo = f"{nombre_pac} {apellido_pac}"
-                # Enviar en background para no bloquear la respuesta al usuario
-                # (Si quisieras async real, usar threading o celery)
                 enviar_confirmacion_cita(
                     correo_paciente=correo_pac,
-                    nombre_paciente=nombre_completo,
-                    fecha=fecha_cita,
-                    hora=hora_cita,
-                    descripcion=descripcion
+                    nombre_paciente=f"{nombre_pac} {apellido_pac}",
+                    fecha=fecha_cita, hora=hora_cita, descripcion=descripcion
                 )
         except Exception as e:
-            # El correo falla silenciosamente — la cita YA fue registrada
             print(f"⚠️  Error enviando confirmación: {e}")
 
         cursor.close()
@@ -846,9 +875,7 @@ def reservar():
             slots=[], mensaje="¡Cita reservada con éxito!", tipo="success")
 
     # GET
-    slots = get_slots()
-    cursor.close()
-    return render_template("reservar.html", slots=slots)
+    return render_template("reservar.html", slots=get_slots())
 
 
 # ================================================================
@@ -956,3 +983,205 @@ def doctor_verificar_codigo():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+# ================================================================
+# HISTORIAL CLÍNICO
+# ================================================================
+
+@app.route("/doctor/historial_clinico/<int:id_paciente>", methods=["GET", "POST"])
+@login_required(role="doctor")
+def historial_clinico(id_paciente):
+    """El doctor ve y agrega entradas al historial clínico de un paciente."""
+    cursor = get_conn().cursor()
+
+    # Datos del paciente
+    cursor.execute("""
+        SELECT id_paciente, nombre, apellido, correo, telefono, cedula
+        FROM paciente WHERE id_paciente=%s
+    """, (id_paciente,))
+    paciente = cursor.fetchone()
+    if not paciente:
+        cursor.close()
+        return redirect("/doctor/historial")
+
+    if request.method == "POST":
+        id_cita       = request.form.get("id_cita") or None
+        diagnostico   = request.form.get("diagnostico", "").strip()
+        tratamiento   = request.form.get("tratamiento", "").strip()
+        observaciones = request.form.get("observaciones", "").strip()
+
+        if diagnostico:
+            cursor.execute("""
+                INSERT INTO historial_clinico
+                    (id_paciente, id_doctor, id_cita, diagnostico, tratamiento, observaciones)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (id_paciente, session["doctor_id"],
+                  id_cita or None, diagnostico, tratamiento or None, observaciones or None))
+            get_conn().commit()
+
+    # Historial del paciente
+    cursor.execute("""
+        SELECT h.id_historial, h.fecha_registro, h.diagnostico,
+               h.tratamiento, h.observaciones, h.id_cita,
+               s.fecha AS fecha_cita, s.hora AS hora_cita
+        FROM historial_clinico h
+        LEFT JOIN cita c ON h.id_cita = c.id_cita
+        LEFT JOIN slot s ON c.id_slot = s.id_slot
+        WHERE h.id_paciente = %s
+        ORDER BY h.fecha_registro DESC
+    """, (id_paciente,))
+    historial = cursor.fetchall()
+
+    # Citas completadas del paciente (para asociar al historial)
+    cursor.execute("""
+        SELECT c.id_cita, s.fecha, s.hora
+        FROM cita c
+        JOIN slot s ON c.id_slot = s.id_slot
+        WHERE c.id_paciente = %s AND c.id_doctor = %s AND c.estado = 'completada'
+        ORDER BY s.fecha DESC
+    """, (id_paciente, session["doctor_id"]))
+    citas_completadas = cursor.fetchall()
+
+    cursor.close()
+    return render_template("historial_clinico.html",
+                           paciente=paciente,
+                           historial=historial,
+                           citas_completadas=citas_completadas)
+
+
+@app.route("/doctor/historial_clinico/<int:id_historial>/eliminar")
+@login_required(role="doctor")
+def eliminar_entrada_historial(id_historial):
+    cursor = get_conn().cursor()
+    cursor.execute("DELETE FROM historial_clinico WHERE id_historial=%s AND id_doctor=%s",
+                   (id_historial, session["doctor_id"]))
+    get_conn().commit()
+    cursor.close()
+    return redirect(request.referrer or "/doctor/historial")
+
+
+# ── Panel del paciente: ver su propio historial clínico ──────────
+@app.route("/mi_historial")
+@login_required(role="paciente")
+def mi_historial():
+    cursor = get_conn().cursor()
+    cursor.execute("""
+        SELECT h.fecha_registro, h.diagnostico, h.tratamiento,
+               h.observaciones, s.fecha AS fecha_cita, s.hora AS hora_cita,
+               d.nombre, d.apellido
+        FROM historial_clinico h
+        LEFT JOIN cita c   ON h.id_cita   = c.id_cita
+        LEFT JOIN slot s   ON c.id_slot   = s.id_slot
+        LEFT JOIN doctor d ON h.id_doctor = d.id_doctor
+        WHERE h.id_paciente = %s
+        ORDER BY h.fecha_registro DESC
+    """, (session["paciente_id"],))
+    historial = cursor.fetchall()
+    cursor.close()
+    return render_template("mi_historial.html", historial=historial)
+
+
+# ================================================================
+# RECETAS DIGITALES
+# ================================================================
+
+@app.route("/doctor/receta/nueva/<int:id_paciente>", methods=["GET", "POST"])
+@login_required(role="doctor")
+def nueva_receta(id_paciente):
+    """El doctor emite una receta digital para un paciente."""
+    cursor = get_conn().cursor()
+
+    cursor.execute("""
+        SELECT id_paciente, nombre, apellido, correo, cedula
+        FROM paciente WHERE id_paciente=%s
+    """, (id_paciente,))
+    paciente = cursor.fetchone()
+    if not paciente:
+        cursor.close()
+        return redirect("/doctor/historial")
+
+    if request.method == "POST":
+        id_cita       = request.form.get("id_cita") or None
+        medicamentos  = request.form.get("medicamentos", "").strip()
+        indicaciones  = request.form.get("indicaciones", "").strip()
+        duracion_dias = request.form.get("duracion_dias", "7").strip()
+
+        if medicamentos:
+            try:
+                duracion_dias = int(duracion_dias)
+            except ValueError:
+                duracion_dias = 7
+
+            cursor.execute("""
+                INSERT INTO receta
+                    (id_paciente, id_doctor, id_cita, medicamentos, indicaciones, duracion_dias)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (id_paciente, session["doctor_id"],
+                  id_cita or None, medicamentos,
+                  indicaciones or None, duracion_dias))
+            get_conn().commit()
+            cursor.close()
+            return redirect(f"/doctor/recetas/{id_paciente}")
+
+    # Citas completadas para asociar
+    cursor.execute("""
+        SELECT c.id_cita, s.fecha, s.hora
+        FROM cita c
+        JOIN slot s ON c.id_slot = s.id_slot
+        WHERE c.id_paciente = %s AND c.id_doctor = %s AND c.estado = 'completada'
+        ORDER BY s.fecha DESC
+    """, (id_paciente, session["doctor_id"]))
+    citas_completadas = cursor.fetchall()
+    cursor.close()
+    return render_template("nueva_receta.html",
+                           paciente=paciente,
+                           citas_completadas=citas_completadas)
+
+
+@app.route("/doctor/recetas/<int:id_paciente>")
+@login_required(role="doctor")
+def ver_recetas_doctor(id_paciente):
+    cursor = get_conn().cursor()
+    cursor.execute("""
+        SELECT id_paciente, nombre, apellido, correo, cedula
+        FROM paciente WHERE id_paciente=%s
+    """, (id_paciente,))
+    paciente = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT r.id_receta, r.fecha_emision, r.medicamentos,
+               r.indicaciones, r.duracion_dias,
+               s.fecha AS fecha_cita, s.hora AS hora_cita
+        FROM receta r
+        LEFT JOIN cita c ON r.id_cita = c.id_cita
+        LEFT JOIN slot s ON c.id_slot = s.id_slot
+        WHERE r.id_paciente = %s AND r.id_doctor = %s
+        ORDER BY r.fecha_emision DESC
+    """, (id_paciente, session["doctor_id"]))
+    recetas = cursor.fetchall()
+    cursor.close()
+    return render_template("ver_recetas_doctor.html",
+                           paciente=paciente, recetas=recetas)
+
+
+# ── Paciente: ver sus propias recetas ────────────────────────────
+@app.route("/mis_recetas")
+@login_required(role="paciente")
+def mis_recetas():
+    cursor = get_conn().cursor()
+    cursor.execute("""
+        SELECT r.id_receta, r.fecha_emision, r.medicamentos,
+               r.indicaciones, r.duracion_dias,
+               s.fecha AS fecha_cita, s.hora AS hora_cita,
+               d.nombre, d.apellido
+        FROM receta r
+        LEFT JOIN cita c   ON r.id_cita   = c.id_cita
+        LEFT JOIN slot s   ON c.id_slot   = s.id_slot
+        LEFT JOIN doctor d ON r.id_doctor = d.id_doctor
+        WHERE r.id_paciente = %s
+        ORDER BY r.fecha_emision DESC
+    """, (session["paciente_id"],))
+    recetas = cursor.fetchall()
+    cursor.close()
+    return render_template("mis_recetas.html", recetas=recetas)

@@ -224,9 +224,27 @@
       <div class="paciente-card">
         <div class="paciente-card-hd">
           <div class="pac-avatar">{{ paciente[1][0] }}{{ paciente[2][0] }}</div>
-          <div>
+          <div style="flex:1;">
             <div class="pac-nombre">{{ paciente[1] }} {{ paciente[2] }}</div>
             <div class="pac-cedula"><i class="bi bi-person-badge" style="margin-right:.3rem;"></i>{{ paciente[5] }}</div>
+          </div>
+          <!-- Acciones rápidas -->
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;flex-shrink:0;">
+            <a href="/doctor/historial_clinico/{{ paciente[0] }}"
+               class="btn btn-sm"
+               style="white-space:nowrap;">
+              <i class="bi bi-journal-medical"></i> Historial clínico
+            </a>
+            <a href="/doctor/receta/nueva/{{ paciente[0] }}"
+               class="btn btn-sm btn-outline"
+               style="white-space:nowrap;">
+              <i class="bi bi-file-earmark-medical"></i> Nueva receta
+            </a>
+            <a href="/doctor/recetas/{{ paciente[0] }}"
+               class="btn btn-sm btn-ghost"
+               style="white-space:nowrap;">
+              <i class="bi bi-list-ul"></i> Ver recetas
+            </a>
           </div>
         </div>
         <div class="paciente-card-body">

@@ -16,12 +16,11 @@
       flex-shrink: 0;
     }
     .nav-logo-img {
-      height: 42px;
+      height: 58px;
       width: auto;
-      max-width: 160px;
+      max-width: 200px;
       object-fit: contain;
       display: block;
-      /* Quita el drop-shadow que distorsionaba el logo */
       filter: none;
       transition: transform 0.2s, opacity 0.2s;
     }
@@ -52,6 +51,8 @@
     {% elif session.get("paciente_id") %}
       <a href="/panel_paciente"   {% if request.path=='/panel_paciente'   %}class="active"{% endif %}><i class="bi bi-house"></i> Mi Panel</a>
       <a href="/reservar"         {% if request.path=='/reservar'         %}class="active"{% endif %}><i class="bi bi-plus-circle"></i> Reservar</a>
+      <a href="/mi_historial"     {% if request.path=='/mi_historial'     %}class="active"{% endif %}><i class="bi bi-journal-medical"></i> Historial</a>
+      <a href="/mis_recetas"      {% if request.path=='/mis_recetas'      %}class="active"{% endif %}><i class="bi bi-file-earmark-medical"></i> Recetas</a>
     {% endif %}
   </div>
 
