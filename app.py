@@ -6,6 +6,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from datetime import date, datetime, timedelta
+import threading
 
 # ── Configuración Gmail SMTP ──────────────────────────────────────────────────
 MAIL_USER = os.getenv("MAIL_USER", "")
@@ -232,12 +233,11 @@ def get_conn():
     """
     global conn
     try:
-        # Verificar si la conexión sigue viva con un ping barato
         if conn:
             conn.cursor().execute("SELECT 1")
             return conn
     except Exception:
-        conn = None  # Conexión muerta, reconectar
+        conn = None
 
     try:
         if DATABASE_URL:
@@ -251,9 +251,6 @@ def get_conn():
         print("❌ Error de conexión:", e)
         return None
 
-# Conexión inicial
-conn = get_conn()
-
 
 # ===============================
 # CREAR TABLAS SI NO EXISTEN
@@ -262,63 +259,67 @@ def init_db():
     c = get_conn()
     if not c:
         return
-    cursor = c.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS doctor (
-            id_doctor    SERIAL PRIMARY KEY,
-            nombre       VARCHAR(100) NOT NULL,
-            apellido     VARCHAR(100) NOT NULL,
-            correo       VARCHAR(150),
-            password     VARCHAR(100) NOT NULL,
-            especialidad VARCHAR(150) DEFAULT 'Médico General'
-        )
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS slot (
-            id_slot    SERIAL PRIMARY KEY,
-            id_doctor  INTEGER REFERENCES doctor(id_doctor) ON DELETE CASCADE,
-            fecha      DATE NOT NULL,
-            hora       TIME NOT NULL,
-            disponible BOOLEAN DEFAULT TRUE
-        )
-    """)
-    cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_doctor INTEGER REFERENCES doctor(id_doctor)")
-    cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
-    cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
-    cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
+    try:
+        cursor = c.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS doctor (
+                id_doctor    SERIAL PRIMARY KEY,
+                nombre       VARCHAR(100) NOT NULL,
+                apellido     VARCHAR(100) NOT NULL,
+                correo       VARCHAR(150),
+                password     VARCHAR(100) NOT NULL,
+                especialidad VARCHAR(150) DEFAULT 'Médico General'
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS slot (
+                id_slot    SERIAL PRIMARY KEY,
+                id_doctor  INTEGER REFERENCES doctor(id_doctor) ON DELETE CASCADE,
+                fecha      DATE NOT NULL,
+                hora       TIME NOT NULL,
+                disponible BOOLEAN DEFAULT TRUE
+            )
+        """)
+        cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_doctor INTEGER REFERENCES doctor(id_doctor)")
+        cursor.execute("ALTER TABLE cita ADD COLUMN IF NOT EXISTS id_slot   INTEGER REFERENCES slot(id_slot)")
+        cursor.execute("ALTER TABLE cita ALTER COLUMN fecha DROP NOT NULL")
+        cursor.execute("ALTER TABLE cita ALTER COLUMN hora  DROP NOT NULL")
 
-    # ── Historial clínico ────────────────────────────────────────────
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS historial_clinico (
-            id_historial  SERIAL PRIMARY KEY,
-            id_paciente   INTEGER REFERENCES paciente(id_paciente) ON DELETE CASCADE,
-            id_doctor     INTEGER REFERENCES doctor(id_doctor),
-            id_cita       INTEGER REFERENCES cita(id_cita),
-            fecha_registro TIMESTAMPTZ DEFAULT NOW(),
-            diagnostico   TEXT NOT NULL,
-            tratamiento   TEXT,
-            observaciones TEXT
-        )
-    """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS historial_clinico (
+                id_historial   SERIAL PRIMARY KEY,
+                id_paciente    INTEGER REFERENCES paciente(id_paciente) ON DELETE CASCADE,
+                id_doctor      INTEGER REFERENCES doctor(id_doctor),
+                id_cita        INTEGER REFERENCES cita(id_cita),
+                fecha_registro TIMESTAMPTZ DEFAULT NOW(),
+                diagnostico    TEXT NOT NULL,
+                tratamiento    TEXT,
+                observaciones  TEXT
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS receta (
+                id_receta     SERIAL PRIMARY KEY,
+                id_paciente   INTEGER REFERENCES paciente(id_paciente) ON DELETE CASCADE,
+                id_doctor     INTEGER REFERENCES doctor(id_doctor),
+                id_cita       INTEGER REFERENCES cita(id_cita),
+                fecha_emision TIMESTAMPTZ DEFAULT NOW(),
+                medicamentos  TEXT NOT NULL,
+                indicaciones  TEXT,
+                duracion_dias INTEGER DEFAULT 7
+            )
+        """)
+        c.commit()
+        cursor.close()
+        print("✅ BD inicializada")
+    except Exception as e:
+        print(f"⚠️  init_db error: {e}")
 
-    # ── Recetas digitales ────────────────────────────────────────────
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS receta (
-            id_receta     SERIAL PRIMARY KEY,
-            id_paciente   INTEGER REFERENCES paciente(id_paciente) ON DELETE CASCADE,
-            id_doctor     INTEGER REFERENCES doctor(id_doctor),
-            id_cita       INTEGER REFERENCES cita(id_cita),
-            fecha_emision TIMESTAMPTZ DEFAULT NOW(),
-            medicamentos  TEXT NOT NULL,
-            indicaciones  TEXT,
-            duracion_dias INTEGER DEFAULT 7
-        )
-    """)
-    c.commit()
-    cursor.close()
-    print("✅ BD inicializada")
 
-init_db()
+# ── Iniciar BD en hilo de fondo para no bloquear el arranque de Gunicorn ──
+# Render requiere que el puerto HTTP esté disponible en <60s.
+# Conectar a Supabase puede tardar varios segundos en cold start.
+threading.Thread(target=init_db, daemon=True).start()
 
 
 # ===============================
