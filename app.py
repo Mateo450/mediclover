@@ -220,7 +220,9 @@ def enviar_confirmacion_cita(correo_paciente, nombre_paciente, fecha, hora, desc
 
 
 app = Flask(__name__)
-app.secret_key = "Mediclover_19"
+# SECRET_KEY debe estar en Render → Environment Variables
+# Nunca hardcodeada en el código (si alguien ve el repo, no puede falsificar sesiones)
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
 
 DURACION_CITA = 35  # minutos
 
@@ -352,6 +354,34 @@ threading.Thread(target=init_db, daemon=True).start()
 # HELPERS
 # ===============================
 
+# Rate limiting simple en memoria: { ip: {"intentos": n, "bloqueado_hasta": datetime} }
+_login_intentos = {}
+
+def _check_rate_limit(ip):
+    """Retorna True si la IP está bloqueada."""
+    from datetime import datetime as _dt
+    entrada = _login_intentos.get(ip)
+    if not entrada:
+        return False
+    if entrada.get("bloqueado_hasta") and _dt.now() < entrada["bloqueado_hasta"]:
+        return True
+    return False
+
+def _registrar_fallo(ip):
+    """Registra un intento fallido. Bloquea 15 min tras 5 fallos."""
+    from datetime import datetime as _dt
+    entrada = _login_intentos.get(ip, {"intentos": 0, "bloqueado_hasta": None})
+    entrada["intentos"] += 1
+    if entrada["intentos"] >= 5:
+        entrada["bloqueado_hasta"] = _dt.now() + timedelta(minutes=15)
+        entrada["intentos"] = 0
+        print(f"⚠️  IP {ip} bloqueada por 15 min (5 intentos fallidos)")
+    _login_intentos[ip] = entrada
+
+def _limpiar_fallo(ip):
+    """Login exitoso — limpiar contador."""
+    _login_intentos.pop(ip, None)
+
 def get_cursor():
     """Helper que retorna (conexión, cursor) siempre de la misma conexión."""
     c = get_conn()
@@ -361,12 +391,20 @@ def login_required(role=None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if role == "admin"    and session.get("usuario") not in ADMINS:
-                return redirect("/login")
-            if role == "paciente" and "paciente_id" not in session:
-                return redirect("/login_paciente")
-            if role == "doctor"   and "doctor_id" not in session:
-                return redirect("/login_doctor")
+            # Verificar que el rol en sesión coincide exactamente con el requerido
+            # Esto evita que un paciente manipule su cookie para acceder como doctor
+            if role == "admin":
+                if session.get("usuario") not in ADMINS or session.get("rol") != "admin":
+                    session.clear()
+                    return redirect("/login")
+            if role == "paciente":
+                if "paciente_id" not in session or session.get("rol") != "paciente":
+                    session.clear()
+                    return redirect("/login_paciente")
+            if role == "doctor":
+                if "doctor_id" not in session or session.get("rol") != "doctor":
+                    session.clear()
+                    return redirect("/login_doctor")
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -414,14 +452,20 @@ def home():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        ip = request.remote_addr
+        if _check_rate_limit(ip):
+            return render_template("login.html",
+                error="Demasiados intentos fallidos. Espera 15 minutos.")
         usuario  = request.form.get("usuario", "").strip()
         password = request.form.get("password", "").strip()
-        # Verificar contra el diccionario de admins (cargado desde variable de entorno)
         if usuario in ADMINS and ADMINS[usuario] == password:
+            _limpiar_fallo(ip)
             session.clear()
-            session["usuario"]       = usuario
-            session["admin_nombre"]  = usuario.capitalize()
+            session["usuario"]      = usuario
+            session["admin_nombre"] = usuario.capitalize()
+            session["rol"]          = "admin"   # ← rol explícito
             return redirect("/admin")
+        _registrar_fallo(ip)
         return render_template("login.html", error="Credenciales incorrectas")
     return render_template("login.html")
 
@@ -578,17 +622,41 @@ def login_doctor():
     if not get_conn():
         return "Error BD"
     if request.method == "POST":
+        ip = request.remote_addr
+        if _check_rate_limit(ip):
+            return render_template("login_doctor.html",
+                error="Demasiados intentos fallidos. Espera 15 minutos.")
         _db, cursor = get_cursor()
-        cursor.execute("SELECT id_doctor,nombre FROM doctor WHERE usuario=%s AND password=%s",
-                       (request.form["usuario"], request.form["password"]))
+        cursor.execute(
+            "SELECT id_doctor, nombre, password FROM doctor WHERE usuario=%s",
+            (request.form.get("usuario","").strip(),)
+        )
         doc = cursor.fetchone()
         cursor.close()
+
+        # Soporte dual: werkzeug hash O texto plano (migración gradual)
+        password_ok = False
         if doc:
+            stored = doc[2]
+            try:
+                from werkzeug.security import check_password_hash
+                password_ok = check_password_hash(stored, request.form.get("password",""))
+            except Exception:
+                pass
+            if not password_ok:
+                password_ok = (stored == request.form.get("password",""))
+
+        if doc and password_ok:
+            _limpiar_fallo(ip)
             session.clear()
             session["doctor_id"]     = doc[0]
             session["doctor_nombre"] = doc[1]
+            session["rol"]           = "doctor"
             return redirect("/doctor/panel")
-        return render_template("login_doctor.html", error="Usuario o contraseña incorrectos")
+
+        _registrar_fallo(ip)
+        return render_template("login_doctor.html",
+            error="Usuario o contraseña incorrectos")
     return render_template("login_doctor.html")
 
 
@@ -771,14 +839,15 @@ def login_paciente():
         return "Error BD"
     if request.method == "POST":
         _db, cursor = get_cursor()
-        cursor.execute("SELECT id_paciente,nombre FROM paciente WHERE correo=%s",
-                       (request.form["correo"],))
+        cursor.execute("SELECT id_paciente, nombre FROM paciente WHERE correo=%s",
+                       (request.form.get("correo","").strip(),))
         user = cursor.fetchone()
         cursor.close()
         if user:
             session.clear()
             session["paciente_id"]     = user[0]
             session["paciente_nombre"] = user[1]
+            session["rol"]             = "paciente"  # ← rol explícito
             return redirect("/panel_paciente")
         return render_template("login_paciente.html", error="Correo no registrado")
     return render_template("login_paciente.html")
