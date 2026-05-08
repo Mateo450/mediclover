@@ -220,23 +220,25 @@ def enviar_confirmacion_cita(correo_paciente, nombre_paciente, fecha, hora, desc
 
 
 app = Flask(__name__)
-# SECRET_KEY debe estar en Render → Environment Variables
-# Nunca hardcodeada en el código (si alguien ve el repo, no puede falsificar sesiones)
 app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
 
 DURACION_CITA = 35  # minutos
 
-# ── Admins por variable de entorno (formato: "usuario:pass,usuario2:pass2")
-# Configura en Render → Environment → ADMIN_CREDENTIALS
-# Ejemplo: "admin:1234,mathias:pass123,jair:pass456,jose:pass789"
-_raw = os.getenv("ADMIN_CREDENTIALS", "admin:1234")
+# ── Constantes de rol (números, no strings — más difícil de manipular)
+ROL_ADMIN    = 1
+ROL_DOCTOR   = 2
+ROL_PACIENTE = 3
+
+# ── Admins desde variable de entorno en Render
+# Formato: "usuario:password,usuario2:password2"
+# CAMBIA LAS CREDENCIALES EN Render → Environment → ADMIN_CREDENTIALS
+_raw = os.getenv("ADMIN_CREDENTIALS", "Admin_Mediclover:MedicloverLuis56_19")
 ADMINS = {}
 for par in _raw.split(","):
     par = par.strip()
     if ":" in par:
         u, p = par.split(":", 1)
         ADMINS[u.strip()] = p.strip()
-# ADMINS queda como dict: {"admin":"1234","mathias":"pass123", ...}
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 conn = None
@@ -391,20 +393,21 @@ def login_required(role=None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Verificar que el rol en sesión coincide exactamente con el requerido
-            # Esto evita que un paciente manipule su cookie para acceder como doctor
+            rol_sesion = session.get("rol")
+            # Verificación doble: clave específica + número de rol
+            # Si falla cualquiera, limpia la sesión y redirige
             if role == "admin":
-                if session.get("usuario") not in ADMINS or session.get("rol") != "admin":
+                if session.get("usuario") not in ADMINS or rol_sesion != ROL_ADMIN:
                     session.clear()
                     return redirect("/login")
-            if role == "paciente":
-                if "paciente_id" not in session or session.get("rol") != "paciente":
-                    session.clear()
-                    return redirect("/login_paciente")
-            if role == "doctor":
-                if "doctor_id" not in session or session.get("rol") != "doctor":
+            elif role == "doctor":
+                if not session.get("doctor_id") or rol_sesion != ROL_DOCTOR:
                     session.clear()
                     return redirect("/login_doctor")
+            elif role == "paciente":
+                if not session.get("paciente_id") or rol_sesion != ROL_PACIENTE:
+                    session.clear()
+                    return redirect("/login_paciente")
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -463,7 +466,7 @@ def login():
             session.clear()
             session["usuario"]      = usuario
             session["admin_nombre"] = usuario.capitalize()
-            session["rol"]          = "admin"   # ← rol explícito
+            session["rol"]          = ROL_ADMIN   # número 1
             return redirect("/admin")
         _registrar_fallo(ip)
         return render_template("login.html", error="Credenciales incorrectas")
@@ -651,7 +654,7 @@ def login_doctor():
             session.clear()
             session["doctor_id"]     = doc[0]
             session["doctor_nombre"] = doc[1]
-            session["rol"]           = "doctor"
+            session["rol"]           = ROL_DOCTOR   # número 2
             return redirect("/doctor/panel")
 
         _registrar_fallo(ip)
@@ -847,7 +850,7 @@ def login_paciente():
             session.clear()
             session["paciente_id"]     = user[0]
             session["paciente_nombre"] = user[1]
-            session["rol"]             = "paciente"  # ← rol explícito
+            session["rol"]             = ROL_PACIENTE   # número 3
             return redirect("/panel_paciente")
         return render_template("login_paciente.html", error="Correo no registrado")
     return render_template("login_paciente.html")
