@@ -824,12 +824,26 @@ def crear_slot():
 @login_required(role="doctor")
 def eliminar_slot(id):
     _db, cursor = get_cursor()
-    cursor.execute("SELECT id_cita FROM cita WHERE id_slot=%s AND estado='pendiente'", (id,))
-    if not cursor.fetchone():
-        cursor.execute("DELETE FROM slot WHERE id_slot=%s AND id_doctor=%s",
-                       (id, session["doctor_id"]))
-        _db.commit()
-    cursor.close()
+    try:
+        cursor.execute(
+            "SELECT id_cita FROM cita WHERE id_slot=%s AND estado='pendiente'",
+            (id,)
+        )
+        ocupado = cursor.fetchone()
+        if not ocupado:
+            cursor.execute(
+                "DELETE FROM slot WHERE id_slot=%s AND id_doctor=%s",
+                (id, session["doctor_id"])
+            )
+            _db.commit()
+        else:
+            # Slot reservado — no eliminar, pero hacer rollback limpio
+            _db.rollback()
+    except Exception as e:
+        _db.rollback()
+        print(f"⚠️  Error eliminando slot: {e}")
+    finally:
+        cursor.close()
     return redirect("/doctor/panel")
 
 
