@@ -479,18 +479,36 @@ def admin():
     _db, cursor = get_cursor()
     cursor.execute("SELECT COUNT(*) FROM paciente")
     total_pacientes = cursor.fetchone()[0]
+
     cursor.execute("SELECT COUNT(*) FROM cita WHERE estado='pendiente'")
     citas_pendientes = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM cita")
+    total_citas = cursor.fetchone()[0]
+
     cursor.execute("""
         SELECT COUNT(*) FROM cita c JOIN slot s ON c.id_slot=s.id_slot
-        WHERE s.fecha=CURRENT_DATE
+        WHERE s.fecha=(NOW() AT TIME ZONE 'America/Guayaquil')::DATE
     """)
     citas_hoy = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT c.id_cita, p.nombre, p.apellido, s.fecha, s.hora, c.estado
+        FROM cita c
+        JOIN paciente p ON c.id_paciente = p.id_paciente
+        LEFT JOIN slot s ON c.id_slot = s.id_slot
+        ORDER BY s.fecha DESC, s.hora DESC
+        LIMIT 8
+    """)
+    citas_recientes = cursor.fetchall()
     cursor.close()
+
     return render_template("index.html",
         total_pacientes=total_pacientes,
         citas_pendientes=citas_pendientes,
-        citas_hoy=citas_hoy
+        citas_hoy=citas_hoy,
+        total_citas=total_citas,
+        citas_recientes=citas_recientes
     )
 
 
@@ -730,36 +748,91 @@ def doctor_cancelar(id):
 @app.route("/doctor/historial", methods=["GET", "POST"])
 @login_required(role="doctor")
 def doctor_historial():
-    paciente = None
+    paciente  = None
     historial = []
-    error = None
+    error     = None
+    resultados_multiples = []  # cuando la búsqueda devuelve más de un paciente
+
     if request.method == "POST":
-        cedula = request.form.get("cedula", "").strip()
-        if not cedula.isdigit() or len(cedula) != 10:
-            error = "Ingresa una cédula válida de 10 dígitos"
+        termino = request.form.get("termino", "").strip()
+
+        if not termino:
+            error = "Ingresa un nombre, apellido o cédula para buscar"
         else:
             _db, cursor = get_cursor()
+
+            # Buscar por cédula exacta, o por nombre/apellido con ILIKE
             cursor.execute("""
-                SELECT id_paciente,nombre,apellido,correo,telefono,cedula
-                FROM paciente WHERE cedula=%s
-            """, (cedula,))
-            paciente = cursor.fetchone()
-            if paciente:
+                SELECT id_paciente, nombre, apellido, correo, telefono, cedula
+                FROM paciente
+                WHERE cedula = %s
+                   OR LOWER(nombre)   LIKE LOWER(%s)
+                   OR LOWER(apellido) LIKE LOWER(%s)
+                   OR LOWER(nombre || ' ' || apellido) LIKE LOWER(%s)
+                ORDER BY apellido, nombre
+                LIMIT 20
+            """, (termino, f"%{termino}%", f"%{termino}%", f"%{termino}%"))
+
+            filas = cursor.fetchall()
+
+            if not filas:
+                error = f"No se encontró ningún paciente con \"{termino}\""
+            elif len(filas) == 1:
+                # Resultado único → mostrar directamente
+                paciente = filas[0]
                 cursor.execute("""
                     SELECT s.fecha, s.hora, c.estado, c.descripcion,
                            d.nombre, d.apellido
                     FROM cita c
                     JOIN slot s        ON c.id_slot   = s.id_slot
                     LEFT JOIN doctor d ON c.id_doctor = d.id_doctor
-                    WHERE c.id_paciente=%s
+                    WHERE c.id_paciente = %s
                     ORDER BY s.fecha DESC, s.hora DESC
                 """, (paciente[0],))
                 historial = cursor.fetchall()
             else:
-                error = "No se encontró paciente con esa cédula"
+                # Múltiples resultados → mostrar lista para elegir
+                resultados_multiples = filas
+
             cursor.close()
+
     return render_template("doctor_historial.html",
-                           paciente=paciente, historial=historial, error=error)
+                           paciente=paciente,
+                           historial=historial,
+                           error=error,
+                           resultados_multiples=resultados_multiples)
+
+
+@app.route("/doctor/historial/paciente/<int:id_paciente>")
+@login_required(role="doctor")
+def doctor_historial_paciente(id_paciente):
+    """Carga el historial de un paciente específico desde la lista de resultados."""
+    _db, cursor = get_cursor()
+    cursor.execute("""
+        SELECT id_paciente, nombre, apellido, correo, telefono, cedula
+        FROM paciente WHERE id_paciente = %s
+    """, (id_paciente,))
+    paciente = cursor.fetchone()
+
+    historial = []
+    if paciente:
+        cursor.execute("""
+            SELECT s.fecha, s.hora, c.estado, c.descripcion,
+                   d.nombre, d.apellido
+            FROM cita c
+            JOIN slot s        ON c.id_slot   = s.id_slot
+            LEFT JOIN doctor d ON c.id_doctor = d.id_doctor
+            WHERE c.id_paciente = %s
+            ORDER BY s.fecha DESC, s.hora DESC
+        """, (paciente[0],))
+        historial = cursor.fetchall()
+
+    cursor.close()
+    return render_template("doctor_historial.html",
+                           paciente=paciente,
+                           historial=historial,
+                           error=None,
+                           resultados_multiples=[])
 
 
 # ================================================================

@@ -1,7 +1,297 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — MediClover{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ── Bienvenida personalizada ── */
+.dash-welcome {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
+  border-radius: var(--r-md);
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  flex-wrap: wrap;
+}
+.dash-welcome::before {
+  content: '';
+  position: absolute;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(10,124,92,.18) 0%, transparent 65%);
+  right: -60px; top: -80px;
+  pointer-events: none;
+}
+.dash-welcome::after {
+  content: '';
+  position: absolute;
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(10,124,92,.1) 0%, transparent 65%);
+  left: 30%; bottom: -60px;
+  pointer-events: none;
+}
+.dash-welcome-left { position: relative; z-index: 1; }
+.dash-welcome-greeting {
+  font-size: .78rem;
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-weight: 600;
+  margin-bottom: .3rem;
+}
+.dash-welcome-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--white);
+  line-height: 1.1;
+  margin-bottom: .3rem;
+}
+.dash-welcome-name em { color: #6ee7c4; font-style: normal; }
+.dash-welcome-sub {
+  font-size: .83rem;
+  color: rgba(255,255,255,.45);
+}
+.dash-welcome-right {
+  display: flex;
+  gap: .75rem;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* ── Métricas principales ── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 1.75rem;
+}
+.metric-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  padding: 1.4rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+.metric-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  transition: transform .3s ease;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.metric-card:hover::after { transform: scaleX(1); }
+.metric-card.teal::after  { background: var(--teal); }
+.metric-card.amber::after { background: var(--amber); }
+.metric-card.green::after { background: var(--green); }
+.metric-card.navy::after  { background: var(--navy); }
+
+.metric-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.metric-ico {
+  width: 42px; height: 42px;
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.metric-card.teal  .metric-ico { background: var(--teal-pale);  color: var(--teal); }
+.metric-card.amber .metric-ico { background: var(--amber-pale); color: var(--amber); }
+.metric-card.green .metric-ico { background: var(--green-pale); color: var(--green); }
+.metric-card.navy  .metric-ico { background: #dde6f5; color: var(--navy); }
+
+.metric-val {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--navy);
+  line-height: 1;
+  font-weight: 700;
+}
+.metric-lbl {
+  font-size: .72rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-top: .25rem;
+}
+
+/* ── Sección de dos columnas ── */
+.dash-cols {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+@media(max-width:960px) {
+  .dash-cols { grid-template-columns: 1fr; }
+}
+
+/* ── Cards genéricas ── */
+.dash-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.dash-card-hd {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.dash-card-hd-left {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.dash-card-ico {
+  width: 30px; height: 30px;
+  background: var(--teal-pale); color: var(--teal);
+  border-radius: var(--r-xs);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; flex-shrink: 0;
+}
+.dash-card-ico.amber { background: var(--amber-pale); color: var(--amber); }
+.dash-card-ico.navy  { background: #dde6f5; color: var(--navy); }
+.dash-card-title {
+  font-family: var(--font-display);
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+.dash-card-sub { font-size: .75rem; color: var(--gray-500); margin-top: .05rem; }
+
+/* ── Tabla de citas recientes ── */
+.citas-table { width: 100%; border-collapse: collapse; font-size: .845rem; }
+.citas-table thead th {
+  background: var(--navy);
+  color: rgba(255,255,255,.72);
+  padding: .65rem 1rem;
+  text-align: left;
+  font-size: .69rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+.citas-table tbody tr {
+  border-bottom: 1px solid var(--gray-100);
+  transition: background .15s;
+}
+.citas-table tbody tr:last-child { border-bottom: none; }
+.citas-table tbody tr:hover { background: var(--teal-pale); }
+.citas-table tbody td { padding: .75rem 1rem; vertical-align: middle; }
+
+/* ── Accesos rápidos ── */
+.quick-links { padding: 1.25rem; display: flex; flex-direction: column; gap: .6rem; }
+.quick-link {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding: .85rem 1rem;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  transition: all .18s;
+}
+.quick-link:hover {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+  transform: translateX(3px);
+}
+.ql-ico {
+  width: 36px; height: 36px;
+  border-radius: var(--r-xs);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem;
+  flex-shrink: 0;
+}
+.ql-ico.teal  { background: var(--teal-pale);  color: var(--teal); }
+.ql-ico.amber { background: var(--amber-pale); color: var(--amber); }
+.ql-ico.navy  { background: #dde6f5; color: var(--navy); }
+.ql-ico.green { background: var(--green-pale); color: var(--green); }
+.ql-name  { font-size: .875rem; font-weight: 600; color: var(--navy); }
+.ql-desc  { font-size: .75rem; color: var(--gray-500); margin-top: .08rem; }
+.ql-arrow { margin-left: auto; color: var(--gray-300); font-size: .85rem; flex-shrink: 0; }
+.quick-link:hover .ql-arrow { color: var(--teal); }
+
+/* ── Card info doctor ── */
+.doctor-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 1.75rem;
+}
+.doctor-card-inner {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+.doctor-card-img {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 2px solid var(--teal-light);
+  flex-shrink: 0;
+}
+.doctor-card-name  { font-weight: 600; font-size: .95rem; color: var(--navy); }
+.doctor-card-role  { font-size: .8rem; color: var(--gray-500); margin-top: .1rem; }
+.doctor-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  background: var(--green-pale);
+  color: var(--green);
+  font-size: .68rem;
+  font-weight: 700;
+  padding: .18rem .6rem;
+  border-radius: 99px;
+  margin-top: .25rem;
+}
+.doctor-card-badge i { font-size: .65rem; }
+
+/* Empty state */
+.empty-table {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  color: var(--gray-400);
+  font-size: .875rem;
+}
+.empty-table i { font-size: 2rem; opacity: .3; display: block; margin-bottom: .6rem; }
+</style>
+{% endblock %}
+
 {% block contenido %}
 <div class="layout">
+
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo"><div class="dot"></div> MediClover</div>
     <a href="/admin" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a>
@@ -10,63 +300,196 @@
     <hr style="border-color:rgba(255,255,255,.1);margin:.75rem 1.25rem;">
     <a href="/logout"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
   </aside>
+
   <div class="main">
-    <div class="page-header">
-      <div>
-        <h1>Dashboard</h1>
-        <p>Consultorio Dr. Luis Suárez</p>
+
+    <!-- Bienvenida personalizada -->
+    <div class="dash-welcome">
+      <div class="dash-welcome-left">
+        <div class="dash-welcome-greeting">
+          <i class="bi bi-shield-check" style="color:#6ee7c4;margin-right:.35rem;"></i>
+          Panel de Administración
+        </div>
+        <div class="dash-welcome-name">
+          Bienvenido, <em>{{ session.get("admin_nombre", session.get("usuario", "Admin")) }}</em>
+        </div>
+        <div class="dash-welcome-sub">
+          Consultorio Dr. Luis Suárez · Quito, Ecuador
+        </div>
+      </div>
+      <div class="dash-welcome-right">
+        <a href="/pacientes" class="btn btn-outline"
+           style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8);background:rgba(255,255,255,.07);">
+          <i class="bi bi-people"></i> Ver pacientes
+        </a>
+        <a href="/citas" class="btn"
+           style="background:var(--teal);border:none;">
+          <i class="bi bi-calendar3"></i> Ver citas
+        </a>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon teal"><i class="bi bi-people-fill"></i></div>
-        <div>
-          <div class="stat-value">{{ total_pacientes }}</div>
-          <div class="stat-label">Pacientes registrados</div>
+    <!-- Métricas -->
+    <div class="metrics-grid">
+      <div class="metric-card teal">
+        <div class="metric-header">
+          <div>
+            <div class="metric-val">{{ total_pacientes }}</div>
+            <div class="metric-lbl">Pacientes registrados</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-people-fill"></i></div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
-        <div>
-          <div class="stat-value">{{ citas_pendientes }}</div>
-          <div class="stat-label">Citas pendientes</div>
+
+      <div class="metric-card amber">
+        <div class="metric-header">
+          <div>
+            <div class="metric-val">{{ citas_pendientes }}</div>
+            <div class="metric-lbl">Citas pendientes</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-hourglass-split"></i></div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon green"><i class="bi bi-calendar-day"></i></div>
-        <div>
-          <div class="stat-value">{{ citas_hoy }}</div>
-          <div class="stat-label">Citas hoy</div>
+
+      <div class="metric-card green">
+        <div class="metric-header">
+          <div>
+            <div class="metric-val">{{ citas_hoy }}</div>
+            <div class="metric-lbl">Citas hoy</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-calendar-day"></i></div>
+        </div>
+      </div>
+
+      <div class="metric-card navy">
+        <div class="metric-header">
+          <div>
+            <div class="metric-val">{{ total_citas }}</div>
+            <div class="metric-lbl">Total de citas</div>
+          </div>
+          <div class="metric-ico"><i class="bi bi-calendar3"></i></div>
         </div>
       </div>
     </div>
 
     <!-- Info del doctor -->
-    <div class="card" style="margin-bottom:1.5rem;">
-      <div class="card-body" style="display:flex;align-items:center;gap:1.25rem;padding:1.25rem">
-        <img src="/static/img/doctor.png" alt="Dr. Luis Suárez"
-             style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--teal)">
-        <div>
-          <div style="font-weight:600;font-size:1rem;">Dr. Luis Suárez</div>
-          <div style="font-size:.85rem;color:var(--gray-500);">Médico General · Consultorio particular</div>
+    <div class="doctor-card">
+      <div class="doctor-card-inner">
+        <img src="/static/img/doctor.png" alt="Dr. Luis Suárez" class="doctor-card-img">
+        <div style="flex:1;">
+          <div class="doctor-card-name">Dr. Luis Suárez</div>
+          <div class="doctor-card-role">Médico General · Consultorio particular</div>
+          <div class="doctor-card-badge">
+            <i class="bi bi-circle-fill"></i> Activo en el sistema
+          </div>
         </div>
-        <a href="/login_doctor" class="btn btn-outline" style="margin-left:auto">
+        <a href="/login_doctor" class="btn btn-outline btn-sm" style="flex-shrink:0;">
           <i class="bi bi-person-badge"></i> Panel del doctor
         </a>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title"><i class="bi bi-lightning-charge-fill text-teal"></i> Acciones rápidas</span>
+    <!-- Dos columnas: citas recientes + accesos rápidos -->
+    <div class="dash-cols">
+
+      <!-- Citas recientes -->
+      <div class="dash-card">
+        <div class="dash-card-hd">
+          <div class="dash-card-hd-left">
+            <div class="dash-card-ico"><i class="bi bi-clock-history"></i></div>
+            <div>
+              <div class="dash-card-title">Citas recientes</div>
+              <div class="dash-card-sub">Últimas 8 citas del sistema</div>
+            </div>
+          </div>
+          <a href="/citas" class="btn btn-ghost btn-sm">
+            Ver todas <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+
+        {% if citas_recientes %}
+          <div style="overflow-x:auto;">
+            <table class="citas-table">
+              <thead>
+                <tr>
+                  <th>Paciente</th>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in citas_recientes %}
+                <tr>
+                  <td>
+                    <div style="font-weight:600;color:var(--navy);font-size:.845rem;">
+                      {{ c[1] }} {{ c[2] }}
+                    </div>
+                  </td>
+                  <td style="color:var(--gray-500);">{{ c[3] }}</td>
+                  <td style="color:var(--gray-500);">
+                    {{ c[4].strftime('%H:%M') if c[4] else '—' }}
+                  </td>
+                  <td><span class="badge estado {{ c[5] }}">{{ c[5] }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-table">
+            <i class="bi bi-calendar-x"></i>
+            Sin citas registradas aún
+          </div>
+        {% endif %}
       </div>
-      <div class="card-body">
-        <div class="actions">
-          <a href="/pacientes" class="btn btn-outline"><i class="bi bi-people"></i> Ver pacientes</a>
-          <a href="/citas"     class="btn btn-outline"><i class="bi bi-calendar3"></i> Ver citas</a>
+
+      <!-- Accesos rápidos -->
+      <div class="dash-card">
+        <div class="dash-card-hd">
+          <div class="dash-card-hd-left">
+            <div class="dash-card-ico navy"><i class="bi bi-lightning-charge-fill"></i></div>
+            <div>
+              <div class="dash-card-title">Accesos rápidos</div>
+            </div>
+          </div>
+        </div>
+        <div class="quick-links">
+          <a href="/pacientes" class="quick-link">
+            <div class="ql-ico teal"><i class="bi bi-people-fill"></i></div>
+            <div>
+              <div class="ql-name">Gestionar pacientes</div>
+              <div class="ql-desc">{{ total_pacientes }} registrado(s)</div>
+            </div>
+            <i class="bi bi-chevron-right ql-arrow"></i>
+          </a>
+          <a href="/citas" class="quick-link">
+            <div class="ql-ico amber"><i class="bi bi-calendar3"></i></div>
+            <div>
+              <div class="ql-name">Todas las citas</div>
+              <div class="ql-desc">{{ citas_pendientes }} pendiente(s)</div>
+            </div>
+            <i class="bi bi-chevron-right ql-arrow"></i>
+          </a>
+          <a href="/login_doctor" class="quick-link">
+            <div class="ql-ico navy"><i class="bi bi-person-badge-fill"></i></div>
+            <div>
+              <div class="ql-name">Ir al panel del doctor</div>
+              <div class="ql-desc">Dr. Luis Suárez</div>
+            </div>
+            <i class="bi bi-chevron-right ql-arrow"></i>
+          </a>
+          <a href="/logout" class="quick-link">
+            <div class="ql-ico green"><i class="bi bi-box-arrow-right"></i></div>
+            <div>
+              <div class="ql-name">Cerrar sesión</div>
+              <div class="ql-desc">Sesión de {{ session.get("admin_nombre", session.get("usuario","")) }}</div>
+            </div>
+            <i class="bi bi-chevron-right ql-arrow"></i>
+          </a>
         </div>
       </div>
+
     </div>
 
   </div>
