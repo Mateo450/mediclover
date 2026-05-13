@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Editar mi perfil — MediClover{% endblock %}
+
+{% block contenido %}
+<div class="auth-wrap" style="align-items:flex-start;padding-top:2.5rem;">
+  <div class="auth-card" style="max-width:480px;">
+
+    <div class="auth-top">
+      <div class="auth-emblem"><i class="bi bi-person-gear"></i></div>
+      <h2>Editar mi perfil</h2>
+      <p>Puedes cambiar tu nombre y teléfono</p>
+    </div>
+
+    <div class="auth-body">
+
+      {% if error %}
+        <div class="alert error">
+          <i class="bi bi-x-circle-fill"></i> {{ error }}
+        </div>
+      {% endif %}
+
+      <form method="POST">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" name="nombre"
+                   value="{{ paciente[0] }}" required minlength="2">
+          </div>
+          <div class="form-group">
+            <label>Apellido</label>
+            <input type="text" name="apellido"
+                   value="{{ paciente[1] }}" required minlength="2">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" value="{{ paciente[2] }}" disabled
+                 style="background:var(--gray-100);color:var(--gray-500);cursor:not-allowed;">
+          <small style="font-size:.72rem;color:var(--gray-400);margin-top:.25rem;display:block;">
+            <i class="bi bi-lock"></i> El correo no se puede cambiar
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" name="telefono"
+                 value="{{ paciente[3] or '' }}"
+                 placeholder="0991234567"
+                 pattern="[0-9]{7,10}" maxlength="10">
+        </div>
+
+        <div class="form-group">
+          <label>Cédula</label>
+          <input type="text" value="{{ paciente[4] }}" disabled
+                 style="background:var(--gray-100);color:var(--gray-500);cursor:not-allowed;">
+          <small style="font-size:.72rem;color:var(--gray-400);margin-top:.25rem;display:block;">
+            <i class="bi bi-lock"></i> La cédula no se puede cambiar
+          </small>
+        </div>
+
+        <button type="submit" class="btn btn-block">
+          <i class="bi bi-floppy-fill"></i> Guardar cambios
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <a href="/panel_paciente">← Volver a mi panel</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

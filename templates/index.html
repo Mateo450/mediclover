@@ -492,6 +492,99 @@
 
     </div>
 
+    <!-- Gráfica de citas por mes -->
+    <div class="dash-card" style="margin-top:1.5rem;">
+      <div class="dash-card-hd">
+        <div class="dash-card-hd-left">
+          <div class="dash-card-ico" style="background:#dde6f5;color:var(--navy);">
+            <i class="bi bi-bar-chart-fill"></i>
+          </div>
+          <div>
+            <div class="dash-card-title">Citas por mes</div>
+            <div class="dash-card-sub">Últimos 6 meses</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:1.5rem;">
+        <canvas id="citasChart" height="90"></canvas>
+      </div>
+    </div>
+
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(async function() {
+  try {
+    const res  = await fetch('/admin/stats');
+    const data = await res.json();
+    if (!data.labels || data.labels.length === 0) return;
+
+    const ctx = document.getElementById('citasChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: 'Completadas',
+            data: data.completadas,
+            backgroundColor: '#0a7c5c',
+            borderRadius: 4,
+          },
+          {
+            label: 'Pendientes',
+            data: data.pendientes,
+            backgroundColor: '#f59e0b',
+            borderRadius: 4,
+          },
+          {
+            label: 'Canceladas',
+            data: data.canceladas,
+            backgroundColor: '#ef4444',
+            borderRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              font: { family: 'Plus Jakarta Sans', size: 12 },
+              padding: 16,
+              usePointStyle: true,
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} cita(s)`
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              font: { family: 'Plus Jakarta Sans', size: 11 }
+            },
+            grid: { color: 'rgba(0,0,0,.06)' }
+          }
+        }
+      }
+    });
+  } catch(e) {
+    console.log('Stats no disponibles:', e);
+  }
+})();
+</script>
 {% endblock %}

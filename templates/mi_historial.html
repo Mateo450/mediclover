@@ -1,86 +1,212 @@
 {% extends "base.html" %}
 {% block title %}Mi Historial Clínico — MediClover{% endblock %}
 
-{% block contenido %}
-<div class="page-content">
-  <div class="container">
+{% block extra_head %}
+<style>
+.hpac-wrap { flex:1; background:var(--snow); padding:2.5rem 0 4rem; }
+.hpac-inner { max-width:820px; margin:0 auto; padding:0 1.5rem; }
 
-    <div class="page-header">
+/* Header */
+.hpac-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:1rem; margin-bottom:2rem; flex-wrap:wrap;
+}
+.hpac-header h1 { font-family:var(--font-display); font-size:1.75rem; color:var(--navy); }
+.hpac-header p  { font-size:.875rem; color:var(--gray-500); margin-top:.2rem; }
+
+/* Badges resumen */
+.hpac-badges { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.75rem; }
+.hpac-badge {
+  display:inline-flex; align-items:center; gap:.4rem;
+  padding:.4rem .9rem; border-radius:var(--r-sm);
+  font-size:.8rem; font-weight:600; border:1px solid;
+}
+.hpac-badge.teal  { background:var(--teal-pale);  color:var(--teal);  border-color:var(--teal-light); }
+.hpac-badge.amber { background:var(--amber-pale); color:var(--amber); border-color:#fde68a; }
+.hpac-badge.navy  { background:#dde6f5; color:var(--navy); border-color:#b8cce8; }
+
+/* Timeline */
+.timeline-wrap { position:relative; padding-left:2.25rem; }
+.timeline-line {
+  position:absolute; left:.75rem; top:6px; bottom:0;
+  width:2px; background:var(--gray-200); border-radius:1px;
+}
+.tl-item { position:relative; margin-bottom:1.5rem; }
+.tl-dot {
+  position:absolute; left:-1.75rem; top:.5rem;
+  width:14px; height:14px; border-radius:50%;
+  background:var(--teal); border:3px solid var(--white);
+  box-shadow:0 0 0 2px var(--teal-light);
+}
+
+/* Card de entrada */
+.hpac-card {
+  background:var(--white); border:1px solid var(--gray-200);
+  border-radius:var(--r-md); box-shadow:var(--shadow-sm);
+  overflow:hidden; transition:box-shadow var(--transition);
+}
+.hpac-card:hover { box-shadow:var(--shadow-md); }
+.hpac-card-hd {
+  padding:.85rem 1.25rem; border-bottom:1px solid var(--gray-100);
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:1rem; flex-wrap:wrap;
+}
+.hpac-diag {
+  font-family:var(--font-display); font-size:1rem; font-weight:600;
+  color:var(--navy); margin-bottom:.25rem;
+}
+.hpac-meta {
+  display:flex; flex-wrap:wrap; gap:.6rem;
+  font-size:.76rem; color:var(--gray-500);
+}
+.hpac-meta i { color:var(--teal); }
+.hpac-card-body { padding:1rem 1.25rem; }
+.hpac-section-lbl {
+  font-size:.68rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.07em; color:var(--gray-400); margin-bottom:.3rem;
+  display:flex; align-items:center; gap:.3rem;
+}
+.hpac-section-lbl i { color:var(--teal); }
+.hpac-section-val {
+  font-size:.875rem; color:var(--gray-700); line-height:1.65;
+  margin-bottom:.85rem; white-space:pre-wrap;
+}
+.hpac-section-val:last-child { margin-bottom:0; }
+
+/* Empty state */
+.hpac-empty {
+  background:var(--white); border:1px solid var(--gray-200);
+  border-radius:var(--r-md); box-shadow:var(--shadow-sm);
+  text-align:center; padding:4rem 2rem;
+}
+.hpac-empty-ico { font-size:3rem; opacity:.2; display:block; margin-bottom:1rem; }
+.hpac-empty h3  { font-family:var(--font-display); color:var(--navy); margin-bottom:.5rem; }
+.hpac-empty p   { font-size:.875rem; color:var(--gray-500); margin-bottom:1.5rem; }
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="hpac-wrap">
+  <div class="hpac-inner">
+
+    <!-- Header -->
+    <div class="hpac-header">
       <div>
         <h1>Mi Historial Clínico</h1>
         <p>Registro médico de <strong>{{ session.get("paciente_nombre","") }}</strong></p>
       </div>
-      <a href="/panel_paciente" class="btn btn-ghost">
-        <i class="bi bi-arrow-left"></i> Mi Panel
-      </a>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+        {% if historial %}
+          <a href="/mi_historial/pdf" class="btn btn-outline" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+          </a>
+        {% endif %}
+        <a href="/panel_paciente" class="btn btn-ghost">
+          <i class="bi bi-arrow-left"></i> Mi Panel
+        </a>
+      </div>
     </div>
 
+    <!-- Badges resumen -->
     {% if historial %}
-      <div style="position:relative;padding-left:2.25rem;">
-        <!-- Línea vertical -->
-        <div style="position:absolute;left:.75rem;top:0;bottom:0;width:2px;background:var(--gray-200);"></div>
+      <div class="hpac-badges">
+        <div class="hpac-badge navy">
+          <i class="bi bi-journal-medical"></i>
+          {{ historial|length }} entrada(s) médica(s)
+        </div>
+        <div class="hpac-badge teal">
+          <i class="bi bi-person-badge"></i>
+          Dr. Luis Suárez · Médico General
+        </div>
+        <div class="hpac-badge amber">
+          <i class="bi bi-clock-history"></i>
+          Última actualización: {{ historial[0][0].strftime('%d/%m/%Y') if historial[0][0] else '—' }}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Timeline de entradas -->
+    {% if historial %}
+      <div class="timeline-wrap">
+        <div class="timeline-line"></div>
 
         {% for h in historial %}
-        <div style="position:relative;margin-bottom:1.5rem;">
-          <!-- Punto de timeline -->
-          <div style="position:absolute;left:-1.75rem;top:.45rem;width:14px;height:14px;border-radius:50%;background:var(--teal);border:3px solid var(--white);box-shadow:0 0 0 2px var(--teal-light);"></div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="hpac-card">
 
-          <div class="card">
-            <div class="card-body">
-              <!-- Header -->
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:1px solid var(--gray-100);flex-wrap:wrap;">
-                <div>
-                  <div style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--navy);margin-bottom:.25rem;">
-                    {{ h[1] }}
-                  </div>
-                  <div style="display:flex;gap:.6rem;flex-wrap:wrap;font-size:.78rem;color:var(--gray-500);">
-                    <span><i class="bi bi-clock text-teal"></i> {{ h[0].strftime('%d/%m/%Y') if h[0] else '—' }}</span>
-                    <span><i class="bi bi-person-badge text-teal"></i> Dr. {{ h[6] }} {{ h[7] }}</span>
-                    {% if h[4] %}
-                      <span><i class="bi bi-calendar3 text-teal"></i> Cita: {{ h[4] }}</span>
-                    {% endif %}
-                  </div>
+            <!-- Encabezado -->
+            <div class="hpac-card-hd">
+              <div>
+                <div class="hpac-diag">{{ h[1] or 'Sin diagnóstico registrado' }}</div>
+                <div class="hpac-meta">
+                  <span>
+                    <i class="bi bi-calendar3"></i>
+                    {{ h[0].strftime('%d de %B de %Y') if h[0] else '—' }}
+                  </span>
+                  <span>
+                    <i class="bi bi-clock"></i>
+                    {{ h[0].strftime('%H:%M') if h[0] else '' }}
+                  </span>
+                  <span>
+                    <i class="bi bi-person-badge"></i>
+                    Dr. {{ h[6] or 'Luis' }} {{ h[7] or 'Suárez' }}
+                  </span>
+                  {% if h[4] %}
+                    <span>
+                      <i class="bi bi-calendar-check"></i>
+                      Cita: {{ h[4] }}
+                      {% if h[5] %}a las {{ h[5].strftime('%H:%M') if h[5] else '' }}{% endif %}
+                    </span>
+                  {% endif %}
                 </div>
-                <span class="badge" style="background:var(--teal-pale);color:var(--teal);font-size:.72rem;">
-                  <i class="bi bi-stethoscope"></i> Diagnóstico
-                </span>
               </div>
+              <span style="background:var(--teal-pale);color:var(--teal);
+                           font-size:.7rem;font-weight:700;padding:.2rem .65rem;
+                           border-radius:99px;white-space:nowrap;flex-shrink:0;">
+                <i class="bi bi-stethoscope"></i> Diagnóstico
+              </span>
+            </div>
 
-              <!-- Tratamiento -->
+            <!-- Cuerpo -->
+            <div class="hpac-card-body">
               {% if h[2] %}
-              <div style="margin-bottom:.85rem;">
-                <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:.25rem;">
-                  <i class="bi bi-capsule" style="color:var(--teal);"></i> Tratamiento
+                <div class="hpac-section-lbl">
+                  <i class="bi bi-capsule"></i> Tratamiento indicado
                 </div>
-                <div style="font-size:.875rem;color:var(--gray-700);line-height:1.65;">{{ h[2] }}</div>
-              </div>
+                <div class="hpac-section-val">{{ h[2] }}</div>
               {% endif %}
 
-              <!-- Observaciones -->
               {% if h[3] %}
-              <div>
-                <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray-400);margin-bottom:.25rem;">
-                  <i class="bi bi-chat-square-text" style="color:var(--teal);"></i> Observaciones
+                <div class="hpac-section-lbl">
+                  <i class="bi bi-chat-square-text"></i> Observaciones del médico
                 </div>
-                <div style="font-size:.875rem;color:var(--gray-700);line-height:1.65;">{{ h[3] }}</div>
-              </div>
+                <div class="hpac-section-val">{{ h[3] }}</div>
+              {% endif %}
+
+              {% if not h[2] and not h[3] %}
+                <div style="font-size:.82rem;color:var(--gray-400);font-style:italic;">
+                  Sin tratamiento ni observaciones registradas.
+                </div>
               {% endif %}
             </div>
+
           </div>
         </div>
         {% endfor %}
       </div>
 
     {% else %}
-      <div class="card">
-        <div class="card-body" style="text-align:center;padding:3.5rem 2rem;">
-          <div style="font-size:2.5rem;margin-bottom:1rem;opacity:.3;">🏥</div>
-          <h3 style="font-family:var(--font-display);color:var(--navy);margin-bottom:.5rem;">Sin historial clínico</h3>
-          <p class="text-muted" style="margin-bottom:1.5rem;">
-            Tu historial médico aparecerá aquí después de tus consultas.
-          </p>
-          <a href="/reservar" class="btn"><i class="bi bi-plus-circle-fill"></i> Reservar cita</a>
-        </div>
+      <div class="hpac-empty">
+        <i class="bi bi-journal-medical hpac-empty-ico"></i>
+        <h3>Sin historial clínico aún</h3>
+        <p>
+          Tu historial médico aparecerá aquí luego de tus consultas.<br>
+          El Dr. Suárez registra diagnósticos y tratamientos después de cada cita.
+        </p>
+        <a href="/reservar" class="btn">
+          <i class="bi bi-plus-circle-fill"></i> Reservar mi primera cita
+        </a>
       </div>
     {% endif %}
 

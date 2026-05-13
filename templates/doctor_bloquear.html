@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Bloquear Fechas — MediClover{% endblock %}
+
+{% block extra_head %}
+<style>
+.dp-wrap{display:flex;flex:1;min-height:calc(100vh - 64px);}
+.dp-sidebar{width:230px;background:var(--navy);padding:0;flex-shrink:0;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.dp-sidebar::before{content:'';position:absolute;bottom:0;left:0;right:0;height:200px;background:radial-gradient(ellipse at bottom,rgba(10,124,92,.15),transparent 70%);pointer-events:none;}
+.dp-profile{padding:2rem 1.5rem 1.5rem;text-align:center;border-bottom:1px solid rgba(255,255,255,.08);position:relative;z-index:1;}
+.dp-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid rgba(10,124,92,.6);margin:0 auto 1rem;display:block;}
+.dp-name{font-family:var(--font-display);font-size:.98rem;font-weight:600;color:var(--white);margin-bottom:.18rem;}
+.dp-role{font-size:.73rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;}
+.dp-nav{flex:1;padding:1rem 0;position:relative;z-index:1;}
+.dp-nav a{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.5rem;font-size:.855rem;font-weight:500;color:rgba(255,255,255,.52);transition:color .18s,background .18s;border-left:3px solid transparent;text-decoration:none;}
+.dp-nav a:hover{color:var(--white);background:rgba(255,255,255,.05);}
+.dp-nav a.active{color:var(--white);background:rgba(10,124,92,.22);border-left-color:var(--teal-hover);}
+.dp-nav-sep{height:1px;background:rgba(255,255,255,.07);margin:.5rem 1.5rem;}
+.dp-nav-logout{padding:0 0 1.5rem;position:relative;z-index:1;}
+.dp-nav-logout a{display:flex;align-items:center;gap:.7rem;padding:.65rem 1.5rem;font-size:.85rem;font-weight:500;color:rgba(255,255,255,.35);transition:color .18s;text-decoration:none;}
+.dp-nav-logout a:hover{color:#fca5a5;}
+.dp-main{flex:1;background:var(--snow);padding:2rem 2.5rem;overflow-x:hidden;}
+.dp-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;}
+.dp-topbar h1{font-family:var(--font-display);font-size:1.65rem;color:var(--navy);}
+.dp-topbar p{font-size:.83rem;color:var(--gray-500);margin-top:.18rem;}
+
+.bloqueo-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-md);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:1.75rem;}
+.bloqueo-hd{padding:1rem 1.5rem;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:.6rem;}
+.bloqueo-hd-ico{width:32px;height:32px;background:var(--amber-pale);color:var(--amber);border-radius:var(--r-xs);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.bloqueo-hd-title{font-family:var(--font-display);font-size:.98rem;font-weight:600;color:var(--navy);}
+.bloqueo-form{padding:1.5rem;}
+.bf-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.9rem;align-items:end;}
+@media(max-width:700px){.bf-grid{grid-template-columns:1fr 1fr;}}
+.bf-group{display:flex;flex-direction:column;gap:.35rem;}
+.bf-group label{font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.07em;}
+.bf-group input,.bf-group select{padding:.6rem .85rem;border:1.5px solid var(--gray-200);border-radius:var(--r-sm);font-family:var(--font-body);font-size:.875rem;color:var(--gray-900);outline:none;transition:border-color .18s;}
+.bf-group input:focus,.bf-group select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(10,124,92,.1);}
+
+.bloqueo-list{padding:0;}
+.bloqueo-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--gray-100);transition:background .15s;}
+.bloqueo-row:last-child{border-bottom:none;}
+.bloqueo-row:hover{background:var(--amber-pale);}
+.bl-ico{width:40px;height:40px;border-radius:var(--r-sm);background:var(--amber-pale);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.bl-title{font-weight:600;color:var(--navy);font-size:.875rem;}
+.bl-dates{font-size:.78rem;color:var(--gray-500);margin-top:.1rem;display:flex;align-items:center;gap:.4rem;}
+
+.dp-empty{text-align:center;padding:2.5rem 1.5rem;color:var(--gray-400);}
+.dp-empty i{font-size:2rem;opacity:.3;display:block;margin-bottom:.6rem;}
+.dp-empty p{font-size:.875rem;color:var(--gray-500);}
+
+.dp-alert-ok{display:flex;align-items:center;gap:.6rem;padding:.8rem 1.1rem;background:var(--green-pale);border-left:3px solid var(--green);border-radius:var(--r-sm);font-size:.875rem;color:#15803d;margin-bottom:1.5rem;animation:alertIn .25s ease both;}
+@keyframes alertIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+
+@media(max-width:900px){.dp-sidebar{display:none;}.dp-main{padding:1.5rem;}}
+</style>
+{% endblock %}
+
+{% block contenido %}
+<div class="dp-wrap">
+
+  <aside class="dp-sidebar">
+    <div class="dp-profile">
+      <img src="{{ url_for('static', filename='img/doctor.png') }}" alt="Doctor" class="dp-avatar">
+      <div class="dp-name">Dr. {{ session.get("doctor_nombre","") }}</div>
+      <div class="dp-role">Panel médico</div>
+    </div>
+    <nav class="dp-nav">
+      <a href="/doctor/panel"><i class="bi bi-grid-1x2-fill"></i> Mi Panel</a>
+      <a href="/doctor/historial"><i class="bi bi-folder2-open"></i> Historial</a>
+      <a href="/doctor/bloquear" class="active"><i class="bi bi-calendar-x-fill"></i> Bloquear fechas</a>
+    </nav>
+    <div class="dp-nav-sep"></div>
+    <div class="dp-nav-logout">
+      <a href="/logout"><i class="bi bi-box-arrow-left"></i> Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="dp-main">
+
+    <div class="dp-topbar">
+      <div>
+        <h1>Bloquear Fechas</h1>
+        <p>Bloquea períodos de vacaciones o ausencia. Los slots disponibles en esas fechas se eliminan automáticamente.</p>
+      </div>
+    </div>
+
+    {% if mensaje %}
+      <div class="dp-alert-ok">
+        <i class="bi bi-check-circle-fill" style="flex-shrink:0;"></i>
+        {{ mensaje }}
+      </div>
+    {% endif %}
+
+    <!-- Formulario nuevo bloqueo -->
+    <div class="bloqueo-card">
+      <div class="bloqueo-hd">
+        <div class="bloqueo-hd-ico"><i class="bi bi-calendar-plus"></i></div>
+        <div>
+          <div class="bloqueo-hd-title">Nuevo período de bloqueo</div>
+          <div style="font-size:.75rem;color:var(--gray-500);">Los slots disponibles en esas fechas se eliminarán</div>
+        </div>
+      </div>
+      <div class="bloqueo-form">
+        <form method="POST">
+          <input type="hidden" name="accion" value="crear">
+          <div class="bf-grid">
+            <div class="bf-group">
+              <label><i class="bi bi-calendar3" style="color:var(--teal);margin-right:.25rem;"></i>Fecha inicio</label>
+              <input type="date" name="fecha_inicio" min="{{ hoy }}" required>
+            </div>
+            <div class="bf-group">
+              <label><i class="bi bi-calendar3" style="color:var(--teal);margin-right:.25rem;"></i>Fecha fin</label>
+              <input type="date" name="fecha_fin" min="{{ hoy }}" required>
+            </div>
+            <div class="bf-group">
+              <label><i class="bi bi-tag" style="color:var(--teal);margin-right:.25rem;"></i>Motivo</label>
+              <select name="motivo">
+                <option value="Vacaciones">Vacaciones</option>
+                <option value="Congreso médico">Congreso médico</option>
+                <option value="Feriado">Feriado</option>
+                <option value="Ausencia personal">Ausencia personal</option>
+                <option value="Capacitación">Capacitación</option>
+              </select>
+            </div>
+            <div>
+              <button type="submit" class="btn" style="height:38px;white-space:nowrap;">
+                <i class="bi bi-lock-fill"></i> Bloquear
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de bloqueos activos -->
+    <div class="bloqueo-card">
+      <div class="bloqueo-hd">
+        <div class="bloqueo-hd-ico"><i class="bi bi-calendar-x"></i></div>
+        <div>
+          <div class="bloqueo-hd-title">Períodos bloqueados activos</div>
+          <div style="font-size:.75rem;color:var(--gray-500);">Solo se muestran bloqueos futuros</div>
+        </div>
+      </div>
+
+      {% if bloqueos %}
+        <div class="bloqueo-list">
+          {% for b in bloqueos %}
+          <div class="bloqueo-row">
+            <div class="bl-ico"><i class="bi bi-calendar-x-fill"></i></div>
+            <div style="flex:1;">
+              <div class="bl-title">{{ b[3] }}</div>
+              <div class="bl-dates">
+                <i class="bi bi-arrow-right" style="color:var(--amber);"></i>
+                Del <strong>{{ b[1] }}</strong> al <strong>{{ b[2] }}</strong>
+              </div>
+            </div>
+            <form method="POST" style="flex-shrink:0;">
+              <input type="hidden" name="accion" value="eliminar">
+              <input type="hidden" name="bloqueo_id" value="{{ b[0] }}">
+              <button type="submit" class="btn btn-danger btn-sm"
+                      onclick="return confirm('¿Eliminar este bloqueo? Los pacientes podrán ver esas fechas nuevamente.')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="dp-empty">
+          <i class="bi bi-calendar-check"></i>
+          <p>No hay fechas bloqueadas. Todos los días están disponibles.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </main>
+</div>
+{% endblock %}

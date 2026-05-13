@@ -1,5 +1,42 @@
 {% extends "base.html" %}
 {% block title %}Mi Panel — MediClover{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Filtro de estado */
+.filtro-tabs{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.filtro-tab{display:inline-flex;align-items:center;gap:.35rem;padding:.38rem .85rem;border-radius:var(--r-sm);font-size:.8rem;font-weight:600;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;transition:all .18s;color:var(--gray-500);}
+.filtro-tab:hover{border-color:var(--teal);color:var(--teal);}
+.filtro-tab.active{border-color:var(--teal);background:var(--teal-pale);color:var(--teal);}
+.filtro-tab.active.amber{border-color:var(--amber);background:var(--amber-pale);color:var(--amber);}
+.filtro-tab.active.green{border-color:var(--green);background:var(--green-pale);color:var(--green);}
+.filtro-tab.active.red{border-color:var(--red);background:var(--red-pale);color:var(--red);}
+
+/* Próxima cita */
+.proxima-cita{background:linear-gradient(135deg,var(--navy),var(--navy-soft));border-radius:var(--r-md);padding:1.4rem 1.75rem;display:flex;align-items:center;gap:1.25rem;margin-bottom:1.75rem;box-shadow:var(--shadow-md);flex-wrap:wrap;}
+.proxima-cita-ico{width:52px;height:52px;border-radius:var(--r-sm);background:rgba(10,124,92,.25);color:#6ee7c4;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.proxima-cita-info{flex:1;}
+.proxima-cita-label{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin-bottom:.2rem;}
+.proxima-cita-fecha{font-family:var(--font-display);font-size:1.15rem;color:var(--white);font-weight:600;}
+.proxima-cita-meta{font-size:.8rem;color:rgba(255,255,255,.5);margin-top:.12rem;}
+
+/* Accesos rápidos */
+.pac-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.85rem;margin-top:1.5rem;}
+.pac-quick-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:1.1rem 1.25rem;text-decoration:none;display:flex;align-items:center;gap:.85rem;transition:all var(--transition);box-shadow:var(--shadow-xs);}
+.pac-quick-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--teal);}
+.pac-quick-ico{width:40px;height:40px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
+.pac-quick-ico.teal{background:var(--teal-pale);color:var(--teal);}
+.pac-quick-ico.amber{background:var(--amber-pale);color:var(--amber);}
+.pac-quick-ico.green{background:var(--green-pale);color:var(--green);}
+.pac-quick-ico.navy{background:#dde6f5;color:var(--navy);}
+.pac-quick-name{font-size:.85rem;font-weight:600;color:var(--navy);}
+.pac-quick-desc{font-size:.74rem;color:var(--gray-500);margin-top:.08rem;}
+
+/* Row vacío */
+.fila-vacia{display:none;}
+</style>
+{% endblock %}
+
 {% block contenido %}
 <div class="page-content">
   <div class="container">
@@ -13,16 +50,58 @@
         <a href="/reservar" class="btn">
           <i class="bi bi-plus-circle-fill"></i> Nueva cita
         </a>
-        <a href="/mi_historial" class="btn btn-outline">
-          <i class="bi bi-journal-medical"></i> Mi historial
-        </a>
-        <a href="/mis_recetas" class="btn btn-ghost">
-          <i class="bi bi-file-earmark-medical"></i> Mis recetas
+        <a href="/editar_perfil" class="btn btn-ghost">
+          <i class="bi bi-person-gear"></i> Mi perfil
         </a>
       </div>
     </div>
 
+    <!-- Próxima cita pendiente -->
+    {% set proxima = citas | selectattr(3, 'equalto', 'pendiente') | list | first if citas else none %}
+    {% if proxima %}
+      <div class="proxima-cita">
+        <div class="proxima-cita-ico"><i class="bi bi-calendar-check-fill"></i></div>
+        <div class="proxima-cita-info">
+          <div class="proxima-cita-label">
+            <i class="bi bi-clock" style="margin-right:.3rem;"></i>Tu próxima cita
+          </div>
+          <div class="proxima-cita-fecha">
+            {{ proxima[1] }} a las
+            {{ proxima[2].strftime('%H:%M') if proxima[2] else proxima[2] }}
+          </div>
+          <div class="proxima-cita-meta">
+            Dr. Luis Suárez · Médico General ·
+            <span style="color:rgba(255,255,255,.65);">{{ proxima[4] }}</span>
+          </div>
+        </div>
+        <a href="/cancelar_cita_paciente/{{ proxima[0] }}"
+           class="btn btn-danger btn-sm"
+           onclick="return confirm('¿Cancelar esta cita?')"
+           style="flex-shrink:0;">
+          <i class="bi bi-x-circle"></i> Cancelar
+        </a>
+      </div>
+    {% endif %}
+
     {% if citas %}
+      <!-- Filtros -->
+      <div class="filtro-tabs" id="filtroTabs">
+        <button class="filtro-tab active" onclick="filtrar('todas',this)">
+          <i class="bi bi-list-ul"></i> Todas
+          <span style="background:var(--gray-200);color:var(--gray-500);
+                       border-radius:99px;padding:.05rem .5rem;font-size:.7rem;">{{ citas|length }}</span>
+        </button>
+        <button class="filtro-tab" onclick="filtrar('pendiente',this)">
+          <i class="bi bi-hourglass-split"></i> Pendientes
+        </button>
+        <button class="filtro-tab" onclick="filtrar('completada',this)">
+          <i class="bi bi-check-circle"></i> Completadas
+        </button>
+        <button class="filtro-tab" onclick="filtrar('cancelada',this)">
+          <i class="bi bi-x-circle"></i> Canceladas
+        </button>
+      </div>
+
       <div class="table-wrap">
         <table>
           <thead>
@@ -35,9 +114,9 @@
               <th>Acción</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="tablaCitas">
             {% for c in citas %}
-            <tr>
+            <tr class="cita-fila" data-estado="{{ c[3] }}">
               <td><i class="bi bi-calendar3 text-teal"></i> {{ c[1] }}</td>
               <td><i class="bi bi-clock text-teal"></i>
                 {{ c[2].strftime('%H:%M') if c[2] else c[2] }}
@@ -46,7 +125,8 @@
                 <strong>Dr. Luis Suárez</strong>
                 <div style="font-size:.78rem;color:var(--gray-500);">Médico General</div>
               </td>
-              <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c[4] }}</td>
+              <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                  title="{{ c[4] }}">{{ c[4] }}</td>
               <td><span class="badge estado {{ c[3] }}">{{ c[3] }}</span></td>
               <td>
                 {% if c[3] == "pendiente" %}
@@ -61,6 +141,12 @@
               </td>
             </tr>
             {% endfor %}
+            <tr class="fila-vacia" id="filaVacia">
+              <td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-400);">
+                <i class="bi bi-search" style="font-size:1.5rem;opacity:.3;display:block;margin-bottom:.5rem;"></i>
+                Sin citas con ese filtro
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -76,57 +162,60 @@
       </div>
     {% endif %}
 
-    <!-- Accesos directos en la parte inferior -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:2rem;">
-      <a href="/mi_historial" style="text-decoration:none;">
-        <div class="card" style="transition:all var(--transition);"
-             onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-md)'"
-             onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div class="card-body" style="display:flex;align-items:center;gap:1rem;padding:1.25rem;">
-            <div style="width:44px;height:44px;background:var(--teal-pale);color:var(--teal);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">
-              <i class="bi bi-journal-medical"></i>
-            </div>
-            <div>
-              <div style="font-weight:600;color:var(--navy);font-size:.9rem;">Historial Clínico</div>
-              <div style="font-size:.78rem;color:var(--gray-500);margin-top:.1rem;">Ver mis diagnósticos</div>
-            </div>
-          </div>
+    <!-- Accesos rápidos -->
+    <div class="pac-quick">
+      <a href="/mi_historial" class="pac-quick-card">
+        <div class="pac-quick-ico teal"><i class="bi bi-journal-medical"></i></div>
+        <div>
+          <div class="pac-quick-name">Mi Historial</div>
+          <div class="pac-quick-desc">Diagnósticos y tratamientos</div>
         </div>
       </a>
-
-      <a href="/mis_recetas" style="text-decoration:none;">
-        <div class="card" style="transition:all var(--transition);"
-             onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-md)'"
-             onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div class="card-body" style="display:flex;align-items:center;gap:1rem;padding:1.25rem;">
-            <div style="width:44px;height:44px;background:var(--amber-pale);color:var(--amber);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">
-              <i class="bi bi-file-earmark-medical"></i>
-            </div>
-            <div>
-              <div style="font-weight:600;color:var(--navy);font-size:.9rem;">Mis Recetas</div>
-              <div style="font-size:.78rem;color:var(--gray-500);margin-top:.1rem;">Recetas digitales</div>
-            </div>
-          </div>
+      <a href="/mis_recetas" class="pac-quick-card">
+        <div class="pac-quick-ico amber"><i class="bi bi-file-earmark-medical"></i></div>
+        <div>
+          <div class="pac-quick-name">Mis Recetas</div>
+          <div class="pac-quick-desc">Recetas digitales emitidas</div>
         </div>
       </a>
-
-      <a href="/reservar" style="text-decoration:none;">
-        <div class="card" style="transition:all var(--transition);"
-             onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-md)'"
-             onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <div class="card-body" style="display:flex;align-items:center;gap:1rem;padding:1.25rem;">
-            <div style="width:44px;height:44px;background:var(--green-pale);color:var(--green);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;">
-              <i class="bi bi-calendar-plus-fill"></i>
-            </div>
-            <div>
-              <div style="font-weight:600;color:var(--navy);font-size:.9rem;">Reservar Cita</div>
-              <div style="font-size:.78rem;color:var(--gray-500);margin-top:.1rem;">Nueva consulta médica</div>
-            </div>
-          </div>
+      <a href="/reservar" class="pac-quick-card">
+        <div class="pac-quick-ico green"><i class="bi bi-calendar-plus-fill"></i></div>
+        <div>
+          <div class="pac-quick-name">Reservar Cita</div>
+          <div class="pac-quick-desc">Nueva consulta médica</div>
+        </div>
+      </a>
+      <a href="/editar_perfil" class="pac-quick-card">
+        <div class="pac-quick-ico navy"><i class="bi bi-person-gear"></i></div>
+        <div>
+          <div class="pac-quick-name">Mi Perfil</div>
+          <div class="pac-quick-desc">Editar mis datos</div>
         </div>
       </a>
     </div>
 
   </div>
 </div>
+
+<script>
+function filtrar(estado, btn) {
+  // Actualizar tabs
+  document.querySelectorAll('.filtro-tab').forEach(t => {
+    t.classList.remove('active','amber','green','red');
+  });
+  btn.classList.add('active');
+  if (estado === 'pendiente')  btn.classList.add('amber');
+  if (estado === 'completada') btn.classList.add('green');
+  if (estado === 'cancelada')  btn.classList.add('red');
+
+  const filas = document.querySelectorAll('.cita-fila');
+  let visibles = 0;
+  filas.forEach(f => {
+    const mostrar = estado === 'todas' || f.dataset.estado === estado;
+    f.style.display = mostrar ? '' : 'none';
+    if (mostrar) visibles++;
+  });
+  document.getElementById('filaVacia').style.display = visibles === 0 ? '' : 'none';
+}
+</script>
 {% endblock %}

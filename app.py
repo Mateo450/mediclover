@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, make_response
 from functools import wraps
 import psycopg2
 import os
 import random
 import smtplib
+import json
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import date, datetime, timedelta
 import threading
 
@@ -1425,3 +1427,399 @@ def mis_recetas():
     recetas = cursor.fetchall()
     cursor.close()
     return render_template("mis_recetas.html", recetas=recetas)
+
+
+# ================================================================
+# EDITAR PERFIL PACIENTE
+# ================================================================
+@app.route("/editar_perfil", methods=["GET", "POST"])
+@login_required(role="paciente")
+def editar_perfil():
+    _db, cursor = get_cursor()
+    if request.method == "POST":
+        nombre   = request.form.get("nombre","").strip()
+        apellido = request.form.get("apellido","").strip()
+        telefono = request.form.get("telefono","").strip()
+        error    = None
+        if len(nombre) < 2:
+            error = "El nombre es muy corto"
+        elif len(apellido) < 2:
+            error = "El apellido es muy corto"
+        elif telefono and not telefono.isdigit():
+            error = "El teléfono solo debe tener números"
+        if error:
+            cursor.execute("SELECT nombre,apellido,correo,telefono,cedula FROM paciente WHERE id_paciente=%s",
+                           (session["paciente_id"],))
+            p = cursor.fetchone()
+            cursor.close()
+            return render_template("editar_perfil.html", paciente=p, error=error)
+        cursor.execute("""
+            UPDATE paciente SET nombre=%s, apellido=%s, telefono=%s
+            WHERE id_paciente=%s
+        """, (nombre, apellido, telefono or None, session["paciente_id"]))
+        _db.commit()
+        session["paciente_nombre"] = nombre
+        cursor.close()
+        return redirect("/panel_paciente")
+    cursor.execute("SELECT nombre,apellido,correo,telefono,cedula FROM paciente WHERE id_paciente=%s",
+                   (session["paciente_id"],))
+    paciente = cursor.fetchone()
+    cursor.close()
+    return render_template("editar_perfil.html", paciente=paciente)
+
+
+# ================================================================
+# RECUPERAR CONTRASEÑA — PACIENTE
+# (El paciente no tiene contraseña, pero sí puede "recuperar acceso"
+#  si olvidó qué correo usó — el admin lo ayuda. Esta ruta es informativa.)
+# En su lugar implementamos OTP real para login de paciente.
+# ================================================================
+
+# ================================================================
+# ESTADÍSTICAS DEL DASHBOARD (JSON para gráficas)
+# ================================================================
+@app.route("/admin/stats")
+@login_required(role="admin")
+def admin_stats():
+    """Devuelve JSON con citas por mes para las gráficas del dashboard."""
+    _db, cursor = get_cursor()
+    # Citas por mes (últimos 6 meses)
+    cursor.execute("""
+        SELECT
+            TO_CHAR(s.fecha, 'Mon YYYY') AS mes,
+            DATE_TRUNC('month', s.fecha) AS mes_orden,
+            COUNT(*) AS total,
+            SUM(CASE WHEN c.estado='completada' THEN 1 ELSE 0 END) AS completadas,
+            SUM(CASE WHEN c.estado='cancelada'  THEN 1 ELSE 0 END) AS canceladas,
+            SUM(CASE WHEN c.estado='pendiente'  THEN 1 ELSE 0 END) AS pendientes
+        FROM cita c
+        JOIN slot s ON c.id_slot = s.id_slot
+        WHERE s.fecha >= (NOW() AT TIME ZONE 'America/Guayaquil')::DATE - INTERVAL '6 months'
+        GROUP BY mes, mes_orden
+        ORDER BY mes_orden
+    """)
+    filas = cursor.fetchall()
+    cursor.close()
+    data = {
+        "labels":     [f[0] for f in filas],
+        "total":      [f[2] for f in filas],
+        "completadas":[f[3] for f in filas],
+        "canceladas": [f[4] for f in filas],
+        "pendientes": [f[5] for f in filas],
+    }
+    return make_response(json.dumps(data), 200, {"Content-Type": "application/json"})
+
+
+# ================================================================
+# EXPORTAR HISTORIAL A PDF (HTML → PDF con CSS)
+# ================================================================
+@app.route("/mi_historial/pdf")
+@login_required(role="paciente")
+def mi_historial_pdf():
+    """Genera un PDF del historial clínico del paciente."""
+    _db, cursor = get_cursor()
+    # Datos del paciente
+    cursor.execute("""
+        SELECT nombre, apellido, cedula, correo, telefono
+        FROM paciente WHERE id_paciente=%s
+    """, (session["paciente_id"],))
+    paciente = cursor.fetchone()
+
+    # Historial completo
+    cursor.execute("""
+        SELECT h.fecha_registro, h.diagnostico, h.tratamiento,
+               h.observaciones, s.fecha, s.hora, d.nombre, d.apellido
+        FROM historial_clinico h
+        LEFT JOIN cita c   ON h.id_cita   = c.id_cita
+        LEFT JOIN slot s   ON c.id_slot   = s.id_slot
+        LEFT JOIN doctor d ON h.id_doctor = d.id_doctor
+        WHERE h.id_paciente = %s
+        ORDER BY h.fecha_registro DESC
+    """, (session["paciente_id"],))
+    historial = cursor.fetchall()
+
+    # Recetas
+    cursor.execute("""
+        SELECT r.fecha_emision, r.medicamentos, r.indicaciones,
+               r.duracion_dias, d.nombre, d.apellido
+        FROM receta r
+        LEFT JOIN doctor d ON r.id_doctor = d.id_doctor
+        WHERE r.id_paciente = %s
+        ORDER BY r.fecha_emision DESC
+    """, (session["paciente_id"],))
+    recetas = cursor.fetchall()
+    cursor.close()
+
+    ahora = datetime.now().strftime('%d/%m/%Y %H:%M')
+
+    # Construir HTML del PDF
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * {{ box-sizing:border-box; margin:0; padding:0; }}
+  body {{ font-family: Arial, sans-serif; font-size: 12px; color: #222; background: #fff; padding: 2cm; }}
+  .header {{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom: 3px solid #0a7c5c; padding-bottom: 1.2rem; margin-bottom: 1.5rem; }}
+  .header-brand {{ font-size: 22px; font-weight: 700; color: #0b1f3a; }}
+  .header-brand span {{ color: #0a7c5c; }}
+  .header-meta {{ text-align:right; font-size:11px; color:#666; }}
+  .section-title {{ font-size:13px; font-weight:700; color:#0a7c5c; text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid #e2e8f0; padding-bottom:.35rem; margin: 1.5rem 0 .85rem; }}
+  .pac-grid {{ display:grid; grid-template-columns:1fr 1fr; gap:.4rem .75rem; margin-bottom:1rem; }}
+  .pac-row {{ font-size:11.5px; }}
+  .pac-row strong {{ color:#0b1f3a; }}
+  .entry {{ border:1px solid #e2e8f0; border-radius:6px; padding:.85rem 1rem; margin-bottom:.75rem; page-break-inside:avoid; }}
+  .entry-diag {{ font-size:13px; font-weight:700; color:#0b1f3a; margin-bottom:.3rem; }}
+  .entry-meta {{ font-size:10.5px; color:#888; margin-bottom:.6rem; }}
+  .entry-label {{ font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#aaa; margin:.5rem 0 .2rem; }}
+  .entry-val {{ font-size:11.5px; color:#444; line-height:1.55; }}
+  .receta-entry {{ border:1px solid #e2e8f0; border-radius:6px; padding:.85rem 1rem; margin-bottom:.75rem; page-break-inside:avoid; }}
+  .receta-header {{ display:flex; justify-content:space-between; margin-bottom:.5rem; }}
+  .receta-rx {{ font-size:22px; font-weight:700; color:#e2e8f0; }}
+  .footer {{ margin-top:2rem; border-top:1px solid #e2e8f0; padding-top:.75rem; font-size:10px; color:#aaa; text-align:center; }}
+  .empty {{ color:#aaa; font-style:italic; font-size:11px; }}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-brand">Medi<span>Clover</span></div>
+    <div style="font-size:11px;color:#888;margin-top:.2rem;">Sistema de Gestión de Citas Médicas</div>
+  </div>
+  <div class="header-meta">
+    <div><strong>Historial Clínico Personal</strong></div>
+    <div>Generado el {ahora}</div>
+    <div>Quito, Ecuador</div>
+  </div>
+</div>
+
+<div class="section-title">Datos del paciente</div>
+<div class="pac-grid">
+  <div class="pac-row"><strong>Nombre:</strong> {paciente[0]} {paciente[1]}</div>
+  <div class="pac-row"><strong>Cédula:</strong> {paciente[2]}</div>
+  <div class="pac-row"><strong>Correo:</strong> {paciente[3]}</div>
+  <div class="pac-row"><strong>Teléfono:</strong> {paciente[4] or '—'}</div>
+</div>
+<div class="pac-row"><strong>Doctor tratante:</strong> Dr. Luis Suárez — Médico General</div>
+
+<div class="section-title">Historial clínico ({len(historial)} entrada(s))</div>
+"""
+
+    if historial:
+        for h in historial:
+            fecha_reg  = h[0].strftime('%d/%m/%Y %H:%M') if h[0] else '—'
+            diagnostico = h[1] or '—'
+            tratamiento = h[2] or ''
+            observaciones = h[3] or ''
+            fecha_cita = str(h[4]) if h[4] else ''
+            hora_cita  = h[5].strftime('%H:%M') if h[5] else ''
+            dr_nombre  = f"Dr. {h[6]} {h[7]}" if h[6] else 'Dr. Luis Suárez'
+            cita_txt   = f"Cita del {fecha_cita} {hora_cita}" if fecha_cita else ''
+
+            html += f"""
+<div class="entry">
+  <div class="entry-diag">{diagnostico}</div>
+  <div class="entry-meta">{fecha_reg} &nbsp;·&nbsp; {dr_nombre}"""
+            if cita_txt:
+                html += f" &nbsp;·&nbsp; {cita_txt}"
+            html += "</div>"
+            if tratamiento:
+                html += f'<div class="entry-label">Tratamiento</div><div class="entry-val">{tratamiento}</div>'
+            if observaciones:
+                html += f'<div class="entry-label">Observaciones</div><div class="entry-val">{observaciones}</div>'
+            html += "</div>"
+    else:
+        html += '<p class="empty">Sin entradas en el historial clínico.</p>'
+
+    html += f'<div class="section-title">Recetas digitales ({len(recetas)} receta(s))</div>'
+
+    if recetas:
+        for r in recetas:
+            fecha_em   = r[0].strftime('%d/%m/%Y') if r[0] else '—'
+            medicamentos = r[1] or '—'
+            indicaciones = r[2] or ''
+            duracion   = r[3] or 7
+            dr_nombre  = f"Dr. {r[4]} {r[5]}" if r[4] else 'Dr. Luis Suárez'
+            html += f"""
+<div class="receta-entry">
+  <div class="receta-header">
+    <div>
+      <div style="font-weight:700;color:#0b1f3a;font-size:12px;">Receta del {fecha_em}</div>
+      <div style="font-size:10.5px;color:#888;">{dr_nombre} &nbsp;·&nbsp; Duración: {duracion} días</div>
+    </div>
+    <div class="receta-rx">Rx</div>
+  </div>
+  <div class="entry-label">Medicamentos</div>
+  <div class="entry-val" style="white-space:pre-wrap;">{medicamentos}</div>"""
+            if indicaciones:
+                html += f'<div class="entry-label">Indicaciones</div><div class="entry-val">{indicaciones}</div>'
+            html += "</div>"
+    else:
+        html += '<p class="empty">Sin recetas emitidas.</p>'
+
+    html += f"""
+<div class="footer">
+  MediClover — Sistema de Gestión de Citas Médicas · Quito, Ecuador · © 2026<br>
+  Este documento es un resumen del historial registrado en el sistema. Generado el {ahora}.
+</div>
+</body></html>"""
+
+    # Intentar usar weasyprint si está disponible
+    try:
+        from weasyprint import HTML as WH
+        pdf_bytes = WH(string=html).write_pdf()
+        response = make_response(pdf_bytes)
+        response.headers["Content-Type"] = "application/pdf"
+        response.headers["Content-Disposition"] = f'attachment; filename="historial_{paciente[2]}.pdf"'
+        return response
+    except ImportError:
+        # weasyprint no está instalado — devolver HTML para imprimir
+        response = make_response(html + """
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            window.print();
+          });
+        </script>""")
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+        return response
+
+
+# ================================================================
+# BLOQUEAR FECHAS — DOCTOR
+# ================================================================
+@app.route("/doctor/bloquear", methods=["GET", "POST"])
+@login_required(role="doctor")
+def doctor_bloquear():
+    _db, cursor = get_cursor()
+
+    if request.method == "POST":
+        accion     = request.form.get("accion")
+        fecha_ini  = request.form.get("fecha_inicio", "").strip()
+        fecha_fin  = request.form.get("fecha_fin", "").strip()
+        motivo     = request.form.get("motivo", "Vacaciones").strip()
+        bloqueo_id = request.form.get("bloqueo_id")
+
+        if accion == "crear" and fecha_ini and fecha_fin:
+            # Verificar que no haya citas pendientes en esas fechas
+            cursor.execute("""
+                SELECT COUNT(*) FROM cita c
+                JOIN slot s ON c.id_slot = s.id_slot
+                WHERE c.id_doctor = %s
+                  AND s.fecha BETWEEN %s AND %s
+                  AND c.estado = 'pendiente'
+            """, (session["doctor_id"], fecha_ini, fecha_fin))
+            citas_afectadas = cursor.fetchone()[0]
+
+            if citas_afectadas > 0:
+                # Hay citas — advertir pero no bloquear
+                cursor.execute("""
+                    INSERT INTO bloqueo_fecha (id_doctor, fecha_inicio, fecha_fin, motivo)
+                    VALUES (%s, %s, %s, %s)
+                """, (session["doctor_id"], fecha_ini, fecha_fin, motivo))
+                _db.commit()
+                session["bloqueo_msg"] = f"Bloqueo creado. Atención: hay {citas_afectadas} cita(s) pendiente(s) en ese período que debes revisar manualmente."
+            else:
+                cursor.execute("""
+                    INSERT INTO bloqueo_fecha (id_doctor, fecha_inicio, fecha_fin, motivo)
+                    VALUES (%s, %s, %s, %s)
+                """, (session["doctor_id"], fecha_ini, fecha_fin, motivo))
+                # Eliminar slots disponibles en ese rango
+                cursor.execute("""
+                    DELETE FROM slot
+                    WHERE id_doctor = %s
+                      AND fecha BETWEEN %s AND %s
+                      AND disponible = TRUE
+                """, (session["doctor_id"], fecha_ini, fecha_fin))
+                _db.commit()
+                session["bloqueo_msg"] = f"Fechas bloqueadas del {fecha_ini} al {fecha_fin}."
+
+        elif accion == "eliminar" and bloqueo_id:
+            cursor.execute("DELETE FROM bloqueo_fecha WHERE id_bloqueo=%s AND id_doctor=%s",
+                           (bloqueo_id, session["doctor_id"]))
+            _db.commit()
+
+        cursor.close()
+        return redirect("/doctor/bloquear")
+
+    # GET — mostrar bloqueos
+    cursor.execute("""
+        SELECT id_bloqueo, fecha_inicio, fecha_fin, motivo, created_at
+        FROM bloqueo_fecha
+        WHERE id_doctor = %s
+          AND fecha_fin >= (NOW() AT TIME ZONE 'America/Guayaquil')::DATE
+        ORDER BY fecha_inicio
+    """, (session["doctor_id"],))
+    bloqueos = cursor.fetchall()
+    cursor.close()
+
+    mensaje = session.pop("bloqueo_msg", None)
+    return render_template("doctor_bloquear.html",
+                           bloqueos=bloqueos, hoy=date.today(), mensaje=mensaje)
+
+
+# ================================================================
+# INIT tabla bloqueo_fecha al arranque (en hilo)
+# ================================================================
+def _crear_tabla_bloqueo():
+    try:
+        c = psycopg2.connect(DATABASE_URL, sslmode="require")
+        cur = c.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS bloqueo_fecha (
+                id_bloqueo   SERIAL PRIMARY KEY,
+                id_doctor    INTEGER REFERENCES doctor(id_doctor) ON DELETE CASCADE,
+                fecha_inicio DATE NOT NULL,
+                fecha_fin    DATE NOT NULL,
+                motivo       VARCHAR(200) DEFAULT 'Vacaciones',
+                created_at   TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        c.commit()
+        cur.close()
+        c.close()
+    except Exception as e:
+        print(f"⚠️  _crear_tabla_bloqueo: {e}")
+
+threading.Thread(target=_crear_tabla_bloqueo, daemon=True).start()
+
+
+# ================================================================
+# FILTRO DE CITAS EN PANEL PACIENTE (AJAX)
+# ================================================================
+@app.route("/api/mis_citas")
+@login_required(role="paciente")
+def api_mis_citas():
+    """Devuelve citas del paciente filtradas por estado. Usado por JS del panel."""
+    estado = request.args.get("estado", "todas")
+    _db, cursor = get_cursor()
+    if estado == "todas":
+        cursor.execute("""
+            SELECT c.id_cita, s.fecha, s.hora, c.estado, c.descripcion
+            FROM cita c
+            JOIN slot s ON c.id_slot = s.id_slot
+            WHERE c.id_paciente = %s
+            ORDER BY s.fecha DESC, s.hora DESC
+        """, (session["paciente_id"],))
+    else:
+        cursor.execute("""
+            SELECT c.id_cita, s.fecha, s.hora, c.estado, c.descripcion
+            FROM cita c
+            JOIN slot s ON c.id_slot = s.id_slot
+            WHERE c.id_paciente = %s AND c.estado = %s
+            ORDER BY s.fecha DESC, s.hora DESC
+        """, (session["paciente_id"], estado))
+    filas = cursor.fetchall()
+    cursor.close()
+    data = [{
+        "id": f[0],
+        "fecha": str(f[1]),
+        "hora":  f[2].strftime('%H:%M') if f[2] else '—',
+        "estado": f[3],
+        "descripcion": f[4] or ''
+    } for f in filas]
+    return make_response(json.dumps(data), 200, {"Content-Type": "application/json"})
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
