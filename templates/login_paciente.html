@@ -1,38 +1,302 @@
 {% extends "base.html" %}
 {% block title %}Iniciar sesión — MediClover{% endblock %}
 
+{% block extra_head %}
+<style>
+/* Countdown */
+.otp-timer {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .8rem;
+  color: var(--gray-500);
+  margin-top: .75rem;
+  justify-content: center;
+}
+.otp-timer.urgente { color: var(--red); font-weight: 600; }
+.otp-timer i { font-size: .8rem; }
+
+/* Campos OTP separados */
+.otp-inputs {
+  display: flex;
+  gap: .5rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+.otp-digit {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--navy);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--r-sm);
+  outline: none;
+  transition: border-color .18s, box-shadow .18s;
+  -webkit-appearance: none;
+  caret-color: var(--teal);
+}
+.otp-digit:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(10,124,92,.12);
+}
+.otp-digit.filled {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+  color: var(--teal);
+}
+
+/* Correo oculto parcialmente */
+.correo-display {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: var(--teal-pale);
+  color: var(--teal);
+  border-radius: 99px;
+  padding: .3rem .9rem;
+  font-size: .83rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+/* Paso indicador */
+.paso-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin-bottom: 1.5rem;
+}
+.paso-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  transition: background .3s;
+}
+.paso-dot.active { background: var(--teal); }
+.paso-line {
+  width: 32px; height: 1.5px;
+  background: var(--gray-200);
+}
+</style>
+{% endblock %}
+
 {% block contenido %}
 <div class="auth-wrap">
   <div class="auth-card">
 
     <div class="auth-top">
-      <div class="auth-emblem"><i class="bi bi-person-circle"></i></div>
-      <h2>Bienvenido de vuelta</h2>
-      <p>Ingresa con tu correo registrado</p>
+      <div class="auth-emblem">
+        {% if paso == 2 %}
+          <i class="bi bi-shield-lock-fill"></i>
+        {% else %}
+          <i class="bi bi-person-circle"></i>
+        {% endif %}
+      </div>
+
+      {% if paso == 2 %}
+        <h2>Verifica tu identidad</h2>
+        <p>Revisa tu correo electrónico</p>
+      {% else %}
+        <h2>Bienvenido de vuelta</h2>
+        <p>Ingresa con tu correo registrado</p>
+      {% endif %}
     </div>
 
     <div class="auth-body">
+
+      <!-- Indicador de pasos -->
+      <div class="paso-indicator">
+        <div class="paso-dot active"></div>
+        <div class="paso-line"></div>
+        <div class="paso-dot {% if paso == 2 %}active{% endif %}"></div>
+      </div>
+
+      <!-- Alerta de error -->
       {% if error %}
         <div class="alert error">
           <i class="bi bi-x-circle-fill"></i> {{ error }}
         </div>
       {% endif %}
 
-      <form method="POST">
-        <div class="form-group">
-          <label>Correo electrónico</label>
-          <input type="email" name="correo" placeholder="tucorreo@ejemplo.com" required autofocus>
+      <!-- ══════════════════════════════
+           PASO 1: escribir correo
+      ══════════════════════════════ -->
+      {% if paso != 2 %}
+        <form method="POST">
+          <input type="hidden" name="paso" value="1">
+
+          <div class="form-group">
+            <label>Correo electrónico</label>
+            <input type="email" name="correo"
+                   placeholder="tucorreo@ejemplo.com"
+                   value="{{ request.form.get('correo','') }}"
+                   required autofocus autocomplete="email">
+          </div>
+
+          <p style="font-size:.78rem;color:var(--gray-400);margin-bottom:1rem;line-height:1.65;">
+            <i class="bi bi-info-circle" style="color:var(--teal);margin-right:.25rem;"></i>
+            Te enviaremos un código de 6 dígitos para verificar tu identidad.
+            El código expira en 10 minutos.
+          </p>
+
+          <button type="submit" class="btn btn-block">
+            <i class="bi bi-send"></i> Enviar código de acceso
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          ¿No tienes cuenta? <a href="/registro_paciente">Regístrate gratis</a>
         </div>
-        <button type="submit" class="btn btn-block" style="margin-top:.5rem;">
-          <i class="bi bi-box-arrow-in-right"></i> Ingresar
-        </button>
-      </form>
 
-      <div class="auth-footer">
-        ¿No tienes cuenta? <a href="/registro_paciente">Regístrate gratis</a>
-      </div>
+      <!-- ══════════════════════════════
+           PASO 2: escribir el código OTP
+      ══════════════════════════════ -->
+      {% else %}
+        <!-- Correo al que se envió -->
+        <div style="text-align:center;margin-bottom:1rem;">
+          <span class="correo-display">
+            <i class="bi bi-envelope-check-fill"></i>
+            {{ correo }}
+          </span>
+          <p style="font-size:.8rem;color:var(--gray-500);margin:0;line-height:1.6;">
+            Revisa tu bandeja de entrada (y spam).<br>
+            El código llega en menos de un minuto.
+          </p>
+        </div>
+
+        <form method="POST" id="otpForm">
+          <input type="hidden" name="paso" value="2">
+          <input type="hidden" name="correo" value="{{ correo }}">
+          <!-- Campo hidden que recibe el código completo -->
+          <input type="hidden" name="codigo" id="codigoCompleto">
+
+          <!-- 6 cajas individuales -->
+          <div class="otp-inputs" id="otpInputs">
+            {% for i in range(6) %}
+            <input type="text" inputmode="numeric" maxlength="1"
+                   class="otp-digit" id="d{{ i }}"
+                   autocomplete="{% if i == 0 %}one-time-code{% else %}off{% endif %}"
+                   aria-label="Dígito {{ i+1 }} del código">
+            {% endfor %}
+          </div>
+
+          <!-- Timer de 10 minutos -->
+          <div class="otp-timer" id="timerWrap">
+            <i class="bi bi-clock"></i>
+            El código expira en <strong id="timerVal">10:00</strong>
+          </div>
+
+          <button type="submit" class="btn btn-block" id="btnVerificar"
+                  style="margin-top:1.25rem;" disabled>
+            <i class="bi bi-shield-check"></i> Verificar y entrar
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:1rem;">
+          <a href="/login_paciente"
+             style="font-size:.82rem;color:var(--gray-500);text-decoration:none;">
+            <i class="bi bi-arrow-left"></i> Usar otro correo
+          </a>
+        </div>
+
+        <script>
+        (function() {
+          const digits   = document.querySelectorAll('.otp-digit');
+          const hidden   = document.getElementById('codigoCompleto');
+          const btn      = document.getElementById('btnVerificar');
+          const timer    = document.getElementById('timerVal');
+          const timerWrap= document.getElementById('timerWrap');
+          const form     = document.getElementById('otpForm');
+
+          // ── Navegación entre cajas ──
+          digits.forEach((input, idx) => {
+            input.addEventListener('input', e => {
+              // Aceptar solo dígitos
+              input.value = input.value.replace(/\D/g, '').slice(-1);
+              input.classList.toggle('filled', input.value !== '');
+
+              // Avanzar automáticamente
+              if (input.value && idx < 5) digits[idx + 1].focus();
+
+              actualizarHidden();
+            });
+
+            input.addEventListener('keydown', e => {
+              if (e.key === 'Backspace' && !input.value && idx > 0) {
+                digits[idx - 1].focus();
+                digits[idx - 1].value = '';
+                digits[idx - 1].classList.remove('filled');
+                actualizarHidden();
+              }
+              // Pegar con Ctrl+V
+              if ((e.ctrlKey || e.metaKey) && e.key === 'v') return;
+            });
+
+            // Soporte para pegar el código completo
+            input.addEventListener('paste', e => {
+              e.preventDefault();
+              const pasted = (e.clipboardData || window.clipboardData)
+                               .getData('text').replace(/\D/g, '').slice(0, 6);
+              pasted.split('').forEach((ch, i) => {
+                if (digits[i]) {
+                  digits[i].value = ch;
+                  digits[i].classList.add('filled');
+                }
+              });
+              if (digits[Math.min(pasted.length, 5)]) {
+                digits[Math.min(pasted.length, 5)].focus();
+              }
+              actualizarHidden();
+            });
+          });
+
+          function actualizarHidden() {
+            const codigo = Array.from(digits).map(d => d.value).join('');
+            hidden.value = codigo;
+            btn.disabled = codigo.length < 6;
+          }
+
+          // Enfocar primer campo al cargar
+          digits[0].focus();
+
+          // ── Timer de 10 minutos ──
+          let segundos = 10 * 60;
+          const intervalo = setInterval(() => {
+            segundos--;
+            const mm = String(Math.floor(segundos / 60)).padStart(2, '0');
+            const ss = String(segundos % 60).padStart(2, '0');
+            timer.textContent = `${mm}:${ss}`;
+
+            if (segundos <= 60) timerWrap.classList.add('urgente');
+
+            if (segundos <= 0) {
+              clearInterval(intervalo);
+              timer.textContent = 'expirado';
+              btn.disabled = true;
+              digits.forEach(d => { d.disabled = true; d.style.opacity='.5'; });
+              timerWrap.innerHTML = '<i class="bi bi-x-circle" style="color:var(--red)"></i> ' +
+                '<span style="color:var(--red)">Código expirado — <a href="/login_paciente">solicita uno nuevo</a></span>';
+            }
+          }, 1000);
+
+          // ── Auto-submit cuando los 6 dígitos están completos ──
+          form.addEventListener('input', () => {
+            const codigo = Array.from(digits).map(d => d.value).join('');
+            if (codigo.length === 6 && segundos > 0) {
+              setTimeout(() => {
+                if (Array.from(digits).every(d => d.value)) form.submit();
+              }, 150);
+            }
+          });
+        })();
+        </script>
+      {% endif %}
+
     </div>
-
   </div>
 </div>
 {% endblock %}

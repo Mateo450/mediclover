@@ -349,9 +349,38 @@ def init_db():
 
 
 # ── Iniciar BD en hilo de fondo para no bloquear el arranque de Gunicorn ──
-# Render requiere que el puerto HTTP esté disponible en <60s.
-# Conectar a Supabase puede tardar varios segundos en cold start.
 threading.Thread(target=init_db, daemon=True).start()
+
+
+def _migrar_password_doctor():
+    """
+    Al arrancar, verifica si la contraseña del doctor está en texto plano.
+    Si es así, la convierte a hash bcrypt automáticamente.
+    Esto corre una sola vez por deploy y no interrumpe el servicio.
+    """
+    import time as _t
+    _t.sleep(5)  # esperar a que init_db termine
+    try:
+        from werkzeug.security import generate_password_hash
+        c = psycopg2.connect(DATABASE_URL, sslmode="require")
+        cur = c.cursor()
+        cur.execute("SELECT id_doctor, password FROM doctor LIMIT 1")
+        doc = cur.fetchone()
+        if doc:
+            pwd = doc[1]
+            # Los hashes de werkzeug empiezan con "pbkdf2:" o "scrypt:"
+            if not (pwd.startswith("pbkdf2:") or pwd.startswith("scrypt:")):
+                hashed = generate_password_hash(pwd)
+                cur.execute("UPDATE doctor SET password=%s WHERE id_doctor=%s",
+                            (hashed, doc[0]))
+                c.commit()
+                print("✅ Contraseña del doctor migrada a hash seguro")
+        cur.close()
+        c.close()
+    except Exception as e:
+        print(f"⚠️  _migrar_password_doctor: {e}")
+
+threading.Thread(target=_migrar_password_doctor, daemon=True).start()
 
 
 # ===============================
@@ -914,22 +943,133 @@ def eliminar_slot(id):
 # ================================================================
 @app.route("/login_paciente", methods=["GET", "POST"])
 def login_paciente():
+    """
+    Login con OTP por correo.
+    Paso 1 (GET / POST sin código): el paciente escribe su correo.
+                                     El servidor genera un código de 6 dígitos,
+                                     lo guarda en sesión con expiración de 10 min
+                                     y lo envía por correo.
+    Paso 2 (POST con código):        el paciente escribe el código que recibió.
+                                     Si es correcto y no expiró, inicia sesión.
+    """
     if not get_conn():
         return "Error BD"
-    if request.method == "POST":
+
+    paso = request.form.get("paso", "1")
+
+    # ── PASO 2: verificar el código ──────────────────────────────────────
+    if request.method == "POST" and paso == "2":
+        correo  = request.form.get("correo", "").strip().lower()
+        codigo  = request.form.get("codigo", "").strip()
+
+        # Verificar sesión y expiración
+        if session.get("otp_correo") != correo:
+            return render_template("login_paciente.html",
+                error="Sesión inválida. Vuelve a escribir tu correo.", paso=1)
+
+        expira = session.get("otp_expira")
+        if not expira or datetime.now() > datetime.fromisoformat(expira):
+            session.pop("otp_codigo",  None)
+            session.pop("otp_correo",  None)
+            session.pop("otp_expira",  None)
+            return render_template("login_paciente.html",
+                error="El código expiró. Vuelve a solicitar uno nuevo.", paso=1)
+
+        if session.get("otp_codigo") != codigo:
+            return render_template("login_paciente.html",
+                error="Código incorrecto. Revisa tu correo e intenta de nuevo.",
+                paso=2, correo=correo)
+
+        # Código correcto → buscar paciente y crear sesión
         _db, cursor = get_cursor()
-        cursor.execute("SELECT id_paciente, nombre FROM paciente WHERE correo=%s",
-                       (request.form.get("correo","").strip(),))
+        cursor.execute("SELECT id_paciente, nombre FROM paciente WHERE correo=%s", (correo,))
         user = cursor.fetchone()
         cursor.close()
+
+        # Limpiar OTP de la sesión
+        session.pop("otp_codigo", None)
+        session.pop("otp_correo", None)
+        session.pop("otp_expira", None)
+
         if user:
             session.clear()
             session["paciente_id"]     = user[0]
             session["paciente_nombre"] = user[1]
-            session["rol"]             = ROL_PACIENTE   # número 3
+            session["rol"]             = ROL_PACIENTE
             return redirect("/panel_paciente")
-        return render_template("login_paciente.html", error="Correo no registrado")
-    return render_template("login_paciente.html")
+        return render_template("login_paciente.html",
+            error="Correo no registrado.", paso=1)
+
+    # ── PASO 1: recibir correo y enviar OTP ──────────────────────────────
+    if request.method == "POST" and paso == "1":
+        correo = request.form.get("correo", "").strip().lower()
+
+        if "@" not in correo or "." not in correo:
+            return render_template("login_paciente.html",
+                error="Escribe un correo válido.", paso=1)
+
+        # Verificar que el correo existe
+        _db, cursor = get_cursor()
+        cursor.execute("SELECT id_paciente FROM paciente WHERE correo=%s", (correo,))
+        existe = cursor.fetchone()
+        cursor.close()
+
+        if not existe:
+            return render_template("login_paciente.html",
+                error="Ese correo no está registrado. ¿Quieres crear una cuenta?",
+                paso=1)
+
+        # Generar código OTP de 6 dígitos
+        codigo = str(random.randint(100000, 999999))
+        session["otp_codigo"] = codigo
+        session["otp_correo"] = correo
+        session["otp_expira"] = (datetime.now() + timedelta(minutes=10)).isoformat()
+
+        # Enviar el código por correo (asíncrono, no bloquea)
+        cuerpo = f"""
+        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head>
+        <body style="font-family:Arial,sans-serif;background:#f4f6f9;padding:2rem;margin:0;">
+        <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;
+                    overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);">
+          <div style="background:linear-gradient(135deg,#0b1f3a,#162f55);
+                      padding:2rem;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">🔑</div>
+            <h2 style="margin:0;color:#fff;font-size:1.2rem;">Código de acceso</h2>
+            <p style="margin:.4rem 0 0;color:rgba(255,255,255,.55);font-size:.85rem;">
+              MediClover · Acceso a tu cuenta
+            </p>
+          </div>
+          <div style="padding:2rem;">
+            <p style="color:#334155;font-size:.93rem;margin:0 0 1.5rem;">
+              Usa este código para iniciar sesión en MediClover.
+              Expira en <strong>10 minutos</strong>.
+            </p>
+            <div style="font-size:2.8rem;font-weight:700;letter-spacing:.9rem;
+                        text-align:center;background:#f0fdf4;padding:1.25rem;
+                        border-radius:10px;color:#0a7c5c;margin-bottom:1.5rem;">
+              {codigo}
+            </div>
+            <p style="color:#94a3b8;font-size:.8rem;margin:0;line-height:1.65;">
+              Si no solicitaste este código, ignora este mensaje.
+              Nadie del equipo de MediClover te pedirá este código.
+            </p>
+          </div>
+          <div style="background:#f8fafc;border-top:1px solid #e2e8f0;
+                      padding:1rem 2rem;text-align:center;">
+            <p style="margin:0;font-size:.75rem;color:#94a3b8;">
+              MediClover · Sistema de Gestión de Citas Médicas
+            </p>
+          </div>
+        </div>
+        </body></html>
+        """
+        enviar_correo_async(correo, "Tu código de acceso — MediClover", cuerpo)
+
+        # Mostrar el paso 2 (campo para escribir el código)
+        return render_template("login_paciente.html", paso=2, correo=correo)
+
+    # GET normal → mostrar paso 1
+    return render_template("login_paciente.html", paso=1)
 
 
 @app.route("/registro_paciente", methods=["GET", "POST"])
