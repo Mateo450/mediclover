@@ -543,12 +543,14 @@ def editar_paciente(id):
     return render_template("editar_paciente.html", paciente=paciente)
 
 
-@app.route("/eliminar_paciente/<int:id>")
+@app.route("/eliminar_paciente/<int:id>", methods=["POST"])
 @login_required(role="admin")
 def eliminar_paciente(id):
     _db, cursor = get_cursor()
-    cursor.execute("DELETE FROM cita     WHERE id_paciente=%s", (id,))
-    cursor.execute("DELETE FROM paciente WHERE id_paciente=%s", (id,))
+    cursor.execute("DELETE FROM historial_clinico WHERE id_paciente=%s", (id,))
+    cursor.execute("DELETE FROM receta           WHERE id_paciente=%s", (id,))
+    cursor.execute("DELETE FROM cita             WHERE id_paciente=%s", (id,))
+    cursor.execute("DELETE FROM paciente         WHERE id_paciente=%s", (id,))
     _db.commit()
     cursor.close()
     return redirect("/pacientes")
@@ -565,14 +567,14 @@ def citas():
         JOIN  paciente p ON c.id_paciente = p.id_paciente
         LEFT JOIN slot   s ON c.id_slot   = s.id_slot
         LEFT JOIN doctor d ON c.id_doctor = d.id_doctor
-        ORDER BY s.fecha, s.hora
+        ORDER BY s.fecha DESC, s.hora DESC
     """)
     lista = cursor.fetchall()
     cursor.close()
     return render_template("citas.html", citas=lista)
 
 
-@app.route("/completar_cita/<int:id>")
+@app.route("/completar_cita/<int:id>", methods=["POST"])
 @login_required(role="admin")
 def completar_cita(id):
     _db, cursor = get_cursor()
@@ -582,7 +584,7 @@ def completar_cita(id):
     return redirect("/citas")
 
 
-@app.route("/cancelar_cita/<int:id>")
+@app.route("/cancelar_cita/<int:id>", methods=["POST"])
 @login_required(role="admin")
 def cancelar_cita(id):
     _db, cursor = get_cursor()
@@ -593,48 +595,33 @@ def cancelar_cita(id):
     return redirect("/citas")
 
 
-# Admin — doctores
-@app.route("/admin/doctores")
+@app.route("/admin/hashear_doctor", methods=["POST"])
 @login_required(role="admin")
-def admin_doctores():
+def hashear_password_doctor():
+    """
+    Migra la contraseña del doctor de texto plano a hash seguro.
+    Llamar una sola vez desde el panel de administración.
+    """
+    from werkzeug.security import generate_password_hash, check_password_hash
     _db, cursor = get_cursor()
-    cursor.execute("SELECT id_doctor,nombre,apellido,correo,especialidad FROM doctor")
-    lista = cursor.fetchall()
+    cursor.execute("SELECT id_doctor, password FROM doctor LIMIT 1")
+    doc = cursor.fetchone()
+    if doc:
+        pwd = doc[1]
+        # Solo hashear si todavía es texto plano (los hash empiezan con pbkdf2: o scrypt:)
+        if not (pwd.startswith("pbkdf2:") or pwd.startswith("scrypt:")):
+            hashed = generate_password_hash(pwd)
+            cursor.execute("UPDATE doctor SET password=%s WHERE id_doctor=%s",
+                           (hashed, doc[0]))
+            _db.commit()
+            msg = "✅ Contraseña del doctor migrada a hash seguro correctamente."
+        else:
+            msg = "ℹ️  La contraseña ya está en formato hash. No se hizo ningún cambio."
+    else:
+        msg = "⚠️  No se encontró ningún doctor en la base de datos."
     cursor.close()
-    return render_template("admin_doctores.html", doctores=lista)
-
-
-@app.route("/admin/crear_doctor", methods=["GET", "POST"])
-@login_required(role="admin")
-def crear_doctor():
-    if request.method == "POST":
-        _db, cursor = get_cursor()
-        cursor.execute("SELECT id_doctor FROM doctor WHERE usuario=%s", (request.form["usuario"],))
-        if cursor.fetchone():
-            cursor.close()
-            return render_template("crear_doctor.html", error="Ese usuario ya existe")
-        correo_doc = request.form.get("correo", "").strip().lower()
-        cursor.execute("""
-            INSERT INTO doctor(nombre, apellido, usuario, password, especialidad, correo)
-            VALUES(%s, %s, %s, %s, %s, %s)
-        """, (request.form["nombre"], request.form["apellido"], request.form["usuario"],
-              request.form["password"], request.form["especialidad"], correo_doc or None))
-        _db.commit()
-        cursor.close()
-        return redirect("/admin/doctores")
-    return render_template("crear_doctor.html")
-
-
-@app.route("/admin/eliminar_doctor/<int:id>")
-@login_required(role="admin")
-def eliminar_doctor(id):
-    _db, cursor = get_cursor()
-    cursor.execute("UPDATE cita SET id_doctor=NULL WHERE id_doctor=%s", (id,))
-    cursor.execute("DELETE FROM slot   WHERE id_doctor=%s", (id,))
-    cursor.execute("DELETE FROM doctor WHERE id_doctor=%s", (id,))
-    _db.commit()
-    cursor.close()
-    return redirect("/admin/doctores")
+    session["admin_msg"] = msg
+    return redirect("/admin")
 
 
 # ================================================================
@@ -724,7 +711,7 @@ def doctor_panel():
                            slots_resultado=slots_resultado)
 
 
-@app.route("/doctor/completar/<int:id>")
+@app.route("/doctor/completar/<int:id>", methods=["POST"])
 @login_required(role="doctor")
 def doctor_completar(id):
     _db, cursor = get_cursor()
@@ -735,7 +722,7 @@ def doctor_completar(id):
     return redirect("/doctor/panel")
 
 
-@app.route("/doctor/cancelar/<int:id>")
+@app.route("/doctor/cancelar/<int:id>", methods=["POST"])
 @login_required(role="doctor")
 def doctor_cancelar(id):
     _db, cursor = get_cursor()
@@ -895,7 +882,7 @@ def crear_slot():
     return redirect("/doctor/panel")
 
 
-@app.route("/doctor/slots/eliminar/<int:id>")
+@app.route("/doctor/slots/eliminar/<int:id>", methods=["POST"])
 @login_required(role="doctor")
 def eliminar_slot(id):
     _db, cursor = get_cursor()
@@ -1001,7 +988,7 @@ def panel_paciente():
     return render_template("panel_paciente.html", citas=citas)
 
 
-@app.route("/cancelar_cita_paciente/<int:id>")
+@app.route("/cancelar_cita_paciente/<int:id>", methods=["POST"])
 @login_required(role="paciente")
 def cancelar_cita_paciente(id):
     _db, cursor = get_cursor()
@@ -1221,10 +1208,6 @@ def doctor_verificar_codigo():
     return render_template("login_doctor.html",
         mensaje="¡Contraseña restablecida con éxito! Ya puedes iniciar sesión.",
         tipo="success")
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
 
 
 # ================================================================
@@ -1823,3 +1806,143 @@ def api_mis_citas():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+# ================================================================
+# PÁGINAS DE ERROR PERSONALIZADAS
+# ================================================================
+
+@app.errorhandler(404)
+def error_404(e):
+    return render_template("error.html",
+        codigo=404,
+        titulo="Página no encontrada",
+        mensaje="La página que buscas no existe o fue movida.",
+        icono="bi-compass"
+    ), 404
+
+@app.errorhandler(403)
+def error_403(e):
+    return render_template("error.html",
+        codigo=403,
+        titulo="Acceso denegado",
+        mensaje="No tienes permiso para ver esta página.",
+        icono="bi-shield-x"
+    ), 403
+
+@app.errorhandler(500)
+def error_500(e):
+    return render_template("error.html",
+        codigo=500,
+        titulo="Error del servidor",
+        mensaje="Algo salió mal. Ya estamos trabajando en solucionarlo.",
+        icono="bi-exclamation-triangle"
+    ), 500
+
+
+# ================================================================
+# RECORDATORIO AUTOMÁTICO DE CITAS (24 horas antes)
+# ================================================================
+
+def enviar_recordatorios():
+    """
+    Busca citas para mañana y manda un correo de recordatorio a cada paciente.
+    Se ejecuta en un hilo de fondo al arrancar el servidor.
+    Se repite cada 12 horas para no perder recordatorios si el servidor reinicia.
+    """
+    import time as _time
+
+    while True:
+        try:
+            c = psycopg2.connect(DATABASE_URL, sslmode="require")
+            cur = c.cursor()
+
+            # Citas pendientes para mañana en hora de Quito
+            cur.execute("""
+                SELECT
+                    p.correo, p.nombre, p.apellido,
+                    s.fecha, s.hora,
+                    c.descripcion
+                FROM cita c
+                JOIN paciente p ON c.id_paciente = p.id_paciente
+                JOIN slot     s ON c.id_slot     = s.id_slot
+                WHERE c.estado = 'pendiente'
+                  AND s.fecha = (NOW() AT TIME ZONE 'America/Guayaquil')::DATE + INTERVAL '1 day'
+                ORDER BY s.hora
+            """)
+            citas = cur.fetchall()
+            cur.close()
+            c.close()
+
+            for cita in citas:
+                correo, nombre, apellido, fecha, hora, descripcion = cita
+                hora_str = hora.strftime('%H:%M') if hasattr(hora, 'strftime') else str(hora)[:5]
+
+                try:
+                    fecha_dt   = fecha if hasattr(fecha, 'strftime') else fecha
+                    fecha_str  = fecha_dt.strftime('%A %d de %B de %Y').capitalize()
+                except Exception:
+                    fecha_str  = str(fecha)
+
+                cuerpo = f"""
+                <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head>
+                <body style="font-family:Arial,sans-serif;background:#f4f6f9;padding:2rem;margin:0;">
+                <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);">
+                  <div style="background:linear-gradient(135deg,#0b1f3a,#162f55);padding:2rem;text-align:center;">
+                    <div style="font-size:2rem;margin-bottom:.5rem;">⏰</div>
+                    <h2 style="margin:0;color:#fff;font-size:1.2rem;">Recordatorio de cita</h2>
+                    <p style="margin:.4rem 0 0;color:rgba(255,255,255,.55);font-size:.85rem;">MediClover · Dr. Luis Suárez</p>
+                  </div>
+                  <div style="padding:2rem;">
+                    <p style="color:#334155;font-size:.95rem;margin:0 0 1.5rem;">
+                      Hola <strong>{nombre} {apellido}</strong>, te recordamos que tienes una cita
+                      <strong style="color:#0a7c5c;">mañana</strong>.
+                    </p>
+                    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:1.25rem;">
+                      <div style="margin-bottom:.75rem;font-size:.875rem;color:#374151;">
+                        <strong>📆 Fecha:</strong> {fecha_str}
+                      </div>
+                      <div style="margin-bottom:.75rem;font-size:.875rem;color:#374151;">
+                        <strong>🕐 Hora:</strong> {hora_str}
+                      </div>
+                      <div style="font-size:.875rem;color:#374151;">
+                        <strong>👨‍⚕️ Doctor:</strong> Dr. Luis Suárez — Médico General
+                      </div>
+                    </div>
+                    <p style="color:#6b7280;font-size:.8rem;margin:1.25rem 0 0;line-height:1.6;">
+                      Si necesitas cancelar tu cita, hazlo desde tu panel en MediClover
+                      con suficiente tiempo de anticipación.
+                    </p>
+                    <div style="text-align:center;margin-top:1.5rem;">
+                      <a href="https://mediclover.onrender.com/panel_paciente"
+                         style="background:#0a7c5c;color:#fff;padding:.75rem 1.75rem;
+                                border-radius:6px;text-decoration:none;font-weight:700;font-size:.9rem;">
+                        Ver mi panel
+                      </a>
+                    </div>
+                  </div>
+                  <div style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:1rem 2rem;text-align:center;">
+                    <p style="margin:0;font-size:.75rem;color:#94a3b8;">
+                      MediClover · Sistema de Gestión de Citas Médicas · Quito, Ecuador
+                    </p>
+                  </div>
+                </div>
+                </body></html>
+                """
+                asunto = f"⏰ Recordatorio: tienes cita mañana {hora_str} — MediClover"
+                enviar_correo_async(correo, asunto, cuerpo)
+
+            if citas:
+                print(f"✅ Recordatorios enviados: {len(citas)} paciente(s)")
+
+        except Exception as e:
+            print(f"⚠️  Error en recordatorios: {e}")
+
+        # Esperar 12 horas antes de volver a revisar
+        _time.sleep(12 * 60 * 60)
+
+
+# Iniciar el hilo de recordatorios si hay configuración de correo
+if MAIL_USER and MAIL_PASS:
+    threading.Thread(target=enviar_recordatorios, daemon=True).start()
+    print("✅ Recordatorios automáticos activados")

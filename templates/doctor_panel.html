@@ -731,12 +731,13 @@
                   </td>
                   <td>
                     {% if s[3] %}
-                      <a href="/doctor/slots/eliminar/{{ s[0] }}"
-                         class="btn btn-danger btn-sm"
-                         onclick="return confirm('¿Eliminar este slot?')"
-                         title="Eliminar slot">
-                        <i class="bi bi-trash"></i>
-                      </a>
+                      <form method="POST" action="/doctor/slots/eliminar/{{ s[0] }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('¿Eliminar este slot?')"
+                                title="Eliminar slot">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
                     {% else %}
                       <span class="td-muted">Ocupado</span>
                     {% endif %}
@@ -804,18 +805,18 @@
 
             <!-- Acciones -->
             <div class="cita-row-actions">
-              <a href="/doctor/completar/{{ c[0] }}"
-                 class="btn btn-sm"
-                 title="Marcar como completada"
-                 onclick="return confirm('¿Marcar como completada?')">
-                <i class="bi bi-check-lg"></i> Completar
-              </a>
-              <a href="/doctor/cancelar/{{ c[0] }}"
-                 class="btn btn-danger btn-sm"
-                 title="Cancelar cita"
-                 onclick="return confirm('¿Cancelar esta cita?')">
-                <i class="bi bi-x-lg"></i>
-              </a>
+              <form method="POST" action="/doctor/completar/{{ c[0] }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm" title="Marcar como completada"
+                        onclick="return confirm('¿Marcar como completada?')">
+                  <i class="bi bi-check-lg"></i> Completar
+                </button>
+              </form>
+              <form method="POST" action="/doctor/cancelar/{{ c[0] }}" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm" title="Cancelar cita"
+                        onclick="return confirm('¿Cancelar esta cita?')">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </form>
             </div>
           </div>
           {% endfor %}

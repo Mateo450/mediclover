@@ -52,14 +52,18 @@
             <td>
               <div style="display:flex; gap:.4rem;">
                 {% if c[5] == "pendiente" %}
-                  <a href="/completar_cita/{{ c[0] }}" class="btn btn-sm"
-                     title="Completar" onclick="return confirm('¿Marcar como completada?')">
-                    <i class="bi bi-check-lg"></i>
-                  </a>
-                  <a href="/cancelar_cita/{{ c[0] }}" class="btn btn-danger btn-sm"
-                     title="Cancelar" onclick="return confirm('¿Cancelar esta cita?')">
-                    <i class="bi bi-x-lg"></i>
-                  </a>
+                  <form method="POST" action="/completar_cita/{{ c[0] }}" style="display:inline;">
+                    <button type="submit" class="btn btn-sm" title="Completar"
+                            onclick="return confirm('¿Marcar como completada?')">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                  </form>
+                  <form method="POST" action="/cancelar_cita/{{ c[0] }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm" title="Cancelar"
+                            onclick="return confirm('¿Cancelar esta cita?')">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </form>
                 {% else %}
                   <span class="text-muted" style="font-size:.8rem;">—</span>
                 {% endif %}

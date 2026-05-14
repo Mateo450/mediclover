@@ -60,11 +60,12 @@
               <a href="/editar_paciente/{{ p[0] }}" class="btn btn-ghost btn-sm">
                 <i class="bi bi-pencil"></i>
               </a>
-              <a href="/eliminar_paciente/{{ p[0] }}"
-                 class="btn btn-danger btn-sm"
-                 onclick="return confirm('¿Eliminar a {{ p[1] }} {{ p[2] }}?')">
-                <i class="bi bi-trash"></i>
-              </a>
+              <form method="POST" action="/eliminar_paciente/{{ p[0] }}" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm"
+                        onclick="return confirm('¿Eliminar a {{ p[1] }} {{ p[2] }}? Esta acción no se puede deshacer.')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
             </td>
           </tr>
           {% endfor %}
