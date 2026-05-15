@@ -3,61 +3,59 @@ from functools import wraps
 import psycopg2
 import os
 import random
-import smtplib
 import json
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import urllib.request
 from datetime import date, datetime, timedelta
 import threading
 
-# ── Configuración Gmail SMTP ──────────────────────────────────────────────────
-MAIL_USER = os.getenv("MAIL_USER", "")
-MAIL_PASS = os.getenv("MAIL_PASS", "")
+# ── Configuración de correo via SendGrid ─────────────────────────────────────
+# Render Free bloquea SMTP (puertos 465/587).
+# SendGrid usa HTTPS (puerto 443) que Render sí permite.
+# Crea cuenta gratuita en sendgrid.com y agrega SENDGRID_KEY en Render.
+SENDGRID_KEY = os.getenv("SENDGRID_KEY", "")
+MAIL_USER    = os.getenv("MAIL_USER", "mediclover19@gmail.com")
 
 def enviar_correo(destinatario, asunto, cuerpo_html):
-    """
-    Envía correo via Gmail SMTP con STARTTLS (puerto 587).
-    Más compatible con Render que SSL/465 que a veces está bloqueado.
-    """
-    if not MAIL_USER or not MAIL_PASS:
-        print("⚠️  MAIL_USER o MAIL_PASS no configurados — correo omitido")
+    """Envía correo via SendGrid HTTP API (funciona en Render Free)."""
+    if not SENDGRID_KEY:
+        print("⚠️  SENDGRID_KEY no configurado — correo omitido")
         return False
     try:
-        msg = MIMEText(cuerpo_html, "html", "utf-8")
-        msg["Subject"] = asunto
-        msg["From"]    = f"MediClover <{MAIL_USER}>"
-        msg["To"]      = destinatario
+        payload = json.dumps({
+            "personalizations": [{"to": [{"email": destinatario}]}],
+            "from": {"email": MAIL_USER, "name": "MediClover"},
+            "subject": asunto,
+            "content": [{"type": "text/html", "value": cuerpo_html}]
+        }).encode("utf-8")
 
-        # Puerto 587 con STARTTLS — más compatible con Render Free
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as smtp:
-            smtp.ehlo()
-            smtp.starttls()
-            smtp.ehlo()
-            smtp.login(MAIL_USER, MAIL_PASS)
-            smtp.sendmail(MAIL_USER, destinatario, msg.as_string())
-
-        print(f"✅ Correo enviado a {destinatario}")
-        return True
-    except smtplib.SMTPAuthenticationError:
-        print("❌ Error SMTP: credenciales incorrectas o App Password inválida")
-        print("   Verifica que 2FA esté activado en mediclover19@gmail.com")
-        print("   y que la App Password sea válida en myaccount.google.com/apppasswords")
-        return False
-    except smtplib.SMTPException as e:
-        print(f"❌ Error SMTP: {e}")
-        return False
+        req = urllib.request.Request(
+            "https://api.sendgrid.com/v3/mail/send",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {SENDGRID_KEY}",
+                "Content-Type":  "application/json",
+            },
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status == 202:
+                print(f"✅ Correo enviado a {destinatario}")
+                return True
+            print(f"⚠️  SendGrid status {resp.status}")
+            return False
     except Exception as e:
         print(f"⚠️  Error al enviar correo: {e}")
         return False
 
 
 def enviar_correo_async(destinatario, asunto, cuerpo_html):
-    """Envía el correo en un hilo de fondo — nunca bloquea la respuesta HTTP."""
+    """Envía el correo en un hilo de fondo — no bloquea la respuesta HTTP."""
     threading.Thread(
         target=enviar_correo,
         args=(destinatario, asunto, cuerpo_html),
         daemon=True
     ).start()
+
 
 
 def enviar_confirmacion_cita(correo_paciente, nombre_paciente, fecha, hora, descripcion):
@@ -315,9 +313,19 @@ def init_db():
                 nombre       VARCHAR(100) NOT NULL,
                 apellido     VARCHAR(100) NOT NULL,
                 correo       VARCHAR(150),
-                password     VARCHAR(100) NOT NULL,
+                password     VARCHAR(255) NOT NULL,
                 especialidad VARCHAR(150) DEFAULT 'Médico General'
             )
+        """)
+        # Ampliar password si ya existe con VARCHAR(100)
+        cursor.execute("""
+            ALTER TABLE doctor
+            ALTER COLUMN password TYPE VARCHAR(255)
+        """)
+        # Agregar campo password a paciente (para nuevos registros con contraseña)
+        cursor.execute("""
+            ALTER TABLE paciente
+            ADD COLUMN IF NOT EXISTS password VARCHAR(255)
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS slot (
@@ -957,143 +965,52 @@ def eliminar_slot(id):
 # ================================================================
 # PACIENTE
 # ================================================================
+# ================================================================
+# PACIENTE
+# ================================================================
 @app.route("/login_paciente", methods=["GET", "POST"])
 def login_paciente():
-    """
-    Login con OTP por correo.
-    Paso 1 (GET / POST sin código): el paciente escribe su correo.
-                                     El servidor genera un código de 6 dígitos,
-                                     lo guarda en sesión con expiración de 10 min
-                                     y lo envía por correo.
-    Paso 2 (POST con código):        el paciente escribe el código que recibió.
-                                     Si es correcto y no expiró, inicia sesión.
-    """
     if not get_conn():
         return "Error BD"
+    if request.method == "POST":
+        from werkzeug.security import check_password_hash
+        correo   = request.form.get("correo", "").strip().lower()
+        password = request.form.get("password", "")
 
-    paso = request.form.get("paso", "1")
-
-    # ── PASO 2: verificar el código ──────────────────────────────────────
-    if request.method == "POST" and paso == "2":
-        correo  = request.form.get("correo", "").strip().lower()
-        codigo  = request.form.get("codigo", "").strip()
-
-        # Verificar sesión y expiración
-        if session.get("otp_correo") != correo:
-            return render_template("login_paciente.html",
-                error="Sesión inválida. Vuelve a escribir tu correo.", paso=1)
-
-        expira = session.get("otp_expira")
-        if not expira or datetime.now() > datetime.fromisoformat(expira):
-            session.pop("otp_codigo",  None)
-            session.pop("otp_correo",  None)
-            session.pop("otp_expira",  None)
-            return render_template("login_paciente.html",
-                error="El código expiró. Vuelve a solicitar uno nuevo.", paso=1)
-
-        if session.get("otp_codigo") != codigo:
-            return render_template("login_paciente.html",
-                error="Código incorrecto. Revisa tu correo e intenta de nuevo.",
-                paso=2, correo=correo)
-
-        # Código correcto → buscar paciente y crear sesión
         _db, cursor = get_cursor()
-        cursor.execute("SELECT id_paciente, nombre FROM paciente WHERE correo=%s", (correo,))
+        cursor.execute(
+            "SELECT id_paciente, nombre, password FROM paciente WHERE correo=%s",
+            (correo,)
+        )
         user = cursor.fetchone()
         cursor.close()
 
-        # Limpiar OTP de la sesión
-        session.pop("otp_codigo", None)
-        session.pop("otp_correo", None)
-        session.pop("otp_expira", None)
-
-        if user:
-            session.clear()
-            session["paciente_id"]     = user[0]
-            session["paciente_nombre"] = user[1]
-            session["rol"]             = ROL_PACIENTE
-            return redirect("/panel_paciente")
-        return render_template("login_paciente.html",
-            error="Correo no registrado.", paso=1)
-
-    # ── PASO 1: recibir correo y enviar OTP ──────────────────────────────
-    if request.method == "POST" and paso == "1":
-        correo = request.form.get("correo", "").strip().lower()
-
-        if "@" not in correo or "." not in correo:
+        if not user:
             return render_template("login_paciente.html",
-                error="Escribe un correo válido.", paso=1)
+                error="Correo no registrado. ¿Quieres crear una cuenta?")
 
-        # Verificar que el correo existe
-        _db, cursor = get_cursor()
-        cursor.execute("SELECT id_paciente FROM paciente WHERE correo=%s", (correo,))
-        existe = cursor.fetchone()
-        cursor.close()
+        # Soporte dual: hash werkzeug O texto plano (pacientes existentes sin hash)
+        pwd_ok = False
+        stored = user[2]
+        if stored:
+            try:
+                pwd_ok = check_password_hash(stored, password)
+            except Exception:
+                pass
+            if not pwd_ok:
+                pwd_ok = (stored == password)
 
-        if not existe:
+        if not pwd_ok:
             return render_template("login_paciente.html",
-                error="Ese correo no está registrado. ¿Quieres crear una cuenta?",
-                paso=1)
+                error="Contraseña incorrecta.")
 
-        # Generar código OTP de 6 dígitos
-        codigo = str(random.randint(100000, 999999))
-        session["otp_codigo"] = codigo
-        session["otp_correo"] = correo
-        session["otp_expira"] = (datetime.now() + timedelta(minutes=10)).isoformat()
+        session.clear()
+        session["paciente_id"]     = user[0]
+        session["paciente_nombre"] = user[1]
+        session["rol"]             = ROL_PACIENTE
+        return redirect("/panel_paciente")
 
-        # Enviar el código por correo (asíncrono, no bloquea)
-        cuerpo = f"""
-        <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head>
-        <body style="font-family:Arial,sans-serif;background:#f4f6f9;padding:2rem;margin:0;">
-        <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;
-                    overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);">
-          <div style="background:linear-gradient(135deg,#0b1f3a,#162f55);
-                      padding:2rem;text-align:center;">
-            <div style="font-size:2rem;margin-bottom:.5rem;">🔑</div>
-            <h2 style="margin:0;color:#fff;font-size:1.2rem;">Código de acceso</h2>
-            <p style="margin:.4rem 0 0;color:rgba(255,255,255,.55);font-size:.85rem;">
-              MediClover · Acceso a tu cuenta
-            </p>
-          </div>
-          <div style="padding:2rem;">
-            <p style="color:#334155;font-size:.93rem;margin:0 0 1.5rem;">
-              Usa este código para iniciar sesión en MediClover.
-              Expira en <strong>10 minutos</strong>.
-            </p>
-            <div style="font-size:2.8rem;font-weight:700;letter-spacing:.9rem;
-                        text-align:center;background:#f0fdf4;padding:1.25rem;
-                        border-radius:10px;color:#0a7c5c;margin-bottom:1.5rem;">
-              {codigo}
-            </div>
-            <p style="color:#94a3b8;font-size:.8rem;margin:0;line-height:1.65;">
-              Si no solicitaste este código, ignora este mensaje.
-              Nadie del equipo de MediClover te pedirá este código.
-            </p>
-          </div>
-          <div style="background:#f8fafc;border-top:1px solid #e2e8f0;
-                      padding:1rem 2rem;text-align:center;">
-            <p style="margin:0;font-size:.75rem;color:#94a3b8;">
-              MediClover · Sistema de Gestión de Citas Médicas
-            </p>
-          </div>
-        </div>
-        </body></html>
-        """
-        enviar_correo_async(correo, "Tu código de acceso — MediClover", cuerpo)
-
-        # Modo demo: si el correo no está configurado, mostrar el código en pantalla
-        codigo_demo = None
-        if not MAIL_USER or not MAIL_PASS:
-            codigo_demo = codigo
-            print(f"⚠️  MODO DEMO — OTP para {correo}: {codigo}")
-
-        # Mostrar el paso 2 (campo para escribir el código)
-        return render_template("login_paciente.html",
-                               paso=2, correo=correo,
-                               codigo_demo=codigo_demo)
-
-    # GET normal → mostrar paso 1
-    return render_template("login_paciente.html", paso=1)
+    return render_template("login_paciente.html")
 
 
 @app.route("/registro_paciente", methods=["GET", "POST"])
@@ -1101,11 +1018,14 @@ def registro_paciente():
     if not get_conn():
         return "Error BD"
     if request.method == "POST":
-        nombre   = request.form["nombre"]
-        apellido = request.form["apellido"]
-        correo   = request.form["correo"]
-        telefono = request.form["telefono"]
-        cedula   = request.form["cedula"]
+        from werkzeug.security import generate_password_hash
+        nombre   = request.form.get("nombre", "").strip()
+        apellido = request.form.get("apellido", "").strip()
+        correo   = request.form.get("correo", "").strip().lower()
+        telefono = request.form.get("telefono", "").strip()
+        cedula   = request.form.get("cedula", "").strip()
+        password = request.form.get("password", "")
+        confirm  = request.form.get("confirm_password", "")
 
         if len(nombre) < 3 or not nombre.replace(" ", "").isalpha():
             return render_template("registro_paciente.html", mensaje="Nombre inválido", tipo="error")
@@ -1114,19 +1034,25 @@ def registro_paciente():
         if "@" not in correo:
             return render_template("registro_paciente.html", mensaje="Correo inválido", tipo="error")
         if not telefono.isdigit():
-            return render_template("registro_paciente.html", mensaje="Teléfono inválido", tipo="error")
+            return render_template("registro_paciente.html", mensaje="Teléfono inválido (solo números)", tipo="error")
         if not cedula.isdigit() or len(cedula) != 10:
             return render_template("registro_paciente.html", mensaje="Cédula inválida (10 dígitos)", tipo="error")
+        if len(password) < 6:
+            return render_template("registro_paciente.html", mensaje="La contraseña debe tener mínimo 6 caracteres", tipo="error")
+        if password != confirm:
+            return render_template("registro_paciente.html", mensaje="Las contraseñas no coinciden", tipo="error")
 
         _db, cursor = get_cursor()
-        cursor.execute("SELECT * FROM paciente WHERE correo=%s OR cedula=%s", (correo, cedula))
+        cursor.execute("SELECT id_paciente FROM paciente WHERE correo=%s OR cedula=%s", (correo, cedula))
         if cursor.fetchone():
             cursor.close()
             return render_template("registro_paciente.html", mensaje="Correo o cédula ya registrados", tipo="error")
+
+        pwd_hash = generate_password_hash(password)
         cursor.execute("""
-            INSERT INTO paciente(nombre,apellido,correo,telefono,cedula)
-            VALUES(%s,%s,%s,%s,%s)
-        """, (nombre, apellido, correo, telefono, cedula))
+            INSERT INTO paciente(nombre, apellido, correo, telefono, cedula, password)
+            VALUES(%s, %s, %s, %s, %s, %s)
+        """, (nombre, apellido, correo, telefono, cedula, pwd_hash))
         _db.commit()
         cursor.close()
         return render_template("registro_paciente.html",
