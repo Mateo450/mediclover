@@ -2033,6 +2033,6 @@ def enviar_recordatorios():
 
 
 # Iniciar el hilo de recordatorios si hay configuración de correo
-if MAIL_USER and MAIL_PASS:
+if SENDGRID_KEY:
     threading.Thread(target=enviar_recordatorios, daemon=True).start()
     print("✅ Recordatorios automáticos activados")
