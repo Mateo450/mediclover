@@ -15,7 +15,10 @@ MAIL_USER = os.getenv("MAIL_USER", "")
 MAIL_PASS = os.getenv("MAIL_PASS", "")
 
 def enviar_correo(destinatario, asunto, cuerpo_html):
-    """Envía correo con timeout de 10s. Llama siempre en un hilo separado."""
+    """
+    Envía correo via Gmail SMTP con STARTTLS (puerto 587).
+    Más compatible con Render que SSL/465 que a veces está bloqueado.
+    """
     if not MAIL_USER or not MAIL_PASS:
         print("⚠️  MAIL_USER o MAIL_PASS no configurados — correo omitido")
         return False
@@ -24,12 +27,25 @@ def enviar_correo(destinatario, asunto, cuerpo_html):
         msg["Subject"] = asunto
         msg["From"]    = f"MediClover <{MAIL_USER}>"
         msg["To"]      = destinatario
-        # timeout=10 evita que un SMTP lento bloquee el worker de Gunicorn
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
+
+        # Puerto 587 con STARTTLS — más compatible con Render Free
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.ehlo()
             smtp.login(MAIL_USER, MAIL_PASS)
             smtp.sendmail(MAIL_USER, destinatario, msg.as_string())
+
         print(f"✅ Correo enviado a {destinatario}")
         return True
+    except smtplib.SMTPAuthenticationError:
+        print("❌ Error SMTP: credenciales incorrectas o App Password inválida")
+        print("   Verifica que 2FA esté activado en mediclover19@gmail.com")
+        print("   y que la App Password sea válida en myaccount.google.com/apppasswords")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"❌ Error SMTP: {e}")
+        return False
     except Exception as e:
         print(f"⚠️  Error al enviar correo: {e}")
         return False
@@ -1065,8 +1081,16 @@ def login_paciente():
         """
         enviar_correo_async(correo, "Tu código de acceso — MediClover", cuerpo)
 
+        # Modo demo: si el correo no está configurado, mostrar el código en pantalla
+        codigo_demo = None
+        if not MAIL_USER or not MAIL_PASS:
+            codigo_demo = codigo
+            print(f"⚠️  MODO DEMO — OTP para {correo}: {codigo}")
+
         # Mostrar el paso 2 (campo para escribir el código)
-        return render_template("login_paciente.html", paso=2, correo=correo)
+        return render_template("login_paciente.html",
+                               paso=2, correo=correo,
+                               codigo_demo=codigo_demo)
 
     # GET normal → mostrar paso 1
     return render_template("login_paciente.html", paso=1)
