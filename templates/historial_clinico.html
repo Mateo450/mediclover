@@ -101,7 +101,11 @@
           <span><i class="bi bi-telephone"></i> {{ paciente[4] or '—' }}</span>
         </div>
       </div>
-      <div style="display:flex;gap:.5rem;flex-shrink:0;">
+      <div style="display:flex;gap:.5rem;flex-shrink:0;flex-wrap:wrap;">
+        <a href="/doctor/editar_paciente/{{ paciente[0] }}" class="btn btn-sm btn-ghost"
+           style="white-space:nowrap;">
+          <i class="bi bi-person-gear"></i> Editar paciente
+        </a>
         <a href="/doctor/receta/nueva/{{ paciente[0] }}" class="btn btn-sm btn-outline"
            style="white-space:nowrap;">
           <i class="bi bi-file-earmark-medical"></i> Nueva receta
@@ -183,6 +187,11 @@
                       <i class="bi bi-clock"></i>
                       {{ h[1].strftime('%d/%m/%Y %H:%M') if h[1] else '—' }}
                     </div>
+                    <a href="/doctor/historial_clinico/{{ h[0] }}/editar"
+                       class="btn btn-ghost btn-sm"
+                       title="Editar entrada">
+                      <i class="bi bi-pencil"></i>
+                    </a>
                     <a href="/doctor/historial_clinico/{{ h[0] }}/eliminar"
                        class="btn btn-danger btn-sm"
                        onclick="return confirm('¿Eliminar esta entrada del historial?')"

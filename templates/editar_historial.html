@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Editar historial clínico — MediClover{% endblock %}
+
+{% block contenido %}
+<div class="page-wrap" style="max-width:640px;margin:2rem auto;padding:0 1rem;">
+
+  <div class="page-header">
+    <div>
+      <h1>Editar historial clínico</h1>
+      <p>Corrige los datos de esta entrada. Solo tú puedes editarla.</p>
+    </div>
+  </div>
+
+  <div class="card" style="padding:2rem;">
+    <form method="POST">
+
+      <div class="form-group">
+        <label>Diagnóstico <span style="color:var(--red)">*</span></label>
+        <textarea name="diagnostico" rows="3" required
+                  style="width:100%;resize:vertical;">{{ entrada[2] }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Tratamiento <span style="color:var(--red)">*</span></label>
+        <textarea name="tratamiento" rows="3" required
+                  style="width:100%;resize:vertical;">{{ entrada[3] }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Observaciones</label>
+        <textarea name="observaciones" rows="2"
+                  style="width:100%;resize:vertical;">{{ entrada[4] or '' }}</textarea>
+      </div>
+
+      <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+        <button type="submit" class="btn">
+          <i class="bi bi-check-lg"></i> Guardar cambios
+        </button>
+        <a href="/doctor/historial_clinico/{{ entrada[1] }}" class="btn btn-ghost">
+          Cancelar
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

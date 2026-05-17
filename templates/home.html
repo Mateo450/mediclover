@@ -873,11 +873,26 @@
       </a>
     </div>
 
-    <div class="cta-note reveal">
-      <i class="bi bi-lock-fill"></i>
-      ¿Eres médico?
-      <a href="/login_doctor" style="color:rgba(255,255,255,.4); text-decoration:underline; text-underline-offset:3px;">
-        Acceso médico
+    <div class="cta-note reveal" style="display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;">
+      <a href="/login_doctor"
+         style="display:inline-flex;align-items:center;gap:.45rem;
+                color:rgba(255,255,255,.55);font-size:.82rem;
+                text-decoration:none;border:1px solid rgba(255,255,255,.18);
+                padding:.35rem .9rem;border-radius:99px;
+                transition:all .2s;"
+         onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,.5)'"
+         onmouseout="this.style.color='rgba(255,255,255,.55)';this.style.borderColor='rgba(255,255,255,.18)'">
+        <i class="bi bi-person-badge"></i> Acceso médico
+      </a>
+      <a href="/login"
+         style="display:inline-flex;align-items:center;gap:.45rem;
+                color:rgba(255,255,255,.55);font-size:.82rem;
+                text-decoration:none;border:1px solid rgba(255,255,255,.18);
+                padding:.35rem .9rem;border-radius:99px;
+                transition:all .2s;"
+         onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,.5)'"
+         onmouseout="this.style.color='rgba(255,255,255,.55)';this.style.borderColor='rgba(255,255,255,.18)'">
+        <i class="bi bi-shield-lock"></i> Panel administrativo
       </a>
     </div>
   </div>

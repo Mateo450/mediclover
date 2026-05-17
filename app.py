@@ -593,7 +593,39 @@ def editar_paciente(id):
     cursor.execute("SELECT nombre,apellido,correo,telefono,cedula FROM paciente WHERE id_paciente=%s", (id,))
     paciente = cursor.fetchone()
     cursor.close()
-    return render_template("editar_paciente.html", paciente=paciente)
+    return render_template("editar_paciente.html", paciente=paciente, origen="admin")
+
+
+@app.route("/doctor/editar_paciente/<int:id>", methods=["GET", "POST"])
+@login_required(role="doctor")
+def doctor_editar_paciente(id):
+    """El doctor puede corregir los datos básicos de un paciente desde su panel."""
+    _db, cursor = get_cursor()
+    if request.method == "POST":
+        nombre    = request.form.get("nombre", "").strip()
+        apellido  = request.form.get("apellido", "").strip()
+        telefono  = request.form.get("telefono", "").strip()
+        # El doctor puede editar nombre, apellido y teléfono
+        # No modifica correo ni cédula (esos son identificadores únicos)
+        if not nombre or not apellido:
+            cursor.close()
+            return redirect(request.referrer or "/doctor/historial")
+        cursor.execute("""
+            UPDATE paciente SET nombre=%s, apellido=%s, telefono=%s
+            WHERE id_paciente=%s
+        """, (nombre, apellido, telefono, id))
+        _db.commit()
+        cursor.close()
+        return redirect(f"/doctor/historial_clinico/{id}")
+    cursor.execute("""
+        SELECT id_paciente, nombre, apellido, correo, telefono, cedula
+        FROM paciente WHERE id_paciente=%s
+    """, (id,))
+    paciente = cursor.fetchone()
+    cursor.close()
+    if not paciente:
+        return redirect("/doctor/historial")
+    return render_template("editar_paciente.html", paciente=paciente, origen="doctor")
 
 
 @app.route("/eliminar_paciente/<int:id>", methods=["POST"])
@@ -1374,6 +1406,46 @@ def eliminar_entrada_historial(id_historial):
     _db.commit()
     cursor.close()
     return redirect(request.referrer or "/doctor/historial")
+
+
+@app.route("/doctor/historial_clinico/<int:id_historial>/editar", methods=["GET", "POST"])
+@login_required(role="doctor")
+def editar_entrada_historial(id_historial):
+    """El doctor puede corregir una entrada de historial clínico que registró él mismo."""
+    _db, cursor = get_cursor()
+    if request.method == "POST":
+        diagnostico   = request.form.get("diagnostico", "").strip()
+        tratamiento   = request.form.get("tratamiento", "").strip()
+        observaciones = request.form.get("observaciones", "").strip()
+        if not diagnostico or not tratamiento:
+            cursor.close()
+            return redirect(request.referrer or "/doctor/historial")
+        cursor.execute("""
+            UPDATE historial_clinico
+            SET diagnostico=%s, tratamiento=%s, observaciones=%s
+            WHERE id_historial=%s AND id_doctor=%s
+        """, (diagnostico, tratamiento, observaciones, id_historial, session["doctor_id"]))
+        _db.commit()
+        # Obtener el id_paciente para redirigir al historial correcto
+        cursor.execute("SELECT id_paciente FROM historial_clinico WHERE id_historial=%s",
+                       (id_historial,))
+        row = cursor.fetchone()
+        cursor.close()
+        if row:
+            return redirect(f"/doctor/historial_clinico/{row[0]}")
+        return redirect("/doctor/historial")
+
+    # GET → cargar la entrada actual
+    cursor.execute("""
+        SELECT id_historial, id_paciente, diagnostico, tratamiento, observaciones
+        FROM historial_clinico
+        WHERE id_historial=%s AND id_doctor=%s
+    """, (id_historial, session["doctor_id"]))
+    entrada = cursor.fetchone()
+    cursor.close()
+    if not entrada:
+        return redirect("/doctor/historial")
+    return render_template("editar_historial.html", entrada=entrada)
 
 
 # ── Panel del paciente: ver su propio historial clínico ──────────
