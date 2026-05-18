@@ -2,70 +2,109 @@
 {% block title %}Editar mi perfil — MediClover{% endblock %}
 
 {% block contenido %}
-<div class="auth-wrap" style="align-items:flex-start;padding-top:2.5rem;">
-  <div class="auth-card" style="max-width:480px;">
+<div style="max-width:520px;margin:2.5rem auto;padding:0 1rem;">
 
-    <div class="auth-top">
-      <div class="auth-emblem"><i class="bi bi-person-gear"></i></div>
-      <h2>Editar mi perfil</h2>
-      <p>Puedes cambiar tu nombre y teléfono</p>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#0b1f3a,#162f55);padding:1.75rem 2rem;">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div style="width:48px;height:48px;border-radius:50%;background:rgba(10,124,92,.3);border:2px solid rgba(110,231,196,.3);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#6ee7c4;">
+          <i class="bi bi-person-gear"></i>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;font-weight:700;">Configuración</div>
+          <div style="font-size:1.2rem;font-weight:700;color:#fff;">Editar mi perfil</div>
+        </div>
+      </div>
     </div>
 
-    <div class="auth-body">
+    <!-- Formulario -->
+    <div style="padding:2rem;">
 
       {% if error %}
-        <div class="alert error">
-          <i class="bi bi-x-circle-fill"></i> {{ error }}
-        </div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.6rem;color:#dc2626;font-size:.87rem;font-weight:600;">
+        <i class="bi bi-x-circle-fill"></i> {{ error }}
+      </div>
+      {% endif %}
+
+      {% if request.args.get('ok') %}
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:.85rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.6rem;color:#16a34a;font-size:.87rem;font-weight:600;">
+        <i class="bi bi-check-circle-fill"></i> Perfil actualizado correctamente.
+      </div>
       {% endif %}
 
       <form method="POST">
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">
-          <div class="form-group">
-            <label>Nombre</label>
-            <input type="text" name="nombre"
-                   value="{{ paciente[0] }}" required minlength="2">
+          <div style="margin-bottom:1rem;">
+            <label style="font-size:.8rem;font-weight:700;color:#0b1f3a;display:block;margin-bottom:.35rem;">
+              Nombre <span style="color:#dc2626">*</span>
+            </label>
+            <input type="text" name="nombre" value="{{ paciente[0] }}"
+                   required minlength="2"
+                   style="width:100%;padding:.65rem .85rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;outline:none;transition:border-color .18s;box-sizing:border-box;"
+                   onfocus="this.style.borderColor='#0a7c5c'"
+                   onblur="this.style.borderColor='#e2e8f0'">
           </div>
-          <div class="form-group">
-            <label>Apellido</label>
-            <input type="text" name="apellido"
-                   value="{{ paciente[1] }}" required minlength="2">
+          <div style="margin-bottom:1rem;">
+            <label style="font-size:.8rem;font-weight:700;color:#0b1f3a;display:block;margin-bottom:.35rem;">
+              Apellido <span style="color:#dc2626">*</span>
+            </label>
+            <input type="text" name="apellido" value="{{ paciente[1] }}"
+                   required minlength="2"
+                   style="width:100%;padding:.65rem .85rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;outline:none;transition:border-color .18s;box-sizing:border-box;"
+                   onfocus="this.style.borderColor='#0a7c5c'"
+                   onblur="this.style.borderColor='#e2e8f0'">
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Correo electrónico</label>
-          <input type="email" value="{{ paciente[2] }}" disabled
-                 style="background:var(--gray-100);color:var(--gray-500);cursor:not-allowed;">
-          <small style="font-size:.72rem;color:var(--gray-400);margin-top:.25rem;display:block;">
-            <i class="bi bi-lock"></i> El correo no se puede cambiar
-          </small>
+        <div style="margin-bottom:1rem;">
+          <label style="font-size:.8rem;font-weight:700;color:#0b1f3a;display:block;margin-bottom:.35rem;">
+            Correo electrónico <span style="color:#dc2626">*</span>
+          </label>
+          <input type="email" name="correo" value="{{ paciente[2] }}"
+                 required
+                 style="width:100%;padding:.65rem .85rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;outline:none;transition:border-color .18s;box-sizing:border-box;"
+                 onfocus="this.style.borderColor='#0a7c5c'"
+                 onblur="this.style.borderColor='#e2e8f0'">
         </div>
 
-        <div class="form-group">
-          <label>Teléfono</label>
-          <input type="text" name="telefono"
-                 value="{{ paciente[3] or '' }}"
-                 placeholder="0991234567"
-                 pattern="[0-9]{7,10}" maxlength="10">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">
+          <div style="margin-bottom:1rem;">
+            <label style="font-size:.8rem;font-weight:700;color:#0b1f3a;display:block;margin-bottom:.35rem;">
+              Teléfono
+            </label>
+            <input type="text" name="telefono" value="{{ paciente[3] or '' }}"
+                   placeholder="0991234567" pattern="[0-9]{7,10}" maxlength="10"
+                   style="width:100%;padding:.65rem .85rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;outline:none;transition:border-color .18s;box-sizing:border-box;"
+                   onfocus="this.style.borderColor='#0a7c5c'"
+                   onblur="this.style.borderColor='#e2e8f0'">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label style="font-size:.8rem;font-weight:700;color:#94a3b8;display:block;margin-bottom:.35rem;">
+              Cédula
+            </label>
+            <input type="text" value="{{ paciente[4] }}" disabled
+                   style="width:100%;padding:.65rem .85rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;background:#f8fafc;color:#94a3b8;cursor:not-allowed;box-sizing:border-box;">
+            <div style="font-size:.71rem;color:#94a3b8;margin-top:.2rem;">
+              <i class="bi bi-lock"></i> No se puede modificar
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Cédula</label>
-          <input type="text" value="{{ paciente[4] }}" disabled
-                 style="background:var(--gray-100);color:var(--gray-500);cursor:not-allowed;">
-          <small style="font-size:.72rem;color:var(--gray-400);margin-top:.25rem;display:block;">
-            <i class="bi bi-lock"></i> La cédula no se puede cambiar
-          </small>
-        </div>
-
-        <button type="submit" class="btn btn-block">
+        <button type="submit"
+                style="width:100%;padding:.8rem;background:#0a7c5c;color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:.5rem;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:.5rem;"
+                onmouseover="this.style.background='#0d9470'"
+                onmouseout="this.style.background='#0a7c5c'">
           <i class="bi bi-floppy-fill"></i> Guardar cambios
         </button>
       </form>
 
-      <div class="auth-footer">
-        <a href="/panel_paciente">← Volver a mi panel</a>
+      <div style="text-align:center;margin-top:1.25rem;">
+        <a href="/panel_paciente" style="font-size:.83rem;color:#64748b;text-decoration:none;">
+          <i class="bi bi-arrow-left"></i> Volver a mi panel
+        </a>
       </div>
     </div>
   </div>

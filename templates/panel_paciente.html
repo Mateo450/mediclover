@@ -3,152 +3,218 @@
 
 {% block extra_head %}
 <style>
-.pac-wrap{max-width:1100px;margin:0 auto;padding:2rem 1.25rem 3rem;}
+.pw { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
 
-/* Hero */
-.pac-hero{background:linear-gradient(135deg,#0b1f3a 0%,#162f55 60%,#0a3d2e 100%);border-radius:18px;padding:2rem 2.25rem;display:flex;align-items:center;justify-content:space-between;gap:1.25rem;margin-bottom:1.75rem;box-shadow:0 8px 32px rgba(11,31,58,.22);flex-wrap:wrap;position:relative;overflow:hidden;}
-.pac-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(10,124,92,.12);pointer-events:none;}
-.pac-hero-avatar{width:56px;height:56px;border-radius:50%;background:rgba(10,124,92,.25);border:2px solid rgba(110,231,196,.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#6ee7c4;flex-shrink:0;}
-.pac-hero-saludo{font-size:.7rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.2rem;}
-.pac-hero-nombre{font-size:1.55rem;font-weight:700;color:#fff;line-height:1.2;}
-.pac-hero-sub{font-size:.8rem;color:rgba(255,255,255,.45);margin-top:.25rem;}
-.pac-hero-actions{display:flex;gap:.65rem;flex-wrap:wrap;}
+/* ── Bienvenida ── */
+.pw-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+}
+.pw-title { font-size: 1.6rem; font-weight: 800; color: #0b1f3a; }
+.pw-subtitle { font-size: .88rem; color: #64748b; margin-top: .2rem; }
 
-/* Stats */
-.pac-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem;}
-@media(max-width:640px){.pac-stats{grid-template-columns:repeat(2,1fr);}}
-.pac-stat{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1.2rem 1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.05);position:relative;overflow:hidden;}
-.pac-stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 14px 14px;}
-.pac-stat.s-total::after{background:#0a7c5c;}
-.pac-stat.s-pend::after{background:#d97706;}
-.pac-stat.s-comp::after{background:#16a34a;}
-.pac-stat.s-canc::after{background:#dc2626;}
-.pac-stat-num{font-size:2rem;font-weight:800;line-height:1;}
-.pac-stat.s-total .pac-stat-num{color:#0a7c5c;}
-.pac-stat.s-pend  .pac-stat-num{color:#d97706;}
-.pac-stat.s-comp  .pac-stat-num{color:#16a34a;}
-.pac-stat.s-canc  .pac-stat-num{color:#dc2626;}
-.pac-stat-lbl{font-size:.73rem;color:#64748b;font-weight:600;margin-top:.3rem;text-transform:uppercase;letter-spacing:.06em;}
+/* ── Stats ── */
+.pw-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .85rem; margin-bottom: 2rem;
+}
+@media(max-width:600px){ .pw-stats{ grid-template-columns: repeat(2,1fr); } }
+.pw-stat {
+  background: #fff; border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 1.1rem 1.25rem;
+  border-top: 3px solid transparent;
+}
+.pw-stat.total { border-top-color: #0a7c5c; }
+.pw-stat.pend  { border-top-color: #d97706; }
+.pw-stat.comp  { border-top-color: #16a34a; }
+.pw-stat.canc  { border-top-color: #dc2626; }
+.pw-stat-n { font-size: 1.85rem; font-weight: 800; line-height: 1; }
+.pw-stat.total .pw-stat-n { color: #0a7c5c; }
+.pw-stat.pend  .pw-stat-n { color: #d97706; }
+.pw-stat.comp  .pw-stat-n { color: #16a34a; }
+.pw-stat.canc  .pw-stat-n { color: #dc2626; }
+.pw-stat-l { font-size: .74rem; color: #64748b; font-weight: 600;
+             text-transform: uppercase; letter-spacing: .05em; margin-top: .25rem; }
 
-/* Notificaciones */
-.notif-card{border-radius:12px;margin-bottom:.6rem;border:1.5px solid;overflow:hidden;}
-.notif-card.completada{background:#f0fdf4;border-color:#bbf7d0;}
-.notif-card.cancelada{background:#fef2f2;border-color:#fecaca;}
-.notif-inner{display:flex;align-items:center;gap:.85rem;padding:.9rem 1.1rem;}
-.notif-ico{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.notif-card.completada .notif-ico{background:#dcfce7;color:#16a34a;}
-.notif-card.cancelada .notif-ico{background:#fee2e2;color:#dc2626;}
-.notif-msg{font-size:.86rem;color:#0b1f3a;line-height:1.5;}
-.notif-when{font-size:.74rem;color:#94a3b8;margin-top:.1rem;}
-.notif-close{background:none;border:none;cursor:pointer;color:#94a3b8;padding:.2rem .5rem;border-radius:6px;font-size:.8rem;transition:all .18s;}
-.notif-close:hover{background:rgba(0,0,0,.06);}
-.notif-badge{background:#dc2626;color:#fff;font-size:.7rem;font-weight:700;padding:.1rem .42rem;border-radius:99px;}
+/* ── Notificaciones ── */
+.notif {
+  border-radius: 10px; border: 1.5px solid;
+  margin-bottom: .55rem; overflow: hidden;
+}
+.notif.completada { background: #f0fdf4; border-color: #bbf7d0; }
+.notif.cancelada  { background: #fef2f2; border-color: #fecaca; }
+.notif-row { display: flex; align-items: center; gap: .75rem; padding: .8rem 1rem; }
+.notif-icon { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+              display: flex; align-items: center; justify-content: center; font-size: .95rem; }
+.notif.completada .notif-icon { background: #dcfce7; color: #16a34a; }
+.notif.cancelada  .notif-icon { background: #fee2e2; color: #dc2626; }
+.notif-txt { flex: 1; font-size: .84rem; color: #0b1f3a; line-height: 1.45; }
+.notif-time { font-size: .72rem; color: #94a3b8; }
+.notif-x { background: none; border: none; color: #94a3b8; cursor: pointer;
+            padding: .2rem .45rem; border-radius: 6px; font-size: .78rem; }
+.notif-x:hover { background: rgba(0,0,0,.06); }
 
-/* Próxima cita */
-.proxima{background:linear-gradient(135deg,#0a7c5c,#0d9470);border-radius:14px;padding:1.3rem 1.6rem;display:flex;align-items:center;gap:1.1rem;margin-bottom:1.75rem;box-shadow:0 4px 20px rgba(10,124,92,.25);flex-wrap:wrap;}
-.proxima-ico{width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;}
-.proxima-lbl{font-size:.7rem;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.18rem;}
-.proxima-fecha{font-size:1.1rem;font-weight:700;color:#fff;}
-.proxima-meta{font-size:.8rem;color:rgba(255,255,255,.65);margin-top:.1rem;}
+/* ── Próxima cita banner ── */
+.banner-proxima {
+  background: linear-gradient(135deg, #0a7c5c, #0d9470);
+  border-radius: 14px; padding: 1.25rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 2rem; flex-wrap: wrap;
+  box-shadow: 0 4px 18px rgba(10,124,92,.2);
+}
+.banner-ico { width: 44px; height: 44px; background: rgba(255,255,255,.18);
+              border-radius: 10px; display: flex; align-items: center;
+              justify-content: center; font-size: 1.25rem; color: #fff; flex-shrink: 0; }
+.banner-label { font-size: .69rem; color: rgba(255,255,255,.65);
+                text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+.banner-fecha { font-size: 1.05rem; font-weight: 700; color: #fff; }
+.banner-meta  { font-size: .78rem; color: rgba(255,255,255,.65); }
 
-/* Accesos rápidos */
-.pac-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;margin-bottom:1.75rem;}
-.pac-quick-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1.1rem 1.2rem;text-decoration:none;display:flex;align-items:center;gap:.85rem;transition:all .2s;box-shadow:0 2px 6px rgba(0,0,0,.04);}
-.pac-quick-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.1);border-color:#0a7c5c;}
-.pac-quick-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
-.pac-quick-ico.teal{background:#e6f7f2;color:#0a7c5c;}
-.pac-quick-ico.amber{background:#fff8eb;color:#d97706;}
-.pac-quick-ico.navy{background:#dde6f5;color:#0b1f3a;}
-.pac-quick-name{font-size:.85rem;font-weight:700;color:#0b1f3a;}
-.pac-quick-desc{font-size:.73rem;color:#64748b;margin-top:.05rem;}
+/* ── Accesos rápidos ── */
+.pw-grid3 { display: grid; grid-template-columns: repeat(3,1fr);
+            gap: .85rem; margin-bottom: 2rem; }
+@media(max-width:520px){ .pw-grid3{ grid-template-columns: 1fr; } }
+.pw-card {
+  background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 12px; padding: 1rem 1.2rem;
+  display: flex; align-items: center; gap: .85rem;
+  text-decoration: none; transition: all .2s;
+}
+.pw-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.09);
+                 border-color: #0a7c5c; transform: translateY(-2px); }
+.pw-card-ico { width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
+               display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+.pw-card-ico.t { background: #e6f7f2; color: #0a7c5c; }
+.pw-card-ico.a { background: #fff8eb; color: #d97706; }
+.pw-card-ico.n { background: #dde6f5; color: #0b1f3a; }
+.pw-card-name { font-size: .85rem; font-weight: 700; color: #0b1f3a; }
+.pw-card-desc { font-size: .72rem; color: #64748b; margin-top: .04rem; }
 
-/* Citas */
-.citas-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
-.citas-title{font-size:1.05rem;font-weight:700;color:#0b1f3a;display:flex;align-items:center;gap:.5rem;}
-.filtro-tabs{display:flex;gap:.38rem;flex-wrap:wrap;}
-.filtro-tab{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .72rem;border-radius:99px;font-size:.78rem;font-weight:600;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;transition:all .18s;color:#64748b;}
-.filtro-tab:hover,.filtro-tab.active{border-color:#0a7c5c;background:#e6f7f2;color:#0a7c5c;}
-.filtro-tab.amber{border-color:#d97706;background:#fff8eb;color:#d97706;}
-.filtro-tab.green{border-color:#16a34a;background:#f0fdf4;color:#16a34a;}
-.filtro-tab.red{border-color:#dc2626;background:#fef2f2;color:#dc2626;}
+/* ── Sección citas ── */
+.pw-section-hd {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem;
+}
+.pw-section-title { font-size: .98rem; font-weight: 700; color: #0b1f3a;
+                    display: flex; align-items: center; gap: .45rem; }
+.ftabs { display: flex; gap: .35rem; flex-wrap: wrap; }
+.ft {
+  padding: .28rem .7rem; border-radius: 99px;
+  font-size: .77rem; font-weight: 600;
+  border: 1.5px solid #e2e8f0; background: #fff;
+  cursor: pointer; color: #64748b; transition: all .18s;
+}
+.ft:hover, .ft.on { border-color: #0a7c5c; background: #e6f7f2; color: #0a7c5c; }
+.ft.on.am { border-color: #d97706; background: #fff8eb; color: #d97706; }
+.ft.on.gr { border-color: #16a34a; background: #f0fdf4; color: #16a34a; }
+.ft.on.re { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
 
-.cita-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:1rem 1.4rem;margin-bottom:.65rem;display:flex;align-items:center;gap:1rem;box-shadow:0 2px 6px rgba(0,0,0,.04);transition:box-shadow .2s;flex-wrap:wrap;}
-.cita-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.09);}
-.cita-fecha-bloque{display:flex;flex-direction:column;align-items:center;min-width:60px;background:#e6f7f2;border-radius:10px;padding:.6rem .5rem;flex-shrink:0;text-align:center;}
-.cita-dia{font-size:1.55rem;font-weight:800;color:#0a7c5c;line-height:1;}
-.cita-mes{font-size:.65rem;text-transform:uppercase;color:#0a7c5c;font-weight:700;letter-spacing:.06em;}
-.cita-hora-lbl{font-size:.72rem;color:#94a3b8;margin-top:.12rem;}
-.cita-body{flex:1;min-width:0;}
-.cita-doctor-name{font-size:.92rem;font-weight:700;color:#0b1f3a;}
-.cita-motivo{font-size:.8rem;color:#64748b;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;}
-.cita-actions{display:flex;align-items:center;gap:.65rem;flex-shrink:0;}
+/* ── Filas de cita ── */
+.cita-row {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: .9rem 1.2rem; margin-bottom: .6rem;
+  display: flex; align-items: center; gap: 1rem;
+  transition: box-shadow .18s; flex-wrap: wrap;
+}
+.cita-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+.cita-date {
+  min-width: 54px; background: #e6f7f2; border-radius: 9px;
+  padding: .5rem; text-align: center; flex-shrink: 0;
+}
+.cita-date-d { font-size: 1.4rem; font-weight: 800; color: #0a7c5c; line-height: 1; }
+.cita-date-m { font-size: .62rem; text-transform: uppercase; color: #0a7c5c;
+               font-weight: 700; letter-spacing: .05em; }
+.cita-date-h { font-size: .69rem; color: #94a3b8; margin-top: .1rem; }
+.cita-info { flex: 1; min-width: 0; }
+.cita-dr { font-size: .88rem; font-weight: 700; color: #0b1f3a; }
+.cita-mot { font-size: .78rem; color: #64748b; margin-top: .06rem;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+.cita-end { display: flex; align-items: center; gap: .6rem; flex-shrink: 0; }
 
-/* Badges de estado */
-.badge.estado.pendiente{background:#fff8eb;color:#d97706;border:1px solid #fde68a;padding:.2rem .7rem;border-radius:99px;font-size:.75rem;font-weight:700;}
-.badge.estado.completada{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:.2rem .7rem;border-radius:99px;font-size:.75rem;font-weight:700;}
-.badge.estado.cancelada{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:.2rem .7rem;border-radius:99px;font-size:.75rem;font-weight:700;}
+.badge-p { background: #fff8eb; color: #d97706; border: 1px solid #fde68a;
+            padding: .18rem .65rem; border-radius: 99px; font-size: .73rem; font-weight: 700; }
+.badge-c { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+            padding: .18rem .65rem; border-radius: 99px; font-size: .73rem; font-weight: 700; }
+.badge-x { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+            padding: .18rem .65rem; border-radius: 99px; font-size: .73rem; font-weight: 700; }
 </style>
 {% endblock %}
 
 {% block contenido %}
-<div class="pac-wrap">
+<div class="pw">
 
-  <!-- HEADER HERO -->
-  <div class="pac-hero">
-    <div class="pac-hero-avatar"><i class="bi bi-person-fill"></i></div>
-    <div style="flex:1;">
-      <div class="pac-hero-saludo">Bienvenido de vuelta</div>
-      <div class="pac-hero-nombre">{{ session["paciente_nombre"] }}</div>
-      <div class="pac-hero-sub">
-        <i class="bi bi-shield-check" style="color:#6ee7c4;margin-right:.3rem;"></i>
-        Consultorio Dr. Luis Suárez · Quito, Ecuador
+  <!-- Encabezado -->
+  <div class="pw-header">
+    <div>
+      <div class="pw-title">
+        <i class="bi bi-house-fill" style="color:#0a7c5c;margin-right:.4rem;font-size:1.3rem;vertical-align:middle;"></i>
+        Mi Panel
       </div>
+      <div class="pw-subtitle">Hola, <strong>{{ session["paciente_nombre"] }}</strong> · Consultorio Dr. Luis Suárez</div>
     </div>
-    <div class="pac-hero-actions">
-      <a href="/reservar" class="btn" style="background:#fff;color:#0b1f3a;border:none;font-weight:700;">
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+      <a href="/reservar" class="btn">
         <i class="bi bi-plus-circle-fill"></i> Nueva cita
       </a>
-      <a href="/editar_perfil" class="btn btn-ghost"
-         style="border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.7);">
+      <a href="/editar_perfil" class="btn btn-ghost">
         <i class="bi bi-person-gear"></i> Mi perfil
       </a>
     </div>
   </div>
 
-  <!-- NOTIFICACIONES -->
+  <!-- Stats -->
+  <div class="pw-stats">
+    <div class="pw-stat total">
+      <div class="pw-stat-n">{{ citas|length }}</div>
+      <div class="pw-stat-l">Total</div>
+    </div>
+    <div class="pw-stat pend">
+      <div class="pw-stat-n">{{ n_pend }}</div>
+      <div class="pw-stat-l">Pendientes</div>
+    </div>
+    <div class="pw-stat comp">
+      <div class="pw-stat-n">{{ n_comp }}</div>
+      <div class="pw-stat-l">Completadas</div>
+    </div>
+    <div class="pw-stat canc">
+      <div class="pw-stat-n">{{ n_canc }}</div>
+      <div class="pw-stat-l">Canceladas</div>
+    </div>
+  </div>
+
+  <!-- Notificaciones -->
   {% if notificaciones %}
   <div style="margin-bottom:1.5rem;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
-      <div style="display:flex;align-items:center;gap:.5rem;font-weight:700;color:#0b1f3a;font-size:.92rem;">
-        <i class="bi bi-bell-fill" style="color:#d97706;"></i>
-        Notificaciones
-        <span class="notif-badge">{{ notificaciones|length }}</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
+      <div style="font-size:.9rem;font-weight:700;color:#0b1f3a;display:flex;align-items:center;gap:.45rem;">
+        <i class="bi bi-bell-fill" style="color:#d97706;"></i> Notificaciones
+        <span style="background:#dc2626;color:#fff;font-size:.68rem;font-weight:700;padding:.08rem .4rem;border-radius:99px;">{{ notificaciones|length }}</span>
       </div>
       {% if notificaciones|length > 1 %}
       <form method="POST" action="/leer_todas_notificaciones" style="margin:0;">
-        <button type="submit" class="notif-close">
-          <i class="bi bi-check-all"></i> Marcar todas como leídas
+        <button type="submit" class="notif-x">
+          <i class="bi bi-check-all"></i> Limpiar todas
         </button>
       </form>
       {% endif %}
     </div>
-    {% for notif in notificaciones %}
-    <div class="notif-card {{ notif[1] }}">
-      <div class="notif-inner">
-        <div class="notif-ico">
-          {% if notif[1] == 'completada' %}<i class="bi bi-check-circle-fill"></i>
+    {% for n in notificaciones %}
+    <div class="notif {{ n[1] }}">
+      <div class="notif-row">
+        <div class="notif-icon">
+          {% if n[1] == 'completada' %}<i class="bi bi-check-circle-fill"></i>
           {% else %}<i class="bi bi-x-circle-fill"></i>{% endif %}
         </div>
         <div style="flex:1;">
-          <div class="notif-msg">{{ notif[2] }}</div>
-          <div class="notif-when">
-            <i class="bi bi-clock" style="margin-right:.2rem;"></i>
-            {{ notif[3].strftime('%d/%m/%Y a las %H:%M') if notif[3] else '' }}
-          </div>
+          <div class="notif-txt">{{ n[2] }}</div>
+          <div class="notif-time">{{ n[3].strftime('%d/%m/%Y %H:%M') if n[3] else '' }}</div>
         </div>
-        <form method="POST" action="/leer_notificacion/{{ notif[0] }}" style="margin:0;">
-          <button type="submit" class="notif-close" title="Cerrar">
-            <i class="bi bi-x-lg"></i>
+        <form method="POST" action="/leer_notificacion/{{ n[0] }}" style="margin:0;">
+          <button type="submit" class="notif-x" title="Cerrar">
+            <i class="bi bi-x"></i>
           </button>
         </form>
       </div>
@@ -157,37 +223,17 @@
   </div>
   {% endif %}
 
-  <!-- ESTADÍSTICAS -->
-  <div class="pac-stats">
-    <div class="pac-stat s-total">
-      <div class="pac-stat-num">{{ citas|length }}</div>
-      <div class="pac-stat-lbl">Total citas</div>
-    </div>
-    <div class="pac-stat s-pend">
-      <div class="pac-stat-num">{{ n_pend }}</div>
-      <div class="pac-stat-lbl">Pendientes</div>
-    </div>
-    <div class="pac-stat s-comp">
-      <div class="pac-stat-num">{{ n_comp }}</div>
-      <div class="pac-stat-lbl">Completadas</div>
-    </div>
-    <div class="pac-stat s-canc">
-      <div class="pac-stat-num">{{ n_canc }}</div>
-      <div class="pac-stat-lbl">Canceladas</div>
-    </div>
-  </div>
-
-  <!-- PRÓXIMA CITA -->
+  <!-- Próxima cita -->
   {% if proxima %}
-  <div class="proxima">
-    <div class="proxima-ico"><i class="bi bi-calendar-check-fill"></i></div>
+  <div class="banner-proxima">
+    <div class="banner-ico"><i class="bi bi-calendar-check-fill"></i></div>
     <div style="flex:1;">
-      <div class="proxima-lbl"><i class="bi bi-clock" style="margin-right:.3rem;"></i>Tu próxima cita</div>
-      <div class="proxima-fecha">
-        {{ proxima[1].strftime('%A %d de %B') if proxima[1] else proxima[1] }}
-        a las {{ proxima[2].strftime('%H:%M') if proxima[2] else proxima[2] }}
+      <div class="banner-label">Tu próxima cita</div>
+      <div class="banner-fecha">
+        {{ proxima[1].strftime('%A %d de %B de %Y') if proxima[1] else proxima[1] }}
+        · {{ proxima[2].strftime('%H:%M') if proxima[2] else '' }}
       </div>
-      <div class="proxima-meta">Dr. Luis Suárez · Médico General · {{ proxima[4] or '' }}</div>
+      <div class="banner-meta">Dr. Luis Suárez · {{ proxima[4] or '' }}</div>
     </div>
     <form method="POST" action="/cancelar_cita_paciente/{{ proxima[0] }}"
           onsubmit="return confirm('¿Cancelar esta cita?')" style="margin:0;">
@@ -198,125 +244,106 @@
   </div>
   {% endif %}
 
-  <!-- ACCESOS RÁPIDOS -->
-  <div class="pac-quick">
-    <a href="/mi_historial" class="pac-quick-card">
-      <div class="pac-quick-ico teal"><i class="bi bi-journal-medical"></i></div>
+  <!-- Accesos rápidos -->
+  <div class="pw-grid3">
+    <a href="/mi_historial" class="pw-card">
+      <div class="pw-card-ico t"><i class="bi bi-journal-medical"></i></div>
       <div>
-        <div class="pac-quick-name">Mi Historial</div>
-        <div class="pac-quick-desc">Diagnósticos y tratamientos</div>
+        <div class="pw-card-name">Mi Historial</div>
+        <div class="pw-card-desc">Diagnósticos y tratamientos</div>
       </div>
     </a>
-    <a href="/mis_recetas" class="pac-quick-card">
-      <div class="pac-quick-ico amber"><i class="bi bi-file-earmark-medical"></i></div>
+    <a href="/mis_recetas" class="pw-card">
+      <div class="pw-card-ico a"><i class="bi bi-file-earmark-medical"></i></div>
       <div>
-        <div class="pac-quick-name">Mis Recetas</div>
-        <div class="pac-quick-desc">Recetas digitales emitidas</div>
+        <div class="pw-card-name">Mis Recetas</div>
+        <div class="pw-card-desc">Recetas digitales emitidas</div>
       </div>
     </a>
-    <a href="/editar_perfil" class="pac-quick-card">
-      <div class="pac-quick-ico navy"><i class="bi bi-person-gear"></i></div>
+    <a href="/editar_perfil" class="pw-card">
+      <div class="pw-card-ico n"><i class="bi bi-person-gear"></i></div>
       <div>
-        <div class="pac-quick-name">Mi Perfil</div>
-        <div class="pac-quick-desc">Editar mis datos</div>
+        <div class="pw-card-name">Mi Perfil</div>
+        <div class="pw-card-desc">Editar mis datos</div>
       </div>
     </a>
   </div>
 
-  <!-- LISTA DE CITAS -->
+  <!-- Citas -->
   {% if citas %}
-  <div class="citas-hd">
-    <div class="citas-title">
-      <i class="bi bi-calendar3" style="color:#0a7c5c;"></i> Mis citas médicas
+  <div class="pw-section-hd">
+    <div class="pw-section-title">
+      <i class="bi bi-calendar3" style="color:#0a7c5c;"></i> Mis citas
     </div>
-    <div class="filtro-tabs">
-      <button class="filtro-tab active" onclick="filtrar('todas',this,'')">
-        <i class="bi bi-list-ul"></i> Todas
-        <span style="background:#e2e8f0;color:#64748b;border-radius:99px;padding:.02rem .4rem;font-size:.68rem;">{{ citas|length }}</span>
-      </button>
-      <button class="filtro-tab" onclick="filtrar('pendiente',this,'amber')">
-        <i class="bi bi-hourglass-split"></i> Pendientes
-      </button>
-      <button class="filtro-tab" onclick="filtrar('completada',this,'green')">
-        <i class="bi bi-check-circle"></i> Completadas
-      </button>
-      <button class="filtro-tab" onclick="filtrar('cancelada',this,'red')">
-        <i class="bi bi-x-circle"></i> Canceladas
-      </button>
+    <div class="ftabs">
+      <button class="ft on" onclick="fil('todas',this,'')">Todas <span style="font-size:.68rem;color:#94a3b8;">{{ citas|length }}</span></button>
+      <button class="ft"    onclick="fil('pendiente',this,'am')">Pendientes</button>
+      <button class="ft"    onclick="fil('completada',this,'gr')">Completadas</button>
+      <button class="ft"    onclick="fil('cancelada',this,'re')">Canceladas</button>
     </div>
   </div>
 
-  <div id="listaCitas">
+  <div id="lc">
     {% for c in citas %}
-    <div class="cita-card cita-fila" data-estado="{{ c[3] }}">
-      <!-- Fecha visual -->
-      <div class="cita-fecha-bloque">
+    <div class="cita-row cf" data-e="{{ c[3] }}">
+      <div class="cita-date">
         {% if c[1] %}
-          <div class="cita-dia">{{ c[1].strftime('%d') }}</div>
-          <div class="cita-mes">{{ c[1].strftime('%b') }}</div>
+          <div class="cita-date-d">{{ c[1].strftime('%d') }}</div>
+          <div class="cita-date-m">{{ c[1].strftime('%b') }}</div>
         {% else %}
-          <div class="cita-dia">—</div>
+          <div class="cita-date-d">—</div>
         {% endif %}
-        <div class="cita-hora-lbl">{{ c[2].strftime('%H:%M') if c[2] else '—' }}</div>
+        <div class="cita-date-h">{{ c[2].strftime('%H:%M') if c[2] else '—' }}</div>
       </div>
-      <!-- Cuerpo -->
-      <div class="cita-body">
-        <div class="cita-doctor-name">
-          <i class="bi bi-person-badge" style="color:#0a7c5c;margin-right:.3rem;"></i>
-          Dr. Luis Suárez
-          <span style="font-weight:400;color:#64748b;font-size:.8rem;"> · Médico General</span>
-        </div>
-        <div class="cita-motivo" title="{{ c[4] or '' }}">{{ c[4] or '—' }}</div>
+      <div class="cita-info">
+        <div class="cita-dr">Dr. Luis Suárez <span style="font-weight:400;color:#94a3b8;font-size:.78rem;">· Médico General</span></div>
+        <div class="cita-mot" title="{{ c[4] or '' }}">{{ c[4] or 'Sin descripción' }}</div>
       </div>
-      <!-- Estado + acción -->
-      <div class="cita-actions">
-        <span class="badge estado {{ c[3] }}">{{ c[3] }}</span>
+      <div class="cita-end">
         {% if c[3] == 'pendiente' %}
+          <span class="badge-p">Pendiente</span>
           <form method="POST" action="/cancelar_cita_paciente/{{ c[0] }}"
                 onsubmit="return confirm('¿Cancelar esta cita?')" style="margin:0;">
             <button type="submit" class="btn btn-danger btn-sm">
-              <i class="bi bi-x-circle"></i> Cancelar
+              <i class="bi bi-x-circle"></i>
             </button>
           </form>
+        {% elif c[3] == 'completada' %}
+          <span class="badge-c">Completada</span>
+        {% else %}
+          <span class="badge-x">Cancelada</span>
         {% endif %}
       </div>
     </div>
     {% endfor %}
-    <div id="filaVacia" style="display:none;text-align:center;padding:2.5rem;color:#94a3b8;">
-      <i class="bi bi-search" style="font-size:1.5rem;opacity:.3;display:block;margin-bottom:.5rem;"></i>
+    <div id="ve" style="display:none;text-align:center;padding:2rem;color:#94a3b8;font-size:.88rem;">
+      <i class="bi bi-calendar-x" style="font-size:1.5rem;display:block;margin-bottom:.5rem;opacity:.4;"></i>
       Sin citas con ese filtro
     </div>
   </div>
 
   {% else %}
-  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;text-align:center;padding:3.5rem 2rem;box-shadow:0 2px 8px rgba(0,0,0,.05);">
-    <div style="font-size:2.5rem;margin-bottom:1rem;opacity:.3;">📅</div>
-    <h3 style="color:#0b1f3a;">Aún no tienes citas</h3>
-    <p style="color:#64748b;margin:.5rem 0 1.5rem;">Reserva tu primera cita con el Dr. Luis Suárez.</p>
-    <a href="/reservar" class="btn">
-      <i class="bi bi-plus-circle"></i> Reservar mi primera cita
-    </a>
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;text-align:center;padding:3rem 2rem;">
+    <div style="font-size:2.5rem;opacity:.25;margin-bottom:1rem;">📅</div>
+    <h3 style="color:#0b1f3a;margin:0 0 .5rem;">Aún no tienes citas</h3>
+    <p style="color:#64748b;margin:0 0 1.5rem;font-size:.88rem;">Reserva tu primera cita con el Dr. Luis Suárez.</p>
+    <a href="/reservar" class="btn"><i class="bi bi-plus-circle"></i> Reservar ahora</a>
   </div>
   {% endif %}
 
 </div>
 
 <script>
-function filtrar(estado, btn, colorClass) {
-  document.querySelectorAll('.filtro-tab').forEach(t =>
-    t.className = 'filtro-tab');
-  btn.classList.add('active');
-  if (colorClass) btn.classList.add(colorClass);
-
-  const filas = document.querySelectorAll('.cita-fila');
-  let vis = 0;
-  filas.forEach(f => {
-    const show = estado === 'todas' || f.dataset.estado === estado;
-    f.style.display = show ? 'flex' : 'none';
-    if (show) vis++;
+function fil(e, btn, cl) {
+  document.querySelectorAll('.ft').forEach(b => b.className = 'ft');
+  btn.className = 'ft on' + (cl ? ' '+cl : '');
+  let v = 0;
+  document.querySelectorAll('.cf').forEach(f => {
+    const ok = e==='todas' || f.dataset.e===e;
+    f.style.display = ok ? 'flex' : 'none';
+    if (ok) v++;
   });
-  const v = document.getElementById('filaVacia');
-  if (v) v.style.display = vis === 0 ? 'block' : 'none';
+  document.getElementById('ve').style.display = v===0 ? 'block' : 'none';
 }
 </script>
 {% endblock %}

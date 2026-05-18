@@ -978,9 +978,13 @@ def doctor_historial_paciente(id_paciente):
 @login_required(role="doctor")
 def crear_slot():
     fecha      = request.form.get("fecha", "").strip()
-    hora       = request.form.get("hora",  "").strip()
+    emergencia = request.form.get("emergencia") == "on"
+    # En modo emergencia se usa un input de texto libre
+    if emergencia:
+        hora = request.form.get("hora_emerg", "").strip()
+    else:
+        hora = request.form.get("hora", "").strip()
     cantidad   = request.form.get("cantidad", "1").strip()
-    emergencia = request.form.get("emergencia") == "on"  # checkbox
 
     if not fecha or not hora:
         return redirect("/doctor/panel")
@@ -1756,28 +1760,42 @@ def editar_perfil():
     if request.method == "POST":
         nombre   = request.form.get("nombre","").strip()
         apellido = request.form.get("apellido","").strip()
+        correo   = request.form.get("correo","").strip().lower()
         telefono = request.form.get("telefono","").strip()
         error    = None
         if len(nombre) < 2:
             error = "El nombre es muy corto"
         elif len(apellido) < 2:
             error = "El apellido es muy corto"
+        elif "@" not in correo or "." not in correo:
+            error = "Escribe un correo válido"
         elif telefono and not telefono.isdigit():
             error = "El teléfono solo debe tener números"
+        else:
+            # Verificar que el correo no esté usado por otro paciente
+            cursor.execute(
+                "SELECT id_paciente FROM paciente WHERE correo=%s AND id_paciente!=%s",
+                (correo, session["paciente_id"])
+            )
+            if cursor.fetchone():
+                error = "Ese correo ya está registrado por otro paciente"
+
         if error:
             cursor.execute("SELECT nombre,apellido,correo,telefono,cedula FROM paciente WHERE id_paciente=%s",
                            (session["paciente_id"],))
             p = cursor.fetchone()
             cursor.close()
             return render_template("editar_perfil.html", paciente=p, error=error)
+
         cursor.execute("""
-            UPDATE paciente SET nombre=%s, apellido=%s, telefono=%s
+            UPDATE paciente SET nombre=%s, apellido=%s, correo=%s, telefono=%s
             WHERE id_paciente=%s
-        """, (nombre, apellido, telefono or None, session["paciente_id"]))
+        """, (nombre, apellido, correo, telefono or None, session["paciente_id"]))
         _db.commit()
         session["paciente_nombre"] = nombre
         cursor.close()
         return redirect("/panel_paciente")
+
     cursor.execute("SELECT nombre,apellido,correo,telefono,cedula FROM paciente WHERE id_paciente=%s",
                    (session["paciente_id"],))
     paciente = cursor.fetchone()

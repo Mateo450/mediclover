@@ -651,10 +651,14 @@
             </div>
             <div class="dp-form-group">
               <label><i class="bi bi-clock" style="margin-right:.25rem;"></i>Hora de inicio</label>
-              <div style="position:relative;">
+              <div id="horaWrap" style="position:relative;">
                 <input type="time" name="hora" step="60" required id="inputHora"
                        min="07:00" max="19:00"
                        style="padding-right:3.5rem;">
+                <input type="text" name="hora_emerg" id="inputHoraEmerg"
+                       placeholder="Ej: 21:30 o 06:00"
+                       pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+                       style="display:none;padding:.5rem .85rem;border:1.5px solid #e2e8f0;border-radius:8px;width:100%;font-size:.9rem;box-sizing:border-box;">
                 <span id="ampmLabel"
                       style="position:absolute;right:.65rem;top:50%;transform:translateY(-50%);
                              font-size:.72rem;font-weight:800;letter-spacing:.06em;
@@ -929,18 +933,24 @@
 })();
 
 function toggleEmergencia(chk) {
-  const input = document.getElementById('inputHora');
-  if (!input) return;
+  const wrap = document.getElementById('horaWrap');
+  const inputTime = document.getElementById('inputHora');
+  const inputText = document.getElementById('inputHoraEmerg');
+  if (!wrap) return;
   if (chk.checked) {
-    input.removeAttribute('min');
-    input.removeAttribute('max');
-    input.style.borderColor = '#d97706';
-    input.style.background  = '#fffbeb';
+    inputTime.style.display  = 'none';
+    inputTime.removeAttribute('required');
+    inputText.style.display  = 'block';
+    inputText.required = true;
+    inputText.style.borderColor = '#d97706';
+    inputText.style.background  = '#fffbeb';
   } else {
-    input.setAttribute('min', '07:00');
-    input.setAttribute('max', '19:00');
-    input.style.borderColor = '';
-    input.style.background  = '';
+    inputTime.style.display  = 'block';
+    inputTime.required = true;
+    inputText.style.display  = 'none';
+    inputText.required = false;
+    inputText.style.borderColor = '';
+    inputText.style.background  = '';
   }
 }
 </script>
