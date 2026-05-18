@@ -240,6 +240,10 @@ app.secret_key = os.getenv("SECRET_KEY", os.urandom(32))
 
 DURACION_CITA = 35  # minutos
 
+# ── Horario del Dr. Luis Suárez: Lunes a Domingo 7:00 - 19:00 ──
+HORA_APERTURA = "07:00"   # primera cita posible
+HORA_CIERRE   = "19:00"   # última cita posible (la cita terminaría a las 19:35 máx)
+
 # ── Constantes de rol (números, no strings — más difícil de manipular)
 ROL_ADMIN    = 1
 ROL_DOCTOR   = 2
@@ -982,6 +986,17 @@ def crear_slot():
     if fecha < str(date.today()):
         return redirect("/doctor/panel")
 
+    # Validar que la hora esté dentro del horario del consultorio
+    hora_dt      = datetime.strptime(hora, "%H:%M")
+    apertura_dt  = datetime.strptime(HORA_APERTURA, "%H:%M")
+    cierre_dt    = datetime.strptime(HORA_CIERRE,   "%H:%M")
+    if hora_dt < apertura_dt or hora_dt >= cierre_dt:
+        session["slots_resultado"] = {
+            "creados": 0, "omitidos": 0,
+            "error": f"Horario fuera de rango. El consultorio atiende de {HORA_APERTURA} a {HORA_CIERRE}."
+        }
+        return redirect("/doctor/panel")
+
     try:
         cantidad = int(cantidad)
         if cantidad < 1:
@@ -989,7 +1004,7 @@ def crear_slot():
     except ValueError:
         cantidad = 1
 
-    hora_actual_dt   = datetime.strptime(hora, "%H:%M")
+    hora_actual_dt   = hora_dt
     creados          = 0
     omitidos         = 0
     horas_pendientes = []
@@ -997,7 +1012,13 @@ def crear_slot():
     _db, cursor = get_cursor()
 
     for i in range(cantidad):
-        hora_str    = hora_actual_dt.strftime("%H:%M")
+        hora_str = hora_actual_dt.strftime("%H:%M")
+
+        # No crear slots que empiecen después del cierre
+        if hora_actual_dt >= cierre_dt:
+            omitidos += (cantidad - i)
+            break
+
         solapaBD    = slot_solapado(session["doctor_id"], fecha, hora_str)
         solapaTanda = slot_solapado_en_lista(hora_actual_dt, horas_pendientes)
 
@@ -1016,7 +1037,6 @@ def crear_slot():
     _db.commit()
     cursor.close()
 
-    # Guardar en sesión — se limpia en doctor_panel() antes de renderizar
     session["slots_resultado"] = {
         "creados":  creados,
         "omitidos": omitidos
