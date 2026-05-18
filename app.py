@@ -364,6 +364,17 @@ def init_db():
                 duracion_dias INTEGER DEFAULT 7
             )
         """)
+        # Tabla de notificaciones internas para el paciente
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notificacion (
+                id_notif     SERIAL PRIMARY KEY,
+                id_paciente  INTEGER REFERENCES paciente(id_paciente) ON DELETE CASCADE,
+                tipo         VARCHAR(30) NOT NULL,
+                mensaje      TEXT NOT NULL,
+                leida        BOOLEAN DEFAULT FALSE,
+                fecha        TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
         c.commit()
         cursor.close()
         c.close()
@@ -796,14 +807,46 @@ def doctor_panel():
                            slots_resultado=slots_resultado)
 
 
+def _crear_notificacion(id_paciente, tipo, mensaje):
+    """Crea una notificación interna para el paciente. No bloquea si falla."""
+    try:
+        c = psycopg2.connect(DATABASE_URL, sslmode="require")
+        cur = c.cursor()
+        cur.execute("""
+            INSERT INTO notificacion (id_paciente, tipo, mensaje)
+            VALUES (%s, %s, %s)
+        """, (id_paciente, tipo, mensaje))
+        c.commit()
+        cur.close()
+        c.close()
+    except Exception as e:
+        print(f"⚠️  notificacion: {e}")
+
+
 @app.route("/doctor/completar/<int:id>", methods=["POST"])
 @login_required(role="doctor")
 def doctor_completar(id):
     _db, cursor = get_cursor()
+    # Obtener datos de la cita para la notificación
+    cursor.execute("""
+        SELECT c.id_paciente, s.fecha, s.hora
+        FROM cita c JOIN slot s ON c.id_slot = s.id_slot
+        WHERE c.id_cita=%s
+    """, (id,))
+    cita = cursor.fetchone()
     cursor.execute("UPDATE cita SET estado='completada' WHERE id_cita=%s AND id_doctor=%s",
                    (id, session["doctor_id"]))
     _db.commit()
     cursor.close()
+    if cita:
+        fecha_str = cita[1].strftime('%d/%m/%Y') if hasattr(cita[1], 'strftime') else str(cita[1])
+        hora_str  = cita[2].strftime('%H:%M')    if hasattr(cita[2], 'strftime') else str(cita[2])
+        threading.Thread(
+            target=_crear_notificacion,
+            args=(cita[0], "completada",
+                  f"✅ Tu cita del {fecha_str} a las {hora_str} fue completada por el Dr. Luis Suárez."),
+            daemon=True
+        ).start()
     return redirect("/doctor/panel")
 
 
@@ -811,11 +854,26 @@ def doctor_completar(id):
 @login_required(role="doctor")
 def doctor_cancelar(id):
     _db, cursor = get_cursor()
+    cursor.execute("""
+        SELECT c.id_paciente, s.fecha, s.hora
+        FROM cita c JOIN slot s ON c.id_slot = s.id_slot
+        WHERE c.id_cita=%s
+    """, (id,))
+    cita = cursor.fetchone()
     cursor.execute("UPDATE slot SET disponible=TRUE WHERE id_slot=(SELECT id_slot FROM cita WHERE id_cita=%s)", (id,))
     cursor.execute("UPDATE cita SET estado='cancelada' WHERE id_cita=%s AND id_doctor=%s",
                    (id, session["doctor_id"]))
     _db.commit()
     cursor.close()
+    if cita:
+        fecha_str = cita[1].strftime('%d/%m/%Y') if hasattr(cita[1], 'strftime') else str(cita[1])
+        hora_str  = cita[2].strftime('%H:%M')    if hasattr(cita[2], 'strftime') else str(cita[2])
+        threading.Thread(
+            target=_crear_notificacion,
+            args=(cita[0], "cancelada",
+                  f"❌ Tu cita del {fecha_str} a las {hora_str} fue cancelada por el Dr. Luis Suárez. Puedes reservar un nuevo horario."),
+            daemon=True
+        ).start()
     return redirect("/doctor/panel")
 
 
@@ -1106,8 +1164,45 @@ def panel_paciente():
         ORDER BY s.fecha DESC, s.hora DESC
     """, (session["paciente_id"],))
     citas = cursor.fetchall()
+
+    # Notificaciones no leídas
+    cursor.execute("""
+        SELECT id_notif, tipo, mensaje, fecha
+        FROM notificacion
+        WHERE id_paciente=%s AND leida=FALSE
+        ORDER BY fecha DESC
+    """, (session["paciente_id"],))
+    notificaciones = cursor.fetchall()
     cursor.close()
-    return render_template("panel_paciente.html", citas=citas)
+    return render_template("panel_paciente.html", citas=citas, notificaciones=notificaciones)
+
+
+@app.route("/leer_notificacion/<int:id_notif>", methods=["POST"])
+@login_required(role="paciente")
+def leer_notificacion(id_notif):
+    """Marca una notificación como leída."""
+    _db, cursor = get_cursor()
+    cursor.execute("""
+        UPDATE notificacion SET leida=TRUE
+        WHERE id_notif=%s AND id_paciente=%s
+    """, (id_notif, session["paciente_id"]))
+    _db.commit()
+    cursor.close()
+    return redirect("/panel_paciente")
+
+
+@app.route("/leer_todas_notificaciones", methods=["POST"])
+@login_required(role="paciente")
+def leer_todas_notificaciones():
+    """Marca todas las notificaciones del paciente como leídas."""
+    _db, cursor = get_cursor()
+    cursor.execute("""
+        UPDATE notificacion SET leida=TRUE
+        WHERE id_paciente=%s AND leida=FALSE
+    """, (session["paciente_id"],))
+    _db.commit()
+    cursor.close()
+    return redirect("/panel_paciente")
 
 
 @app.route("/cancelar_cita_paciente/<int:id>", methods=["POST"])
@@ -1550,6 +1645,45 @@ def ver_recetas_doctor(id_paciente):
     cursor.close()
     return render_template("ver_recetas_doctor.html",
                            paciente=paciente, recetas=recetas)
+
+
+@app.route("/doctor/receta/<int:id_receta>/editar", methods=["GET", "POST"])
+@login_required(role="doctor")
+def editar_receta(id_receta):
+    """El doctor puede corregir una receta que emitió él mismo."""
+    _db, cursor = get_cursor()
+    if request.method == "POST":
+        medicamentos  = request.form.get("medicamentos", "").strip()
+        indicaciones  = request.form.get("indicaciones", "").strip()
+        duracion_dias = request.form.get("duracion_dias", "7").strip()
+        if not medicamentos:
+            cursor.close()
+            return redirect(request.referrer or "/doctor/historial")
+        cursor.execute("""
+            UPDATE receta
+            SET medicamentos=%s, indicaciones=%s, duracion_dias=%s
+            WHERE id_receta=%s AND id_doctor=%s
+        """, (medicamentos, indicaciones, duracion_dias or 7, id_receta, session["doctor_id"]))
+        _db.commit()
+        # Redirigir al historial del paciente
+        cursor.execute("SELECT id_paciente FROM receta WHERE id_receta=%s", (id_receta,))
+        row = cursor.fetchone()
+        cursor.close()
+        if row:
+            return redirect(f"/doctor/recetas/{row[0]}")
+        return redirect("/doctor/historial")
+
+    # GET → cargar receta
+    cursor.execute("""
+        SELECT id_receta, id_paciente, medicamentos, indicaciones, duracion_dias
+        FROM receta
+        WHERE id_receta=%s AND id_doctor=%s
+    """, (id_receta, session["doctor_id"]))
+    receta = cursor.fetchone()
+    cursor.close()
+    if not receta:
+        return redirect("/doctor/historial")
+    return render_template("editar_receta.html", receta=receta)
 
 
 # ── Paciente: ver sus propias recetas ────────────────────────────

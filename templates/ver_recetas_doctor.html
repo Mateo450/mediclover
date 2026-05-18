@@ -117,6 +117,12 @@
           <div class="receta-sec-val">{{ r[3] }}</div>
         </div>
         {% endif %}
+
+        <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+          <a href="/doctor/receta/{{ r[0] }}/editar" class="btn btn-ghost btn-sm">
+            <i class="bi bi-pencil"></i> Editar receta
+          </a>
+        </div>
       </div>
       {% endfor %}
 

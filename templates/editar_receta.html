@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Editar receta — MediClover{% endblock %}
+
+{% block contenido %}
+<div class="page-wrap" style="max-width:620px;margin:2rem auto;padding:0 1rem;">
+
+  <div class="page-header">
+    <div>
+      <h1>Editar receta #{{ receta[0] }}</h1>
+      <p>Corrige los datos de esta receta. Solo tú puedes editarla.</p>
+    </div>
+  </div>
+
+  <div class="card" style="padding:2rem;">
+    <form method="POST">
+
+      <div class="form-group">
+        <label>Medicamentos <span style="color:var(--red)">*</span></label>
+        <textarea name="medicamentos" rows="4" required
+                  placeholder="Nombre del medicamento, dosis, frecuencia..."
+                  style="width:100%;resize:vertical;">{{ receta[2] }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Indicaciones al paciente</label>
+        <textarea name="indicaciones" rows="3"
+                  placeholder="Instrucciones de uso, horarios, advertencias..."
+                  style="width:100%;resize:vertical;">{{ receta[3] or '' }}</textarea>
+      </div>
+
+      <div class="form-group" style="max-width:200px;">
+        <label>Duración del tratamiento (días)</label>
+        <input type="number" name="duracion_dias"
+               value="{{ receta[4] or 7 }}" min="1" max="365">
+      </div>
+
+      <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+        <button type="submit" class="btn">
+          <i class="bi bi-check-lg"></i> Guardar cambios
+        </button>
+        <a href="/doctor/recetas/{{ receta[1] }}" class="btn btn-ghost">
+          Cancelar
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}
