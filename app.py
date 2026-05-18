@@ -977,23 +977,26 @@ def doctor_historial_paciente(id_paciente):
 @app.route("/doctor/slots/crear", methods=["POST"])
 @login_required(role="doctor")
 def crear_slot():
-    fecha    = request.form.get("fecha", "").strip()
-    hora     = request.form.get("hora",  "").strip()
-    cantidad = request.form.get("cantidad", "1").strip()
+    fecha      = request.form.get("fecha", "").strip()
+    hora       = request.form.get("hora",  "").strip()
+    cantidad   = request.form.get("cantidad", "1").strip()
+    emergencia = request.form.get("emergencia") == "on"  # checkbox
 
     if not fecha or not hora:
         return redirect("/doctor/panel")
     if fecha < str(date.today()):
         return redirect("/doctor/panel")
 
-    # Validar que la hora esté dentro del horario del consultorio
-    hora_dt      = datetime.strptime(hora, "%H:%M")
-    apertura_dt  = datetime.strptime(HORA_APERTURA, "%H:%M")
-    cierre_dt    = datetime.strptime(HORA_CIERRE,   "%H:%M")
-    if hora_dt < apertura_dt or hora_dt >= cierre_dt:
+    hora_dt     = datetime.strptime(hora, "%H:%M")
+    apertura_dt = datetime.strptime(HORA_APERTURA, "%H:%M")
+    cierre_dt   = datetime.strptime(HORA_CIERRE,   "%H:%M")
+
+    # Solo validar horario si NO es emergencia
+    if not emergencia and (hora_dt < apertura_dt or hora_dt >= cierre_dt):
         session["slots_resultado"] = {
             "creados": 0, "omitidos": 0,
-            "error": f"Horario fuera de rango. El consultorio atiende de {HORA_APERTURA} a {HORA_CIERRE}."
+            "error": f"Horario fuera de rango. El consultorio atiende de {HORA_APERTURA} a {HORA_CIERRE}. "
+                     f"Activa 'Horario de emergencia' para crear slots fuera de ese rango."
         }
         return redirect("/doctor/panel")
 
@@ -1014,8 +1017,8 @@ def crear_slot():
     for i in range(cantidad):
         hora_str = hora_actual_dt.strftime("%H:%M")
 
-        # No crear slots que empiecen después del cierre
-        if hora_actual_dt >= cierre_dt:
+        # En modo normal no crear slots más allá del cierre
+        if not emergencia and hora_actual_dt >= cierre_dt:
             omitidos += (cantidad - i)
             break
 
@@ -1039,7 +1042,8 @@ def crear_slot():
 
     session["slots_resultado"] = {
         "creados":  creados,
-        "omitidos": omitidos
+        "omitidos": omitidos,
+        "emergencia": emergencia
     }
 
     return redirect("/doctor/panel")
@@ -1181,20 +1185,34 @@ def panel_paciente():
         JOIN slot s        ON c.id_slot   = s.id_slot
         LEFT JOIN doctor d ON c.id_doctor = d.id_doctor
         WHERE c.id_paciente=%s
-        ORDER BY s.fecha DESC, s.hora DESC
+        ORDER BY s.fecha ASC, s.hora ASC
     """, (session["paciente_id"],))
     citas = cursor.fetchall()
 
     # Notificaciones no leídas
-    cursor.execute("""
-        SELECT id_notif, tipo, mensaje, fecha
-        FROM notificacion
-        WHERE id_paciente=%s AND leida=FALSE
-        ORDER BY fecha DESC
-    """, (session["paciente_id"],))
-    notificaciones = cursor.fetchall()
+    try:
+        cursor.execute("""
+            SELECT id_notif, tipo, mensaje, fecha
+            FROM notificacion
+            WHERE id_paciente=%s AND leida=FALSE
+            ORDER BY fecha DESC
+        """, (session["paciente_id"],))
+        notificaciones = cursor.fetchall()
+    except Exception:
+        notificaciones = []
     cursor.close()
-    return render_template("panel_paciente.html", citas=citas, notificaciones=notificaciones)
+
+    # Calcular conteos en Python — más seguro que en Jinja2 con tuplas
+    n_pend = sum(1 for c in citas if c[3] == 'pendiente')
+    n_comp = sum(1 for c in citas if c[3] == 'completada')
+    n_canc = sum(1 for c in citas if c[3] == 'cancelada')
+    proxima = next((c for c in citas if c[3] == 'pendiente'), None)
+
+    return render_template("panel_paciente.html",
+                           citas=citas,
+                           notificaciones=notificaciones,
+                           n_pend=n_pend, n_comp=n_comp,
+                           n_canc=n_canc, proxima=proxima)
 
 
 @app.route("/leer_notificacion/<int:id_notif>", methods=["POST"])
