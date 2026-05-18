@@ -979,11 +979,7 @@ def doctor_historial_paciente(id_paciente):
 def crear_slot():
     fecha      = request.form.get("fecha", "").strip()
     emergencia = request.form.get("emergencia") == "on"
-    # En modo emergencia se usa un input de texto libre
-    if emergencia:
-        hora = request.form.get("hora_emerg", "").strip()
-    else:
-        hora = request.form.get("hora", "").strip()
+    hora       = request.form.get("hora", "").strip()  # siempre type=time
     cantidad   = request.form.get("cantidad", "1").strip()
 
     if not fecha or not hora:
